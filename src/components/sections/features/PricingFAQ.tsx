@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Container } from "@/components/ui/Container";
-import { Accordion } from "@/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 const FAQS = [
   {
@@ -52,7 +52,7 @@ export function PricingFAQ() {
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.45, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
           >
-            <AccordionItem value={values[index]} question={faq.question} answer={faq.answer} />
+            <PricingAccordionItem value={values[index]} question={faq.question} answer={faq.answer} />
           </motion.div>
         ))}
       </Accordion>
@@ -60,14 +60,14 @@ export function PricingFAQ() {
   );
 }
 
-function AccordionItem({ value, question, answer }: { value: string; question: string; answer: string }) {
+function PricingAccordionItem({ value, question, answer }: { value: string; question: string; answer: string }) {
   return (
-    <Accordion.Item
+    <AccordionItem
       value={value}
       className="rounded-2xl border border-[var(--color-border)] bg-white px-6 transition-all"
     >
       <AccordionTrigger className="py-5 text-left text-base font-semibold text-gray-900">{question}</AccordionTrigger>
       <AccordionContent className="pb-5 text-base leading-relaxed text-[var(--color-text-2)]">{answer}</AccordionContent>
-    </Accordion.Item>
+    </AccordionItem>
   );
 }

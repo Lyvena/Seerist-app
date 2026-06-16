@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
-import { FadeUp, StaggerContainer } from "@/components/animations/FadeUp";
+import { FadeUp } from "@/components/animations/FadeUp";
+import { StaggerContainer } from "@/components/animations/StaggerContainer";
 import { Container } from "@/components/ui/Container";
 
 const USE_CASES = [

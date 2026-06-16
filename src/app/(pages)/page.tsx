@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Hero } from "@/components/sections/Hero";
 import { PlatformsMarquee } from "@/components/sections/PlatformsMarquee";
 import { StatsSection } from "@/components/sections/StatsSection";
@@ -14,9 +15,36 @@ import { PricingPreview } from "@/components/sections/PricingPreview";
 import { FaqSection } from "@/components/sections/FaqSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 
+export const metadata: Metadata = {
+  title: "Sell Automatically on Freelance Platforms",
+  description:
+    "Seerist monitors 14 freelance platforms for buyers who need exactly what you built — then writes the proposal. Automatic sales for indie SaaS founders.",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Seerist",
+  applicationCategory: "BusinessApplication",
+  description:
+    "AI-powered sales automation for SaaS founders. Monitor freelance platforms and generate proposals automatically.",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free plan available",
+  },
+  url: "https://seerist.xyz",
+  operatingSystem: "Web",
+};
+
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Hero />
       <main>
         <PlatformsMarquee />
