@@ -10,9 +10,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ hostname: "*.insforge.site" }],
     formats: ["image/webp", "image/avif"],
   },
-  experimental: {
-    optimizeCss: true,
-  },
 };
 
 export default bundleAnalyzer(nextConfig);
