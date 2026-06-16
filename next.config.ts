@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [{ hostname: "*.insforge.site" }],
+    formats: ["image/webp", "image/avif"],
+  },
+  experimental: {
+    optimizeCss: true,
+  },
 };
 
 export default nextConfig;
