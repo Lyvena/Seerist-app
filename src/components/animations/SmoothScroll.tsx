@@ -1,18 +1,17 @@
+"use client";
 import Lenis from "lenis";
-import type { Lenis as LenisType } from "@studio-freight/lenis";
-import { useEffect } from "react";
-
-type LenisInstance = LenisType & {
-  destroy: () => void;
-};
+import { useEffect, useRef } from "react";
 
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
+  const lenisRef = useRef<Lenis | null>(null);
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-    }) as LenisInstance;
+    });
+    lenisRef.current = lenis;
 
     function raf(time: number) {
       lenis.raf(time);

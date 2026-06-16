@@ -92,16 +92,19 @@
   html {
     @apply font-sans antialiased;
   }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-[family-name:var(--font-cal)];
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-cal), var(--font-geist-sans), system-ui, sans-serif;
   }
 }
 
 @utility container {
   @apply mx-auto max-w-[1200px] px-6 lg:px-8;
+}
+
+@font-face {
+  font-family: "Cal Sans";
+  src: url("/fonts/CalSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }

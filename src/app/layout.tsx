@@ -1,5 +1,4 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import { localFont } from "next/font/local";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SmoothScroll } from "@/components/animations/SmoothScroll";
 import "./globals.css";
@@ -24,12 +23,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const calSans = localFont({
-  src: "../public/fonts/CalSans-SemiBold.woff2",
-  variable: "--font-cal",
-  display: "swap",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,7 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${calSans.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-white text-[#0A0A0A] antialiased">
