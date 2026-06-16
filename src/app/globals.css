@@ -164,9 +164,13 @@ h1, h2, h3 { font-family: var(--font-heading); }
   box-shadow: 0 0 0 8px rgba(124,58,237,0);
 }
 
-@keyframes marquee {
+@keyframes marquee-left {
   from { transform: translateX(0) }
   to   { transform: translateX(-50%) }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%) }
+  to   { transform: translateX(0) }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0px) }
