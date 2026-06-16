@@ -14,7 +14,7 @@ export function PageLoader({ onDone }: { onDone: () => void }) {
     if (!visited) {
       setVisible(true);
       window.sessionStorage.setItem(STORAGE_KEY, "true");
-      const id = window.setTimeout(onDone, 1200);
+      const id = window.setTimeout(onDone, 800);
       return () => window.clearTimeout(id);
     } else {
       onDone();

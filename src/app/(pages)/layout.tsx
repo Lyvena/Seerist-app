@@ -31,7 +31,7 @@ export default function PagesLayout({ children }: { children: React.ReactNode })
               key="page"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.5, ease }}
             >
               <TooltipProvider>

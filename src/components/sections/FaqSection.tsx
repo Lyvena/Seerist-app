@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
-import { Accordion } from "@/components/ui/accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 const FAQS = [
   {
@@ -67,7 +67,7 @@ export function FaqSection() {
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
               >
-                <Accordion.Item
+                <AccordionItem
                   value={values[index]}
                   className="rounded-2xl border border-[var(--color-border)] bg-white px-6 transition-all"
                 >
@@ -77,7 +77,7 @@ export function FaqSection() {
                   <AccordionContent className="pb-5 text-base leading-relaxed text-[var(--color-text-2)]">
                     {faq.answer}
                   </AccordionContent>
-                </Accordion.Item>
+                </AccordionItem>
               </motion.div>
             ))}
           </Accordion>
