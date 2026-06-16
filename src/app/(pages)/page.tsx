@@ -5,6 +5,9 @@ import { HowItWorks } from "@/components/sections/HowItWorks";
 import { LogosSection } from "@/components/sections/LogosSection";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { CaseStudyCallout } from "@/components/sections/CaseStudyCallout";
+import { PricingPreview } from "@/components/sections/PricingPreview";
+import { FaqSection } from "@/components/sections/FaqSection";
+import { FinalCTA } from "@/components/sections/FinalCTA";
 
 export default function Home() {
   return (
@@ -17,6 +20,9 @@ export default function Home() {
         <LogosSection />
         <Testimonials />
         <CaseStudyCallout />
+        <PricingPreview />
+        <FaqSection />
+        <FinalCTA />
       </main>
     </>
   );
