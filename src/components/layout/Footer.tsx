@@ -93,7 +93,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900"
+                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -104,7 +104,7 @@ export function Footer() {
                     href="https://status.seerist.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900"
+                    className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
                   >
                     Status
                   </Link>
@@ -118,7 +118,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900"
+                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -133,7 +133,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900"
+                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -150,7 +150,7 @@ export function Footer() {
             <p className="text-xs text-gray-500">Made with ❤️ for indie founders</p>
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900"
+              className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-full border border-input px-4 text-sm text-text-2 transition-colors hover:border-border/70 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
             >
               🌐 English
             </button>

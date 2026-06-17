@@ -23,8 +23,8 @@ export function Hero() {
             width: "520px",
             height: "520px",
             borderRadius: "50%",
-            background: "#7C3AED",
-            opacity: 0.12,
+            background: "var(--color-accent)",
+            opacity: 0.18,
             filter: "blur(120px)",
             animation: "float 8s ease-in-out infinite",
           }}
@@ -39,7 +39,7 @@ export function Hero() {
             height: "480px",
             borderRadius: "50%",
             background: "#6366F1",
-            opacity: 0.10,
+            opacity: 0.15,
             filter: "blur(120px)",
             animation: "float 8s ease-in-out infinite 2s",
           }}
@@ -64,7 +64,7 @@ export function Hero() {
               fontFamily: "var(--font-heading)",
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
-              fontSize: "clamp(48px, 7vw, 96px)",
+              fontSize: "clamp(36px, 6vw, 72px)",
             }}
           >
             <motion.span
@@ -116,7 +116,7 @@ export function Hero() {
               href="https://app.seerist.xyz/signup"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex h-[52px] items-center justify-center rounded-full bg-[#7C3AED] px-7 text-base font-semibold text-white transition-colors hover:bg-[#6D28D9]"
+              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
               style={{ boxShadow: "0 8px 24px rgba(124,58,237,0.35)" }}
             >
               Start Free — No Card Needed
@@ -128,7 +128,7 @@ export function Hero() {
                 const el = document.getElementById("how-it-works");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
-              className="inline-flex h-[52px] items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-7 text-base font-medium text-gray-700 transition hover:border-gray-500 hover:text-gray-900"
+              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center gap-2 rounded-full border border-input bg-card px-7 text-base font-medium text-foreground transition hover:border-border/70 hover:text-primary focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
             >
               See How It Works
               <span aria-hidden="true">↓</span>

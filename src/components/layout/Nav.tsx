@@ -72,7 +72,7 @@ export function Nav() {
           <Logo />
           <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map(({ label, href }) => (
-              <Link key={href} href={href} className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900">
+              <Link key={href} href={href} className="text-sm font-medium text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2">
                 {label}
               </Link>
             ))}
@@ -80,13 +80,13 @@ export function Nav() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="https://app.seerist.xyz/login"
-              className="rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-white"
+              className="rounded-full border border-input px-5 py-2 text-sm font-medium text-text-2 transition-colors hover:border-border/70 hover:bg-white focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
             >
               Sign In
             </Link>
             <Link
               href="https://app.seerist.xyz/signup"
-              className="rounded-full bg-violet-600 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-violet-700 hover:scale-[1.02]"
+              className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:scale-[1.02]"
               style={{ boxShadow: "0 4px 16px rgba(124,58,237,0.25)" }}
             >
               Get Started Free
@@ -129,7 +129,7 @@ export function Nav() {
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="flex flex-col items-center gap-4 px-8"
+              className="flex flex-wrap items-center gap-4 px-8 justify-center"
             >
               {MOBILE_LINKS.map(({ label, href, external, primary }) => (
                 <motion.div
@@ -144,9 +144,11 @@ export function Nav() {
                     target={external ? "_blank" : undefined}
                     rel={external ? "noopener noreferrer" : undefined}
                     onClick={closeMobile}
-                    className={`block rounded-full px-6 py-3 text-center text-base font-medium transition-colors ${
-                      primary ? "bg-violet-600 text-white hover:bg-violet-700" : "text-gray-700 hover:bg-gray-50"
-                    }`}
+                    className={`block min-h-[44px] rounded-full px-6 py-3 text-center text-base font-medium transition-colors ${
+                      primary
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                        : "text-text-2 hover:bg-border/50"
+                    } focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2`}
                   >
                     {primary ? label : <span className="inline-flex items-center gap-1">{label} <ChevronRight className="h-4 w-4" /></span>}
                   </Link>
