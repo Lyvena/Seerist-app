@@ -41,7 +41,7 @@ export function OpportunityRadar() {
               <SectionLabel className="border-white/15 bg-white/10 text-white backdrop-blur">Opportunity Radar</SectionLabel>
             </FadeUp>
             <FadeUp delay={0.1}>
-              <h2 className="mt-5 font-semibold tracking-tight text-white" style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(38px,6vw,68px)", lineHeight: 1.05, letterSpacing: "-0.04em" }}>
+              <h2 className="mt-5 font-semibold tracking-tight text-white" style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-hero)", lineHeight: 1.04, letterSpacing: "-0.03em" }}>
                 See buyers before your competitors refresh their feeds.
               </h2>
             </FadeUp>

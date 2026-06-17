@@ -9,6 +9,12 @@ const config: Config = {
         sans: ["var(--font-geist-sans)"],
         mono: ["var(--font-geist-mono)"],
       },
+      fontSize: {
+        hero: ["clamp(3.5rem, 7.5vw, 6rem)", { lineHeight: "1.04", letterSpacing: "-0.03em" }],
+        display: ["clamp(2.5rem, 5vw, 4rem)", { lineHeight: "1.08", letterSpacing: "-0.025em" }],
+        heading: ["clamp(1.75rem, 3vw, 2.5rem)", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
+        subhead: ["clamp(1.1rem, 2vw, 1.375rem)", { lineHeight: "1.5" }],
+      },
       colors: {
         accent: {
           DEFAULT: "var(--color-accent)",
@@ -49,6 +55,7 @@ const config: Config = {
         float: "float 6s ease-in-out infinite",
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         marquee: "marquee 30s linear infinite",
+        "gradient-shift": "gradient-shift 12s ease infinite",
       },
       keyframes: {
         marquee: {
@@ -62,6 +69,11 @@ const config: Config = {
         shimmer: {
           from: { backgroundPosition: "-200% center" },
           to: { backgroundPosition: "200% center" },
+        },
+        "gradient-shift": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
         },
       },
     },

@@ -6,7 +6,7 @@ import { EmailMockup } from "@/components/mockups/EmailMockup";
 
 export function FeatureSection5() {
   return (
-    <section className="py-24">
+    <section className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           <FadeUp>

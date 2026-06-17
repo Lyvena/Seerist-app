@@ -40,9 +40,9 @@ export function Hero() {
             className="mt-8 font-semibold tracking-tight text-gray-900"
             style={{
               fontFamily: "var(--font-heading)",
-              lineHeight: 1.05,
+              lineHeight: 1.04,
               letterSpacing: "-0.03em",
-              fontSize: "clamp(36px, 6vw, 72px)",
+              fontSize: "var(--text-hero)",
             }}
           >
             <motion.span

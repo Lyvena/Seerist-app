@@ -13,8 +13,8 @@ export function HeroSection() {
               className="font-semibold tracking-tight text-[var(--color-text-1)]"
               style={{
                 fontFamily: "var(--font-heading)",
-                fontSize: "clamp(40px, 6vw, 72px)",
-                lineHeight: 1.05,
+                fontSize: "var(--text-hero)",
+                lineHeight: 1.04,
                 letterSpacing: "-0.03em",
               }}
             >
@@ -22,7 +22,7 @@ export function HeroSection() {
             </h1>
           </FadeUp>
           <FadeUp delay={0.1}>
-            <p className="mx-auto mt-6 max-w-2xl text-lg" style={{ color: "var(--color-text-3)" }}>
+            <p className="mx-auto mt-6 max-w-2xl text-gray-600" style={{ fontSize: "var(--text-xl)" }}>
               Seerist works for any digital product that solves a problem.
               Here&apos;s how different types of indie founders use it.
             </p>

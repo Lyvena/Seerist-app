@@ -76,7 +76,7 @@ export function FeatureMatrix({ variant = "home" }: { variant?: "home" | "page" 
               <SectionLabel>Product OS</SectionLabel>
             </FadeUp>
             <FadeUp delay={0.1}>
-              <h1 className="mt-5 font-semibold tracking-tight text-slate-950" style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(40px,6vw,72px)", lineHeight: 1.05, letterSpacing: "-0.04em" }}>
+              <h1 className="mt-5 font-semibold tracking-tight text-slate-950" style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-hero)", lineHeight: 1.04, letterSpacing: "-0.03em" }}>
                 A complete sales engine for products that need buyers.
               </h1>
             </FadeUp>
@@ -94,7 +94,7 @@ export function FeatureMatrix({ variant = "home" }: { variant?: "home" | "page" 
               <SectionLabel>Built for outbound that feels inbound</SectionLabel>
             </FadeUp>
             <FadeUp delay={0.1}>
-              <h2 className="mt-5 font-semibold tracking-tight text-slate-950" style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(38px,6vw,70px)", lineHeight: 1.05, letterSpacing: "-0.04em" }}>
+              <h2 className="mt-5 font-semibold tracking-tight text-slate-950" style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-hero)", lineHeight: 1.04, letterSpacing: "-0.03em" }}>
                 Every part of the freelance sales loop, automated.
               </h2>
             </FadeUp>

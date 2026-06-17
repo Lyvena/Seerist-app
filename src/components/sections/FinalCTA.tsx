@@ -26,7 +26,7 @@ export function FinalCTA() {
           <FadeUp>
             <h2
               className="font-semibold tracking-tight text-white"
-              style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(40px, 6vw, 72px)", lineHeight: 1.05, letterSpacing: "-0.03em" }}
+              style={{ fontFamily: "var(--font-heading)", fontSize: "var(--text-hero)", lineHeight: 1.04, letterSpacing: "-0.03em" }}
             >
               Start selling while your competitors are still manually checking Upwork.
             </h2>

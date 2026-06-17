@@ -48,7 +48,7 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <div className="py-24">
+    <div className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="mb-20 text-center">
           <FadeUp>
@@ -59,8 +59,8 @@ export function FeaturesSection() {
               className="font-semibold tracking-tight text-[var(--color-text-1)]"
               style={{
                 fontFamily: "var(--font-heading)",
-                fontSize: "clamp(40px, 6vw, 72px)",
-                lineHeight: 1.05,
+                fontSize: "var(--text-hero)",
+                lineHeight: 1.04,
                 letterSpacing: "-0.03em",
               }}
             >
@@ -68,7 +68,7 @@ export function FeaturesSection() {
             </h1>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p className="mx-auto mt-5 max-w-2xl text-lg" style={{ color: "var(--color-text-3)" }}>
+            <p className="mx-auto mt-5 max-w-2xl text-gray-600" style={{ fontSize: "var(--text-xl)" }}>
               Built for indie founders who ship great products but don&apos;t have time to manually hunt for buyers.
             </p>
           </FadeUp>

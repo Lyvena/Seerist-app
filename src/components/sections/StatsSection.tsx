@@ -19,9 +19,9 @@ function Stat({ value, label, delay = 0, renderValue }: StatProps) {
           className="font-semibold"
           style={{
             fontFamily: "var(--font-heading)",
-            fontSize: "clamp(48px, 6vw, 80px)",
+            fontSize: "var(--text-5xl)",
             color: "#7C3AED",
-            lineHeight: 1.05,
+            lineHeight: 1.04,
             letterSpacing: "-0.03em",
           }}
         >
@@ -35,7 +35,7 @@ function Stat({ value, label, delay = 0, renderValue }: StatProps) {
 
 export function StatsSection() {
   return (
-    <section className="py-20">
+    <section className="py-20" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div
           className="rounded-3xl bg-white p-10 md:p-14"
@@ -55,8 +55,8 @@ export function StatsSection() {
               delay={0.3}
               renderValue={() => (
                 <span className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl md:text-5xl tabular-nums" style={{ color: "#7C3AED" }}>{"<"}30</span>
-                  <span className="text-xl md:text-2xl" style={{ color: "#7C3AED" }}>s</span>
+                  <span className="text-4xl md:text-5xl tabular-nums text-violet-600">{"<"}30</span>
+                  <span className="text-xl md:text-2xl text-violet-600">s</span>
                 </span>
               )}
             />

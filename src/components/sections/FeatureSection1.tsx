@@ -6,7 +6,7 @@ import { ScoringMockup } from "@/components/mockups/ScoringMockup";
 
 export function FeatureSection1() {
   return (
-    <section className="py-24 bg-gray-50/50">
+    <section className="py-24 bg-gray-50/50" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
           <FadeUp>

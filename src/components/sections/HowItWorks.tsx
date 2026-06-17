@@ -76,7 +76,7 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section id="how-it-works" ref={sectionRef} className="py-24">
+    <section id="how-it-works" ref={sectionRef} className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="mb-16 text-center">
           <FadeUp>
@@ -84,14 +84,14 @@ export function HowItWorks() {
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl"
+              className="mt-4 font-semibold tracking-tight"
               style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
             >
               From product description to closed deal — in three steps
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p className="mx-auto mt-3 max-w-2xl text-base" style={{ color: "var(--color-text-3)" }}>
+            <p className="mx-auto mt-3 max-w-2xl" style={{ color: "var(--color-text-3)" }}>
               Set it up once. Seerist runs automatically, day and night.
             </p>
           </FadeUp>
@@ -130,7 +130,7 @@ export function HowItWorks() {
                         </span>
                         <h3 className="text-base font-semibold text-gray-900 md:text-lg">{title}</h3>
                       </div>
-                      <p className="mt-2 text-sm leading-relaxed text-gray-600">{body}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-gray-600" style={{ fontSize: "var(--text-sm)" }}>{body}</p>
                     </div>
                   </div>
                 </div>

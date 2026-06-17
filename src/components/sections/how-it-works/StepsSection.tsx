@@ -63,7 +63,7 @@ const STEPS = [
 
 export function StepsSection() {
   return (
-    <section className="py-24">
+    <section className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="mb-16 text-center">
           <SectionLabel>The Process</SectionLabel>
@@ -71,8 +71,8 @@ export function StepsSection() {
             className="mt-4 font-semibold tracking-tight md:text-5xl text-gray-900"
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "clamp(40px, 6vw, 72px)",
-              lineHeight: 1.05,
+              fontSize: "var(--text-hero)",
+              lineHeight: 1.04,
               letterSpacing: "-0.03em",
             }}
           >
