@@ -45,6 +45,12 @@
   --radius-xl: 28px;
   --radius-pill: 999px;
 
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 20px 50px rgba(0,0,0,0.12), 0 6px 15px rgba(0,0,0,0.08);
+  --shadow-accent: 0 16px 48px rgba(124, 58, 237, 0.25);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
   --background: var(--color-bg);
   --foreground: var(--color-text-1);
   --card: var(--color-surface);
@@ -103,7 +109,13 @@
   --color-danger: #F87171;
 
   --gradient-hero: linear-gradient(135deg, var(--color-bg) 0%, var(--color-accent-light) 50%, var(--color-bg) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+--gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 20px 50px rgba(0,0,0,0.12), 0 6px 15px rgba(0,0,0,0.08);
+  --shadow-accent: 0 16px 48px rgba(124, 58, 237, 0.25);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   --background: var(--color-bg);
   --foreground: var(--color-text-1);
@@ -213,6 +225,11 @@ h1, h2, h3 { font-family: var(--font-heading); }
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(24px) }
   to   { opacity: 1; transform: translateY(0) }
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
 }
 
 @layer base {

@@ -128,11 +128,10 @@ function TestimonialCard({ quote, author, role }: Testimonial) {
           transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
         },
       }}
-      className="rounded-2xl border border-[var(--color-border)] bg-white p-6 transition-all duration-300 ease-out-expo hover:-translate-y-1 hover:shadow-[var(--shadow-md)]"
-      style={{ boxShadow: "var(--shadow-sm)" }}
+      className="rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 ease-out-expo hover:-translate-y-1 hover:shadow-md"
     >
       <StarRating />
-      <p className="mt-4 text-base leading-relaxed text-[var(--color-text-2)]">{quote}</p>
+      <p className="mt-4 text-base leading-relaxed text-gray-700">{quote}</p>
       <div className="mt-5 flex items-center gap-3">
         <div
           className="h-9 w-9 rounded-full"
@@ -141,8 +140,8 @@ function TestimonialCard({ quote, author, role }: Testimonial) {
           }}
         />
         <div>
-          <p className="text-sm font-semibold text-[var(--color-text-1)]">{author}</p>
-          <p className="text-xs text-[var(--color-text-3)]">{role}</p>
+          <p className="text-sm font-semibold text-gray-900">{author}</p>
+          <p className="text-xs text-gray-500">{role}</p>
         </div>
       </div>
     </motion.div>
@@ -159,14 +158,14 @@ export function Testimonials() {
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl"
-              style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+              className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Joined by 200+ indie founders selling through Seerist
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p className="mx-auto mt-3 max-w-2xl text-base" style={{ color: "var(--color-text-3)" }}>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600">
               Real results from real product builders.
             </p>
           </FadeUp>

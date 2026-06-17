@@ -79,10 +79,10 @@ function PlanPrice({ plan, annual }: { plan: Plan; annual: boolean }) {
   const price = annual ? plan.annual : plan.monthly;
   return (
     <div className="mt-6 flex items-baseline gap-1">
-      <span className="text-5xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+      <span className="text-5xl font-semibold text-gray-900" style={{ fontFamily: "var(--font-heading)" }}>
         ${price}
       </span>
-      {price > 0 && <span className="text-sm text-[var(--color-text-3)]">{annual ? "/mo" : "/month"}</span>}
+      {price > 0 && <span className="text-sm text-gray-600">{annual ? "/mo" : "/month"}</span>}
     </div>
   );
 }
@@ -96,9 +96,11 @@ export function PricingCards({ annual }: { annual: boolean }) {
             <FadeUp key={plan.name} delay={index * 0.1}>
               <div
                 className={`relative flex flex-col rounded-3xl border bg-white p-8 ${
-                  plan.popular ? "gradient-border" : "border-[var(--color-border)]"
+                  plan.popular
+                    ? "bg-gradient-to-br from-violet-50 to-white"
+                    : "border-gray-200"
                 }`}
-                style={{ boxShadow: plan.popular ? "var(--shadow-accent)" : "var(--shadow-sm)" }}
+                style={{ boxShadow: plan.popular ? "0 16px 48px rgba(124, 58, 237, 0.2)" : "0 1px 3px rgba(0,0,0,0.06)" }}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -107,24 +109,24 @@ export function PricingCards({ annual }: { annual: boolean }) {
                     </Badge>
                   </div>
                 )}
-                <h3 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+                <h3 className="text-2xl font-semibold text-gray-900" style={{ fontFamily: "var(--font-heading)" }}>
                   {plan.name}
                 </h3>
                 <PlanPrice plan={plan} annual={annual} />
-                <p className="mt-2 text-sm text-[var(--color-text-3)]">{plan.subtitle}</p>
+                <p className="mt-2 text-sm text-gray-600">{plan.subtitle}</p>
                 <Link
                   href={plan.href}
                   className={`mt-6 inline-flex h-12 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                     plan.popular
                       ? "bg-violet-600 text-white hover:bg-violet-700"
-                      : "border border-[var(--color-border)] text-[var(--color-text-1)] hover:bg-[var(--color-surface-2)]"
+                      : "border border-gray-200 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   {plan.name === "Free" ? "Get Started Free" : plan.name === "Pro" ? "Start Pro — 7 Days Free" : "Start Agency"}
                 </Link>
                 <div className="mt-8 space-y-3">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-start gap-3 text-sm text-[var(--color-text-2)]">
+                    <div key={feature} className="flex items-start gap-3 text-sm text-gray-700">
                       <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
                         <path
                           fillRule="evenodd"

@@ -26,12 +26,12 @@ function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle cx="16" cy="16" r="14" stroke="#7C3AED" strokeWidth="2" opacity="0.2" />
-        <circle cx="16" cy="16" r="9" stroke="#7C3AED" strokeWidth="2" opacity="0.5" />
-        <circle cx="16" cy="16" r="4" stroke="#7C3AED" strokeWidth="2.5" />
-        <circle cx="16" cy="16" r="2.5" fill="#7C3AED" />
+        <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" opacity="0.2" className="text-violet-600" />
+        <circle cx="16" cy="16" r="9" stroke="currentColor" strokeWidth="2" opacity="0.5" className="text-violet-600" />
+        <circle cx="16" cy="16" r="4" stroke="currentColor" strokeWidth="2.5" className="text-violet-600" />
+        <circle cx="16" cy="16" r="2.5" fill="currentColor" className="text-violet-600" />
       </svg>
-      <span className="text-xl font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+      <span className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100" style={{ fontFamily: "var(--font-heading)" }}>
         Seerist
       </span>
     </Link>
@@ -72,7 +72,7 @@ export function Nav() {
           <Logo />
           <div className="hidden md:flex items-center gap-8">
             {NAV_LINKS.map(({ label, href }) => (
-              <Link key={href} href={href} className="text-sm font-medium text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2">
+              <Link key={href} href={href} className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
                 {label}
               </Link>
             ))}
@@ -80,13 +80,13 @@ export function Nav() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="https://app.seerist.xyz/login"
-              className="rounded-full border border-input px-5 py-2 text-sm font-medium text-text-2 transition-colors hover:border-border/70 hover:bg-white focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+              className="rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
             >
               Sign In
             </Link>
             <Link
               href="https://app.seerist.xyz/signup"
-              className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-primary/90 hover:scale-[1.02]"
+              className="rounded-full bg-violet-600 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-violet-700 hover:scale-[1.02]"
               style={{ boxShadow: "0 4px 16px rgba(124,58,237,0.25)" }}
             >
               Get Started Free
@@ -112,7 +112,7 @@ export function Nav() {
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-[60] bg-white md:hidden"
           >
-            <div className="flex justify-end p-5">
+            <div className="flex h-16 items-end justify-end px-4 pb-4">
               <button
                 onClick={closeMobile}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
@@ -123,20 +123,20 @@ export function Nav() {
             </div>
             <motion.div
               variants={{
-                hidden: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
-                visible: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
+                hidden: { transition: { staggerChildren: 0.05 } },
+                visible: { transition: { staggerChildren: 0.05 } },
               }}
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="flex flex-wrap items-center gap-4 px-8 justify-center"
+              className="flex flex-col items-center gap-3 px-6"
             >
               {MOBILE_LINKS.map(({ label, href, external, primary }) => (
                 <motion.div
                   key={href}
                   variants={{
-                    hidden: { opacity: 0, y: 24 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+                    hidden: { opacity: 0, y: 16 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
                   }}
                 >
                   <Link
@@ -146,11 +146,11 @@ export function Nav() {
                     onClick={closeMobile}
                     className={`block min-h-[44px] rounded-full px-6 py-3 text-center text-base font-medium transition-colors ${
                       primary
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "text-text-2 hover:bg-border/50"
-                    } focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2`}
+                        ? "bg-violet-600 text-white hover:bg-violet-700"
+                        : "text-gray-700 hover:bg-gray-100"
+                    } focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2`}
                   >
-                    {primary ? label : <span className="inline-flex items-center gap-1">{label} <ChevronRight className="h-4 w-4" /></span>}
+                    {label}
                   </Link>
                 </motion.div>
               ))}

@@ -50,7 +50,7 @@ function UseCaseCard({
 }) {
   return (
     <FadeUp>
-      <div className="rounded-2xl border border-[var(--color-border)] bg-white p-8 transition-all duration-300 hover:shadow-[var(--shadow-md)]">
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 transition-all duration-300 hover:shadow-md">
         <div
           className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl"
           style={{ background: "var(--color-accent-light)" }}
@@ -58,15 +58,13 @@ function UseCaseCard({
           {icon}
         </div>
         <h3
-          className="text-xl font-semibold"
-          style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+          className="text-xl font-semibold text-gray-900"
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           {title}
         </h3>
-        <p className="mt-3 text-base leading-relaxed" style={{ color: "var(--color-text-2)" }}>
-          {body}
-        </p>
-        <p className="mt-4 text-sm font-medium text-violet-700">{stat}</p>
+        <p className="mt-3 text-base leading-relaxed text-gray-600">{body}</p>
+        <p className="mt-4 text-sm font-medium text-violet-600">{stat}</p>
       </div>
     </FadeUp>
   );

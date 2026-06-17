@@ -68,18 +68,17 @@ export function StepsSection() {
         <div className="mb-16 text-center">
           <SectionLabel>The Process</SectionLabel>
           <h1
-            className="mt-4 font-semibold tracking-tight md:text-5xl"
+            className="mt-4 font-semibold tracking-tight md:text-5xl text-gray-900"
             style={{
               fontFamily: "var(--font-heading)",
               fontSize: "clamp(40px, 6vw, 72px)",
-              color: "var(--color-text-1)",
               lineHeight: 1.05,
               letterSpacing: "-0.03em",
             }}
           >
             From setup to first deal — in six steps.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg" style={{ color: "var(--color-text-3)" }}>
+          <p className="mt-5 text-base max-w-2xl text-gray-600">
             Set it up once. Seerist runs automatically, day and night.
           </p>
         </div>
@@ -110,18 +109,18 @@ function StepBlock({ step, index }: StepBlockProps) {
       <FadeUp delay={index * 0.05}>
         <div className="flex flex-col justify-center">
           <span
-            className="text-sm font-semibold uppercase tracking-widest text-violet-700"
+            className="text-sm font-semibold uppercase tracking-widest text-violet-600"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Step {step.number}
           </span>
           <h3
-            className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl"
-            style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+            className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {step.title}
           </h3>
-          <p className="mt-4 text-lg leading-relaxed" style={{ color: "var(--color-text-2)" }}>
+          <p className="mt-4 text-lg leading-relaxed text-gray-600">
             {step.body}
           </p>
           <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/80 p-4 text-sm text-violet-900">
@@ -130,7 +129,7 @@ function StepBlock({ step, index }: StepBlockProps) {
         </div>
       </FadeUp>
       <FadeUp delay={index * 0.05 + 0.1}>
-        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           {step.mockup ?? <PlaceholderMockup label={`Step ${step.number} preview`} />}
         </div>
       </FadeUp>

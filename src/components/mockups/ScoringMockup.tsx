@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { CountUp } from "@/components/animations/CountUp";
 
 const SCORE = 94;
 const SUB_SCORES = [
@@ -49,12 +48,12 @@ export function ScoringMockup() {
   const circumference = 2 * Math.PI * 45;
   const offset = circumference - (SCORE / 100) * circumference;
 
-  return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900">Need invoicing tool for my freelance agency</p>
+            <p className="text-sm font-semibold text-gray-900">{REASON.split(".")[0]}.</p>
             <p className="text-xs text-gray-500">Upwork · $200–$400 budget</p>
           </div>
           <div className="text-right">
@@ -81,7 +80,7 @@ export function ScoringMockup() {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <CountUp to={SCORE} duration={1.4} className="text-2xl font-semibold text-gray-900" />
+              <div className="text-2xl font-semibold text-gray-900">{SCORE}</div>
             </div>
           </div>
           <div className="w-full space-y-3">

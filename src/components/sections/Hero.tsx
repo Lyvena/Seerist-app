@@ -1,54 +1,33 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
+import { useRef } from "react";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { GradientText } from "@/components/ui/GradientText";
 import { Container } from "@/components/ui/Container";
 import { HeroMockup } from "@/components/mockups/HeroMockup";
-import type { ReactNode } from "react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Hero() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
+
   return (
-    <section className="relative min-h-screen overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
-      {/* Background orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div
-          className="orb-violet"
-          style={{
-            position: "absolute",
-            top: "-120px",
-            right: "-120px",
-            width: "520px",
-            height: "520px",
-            borderRadius: "50%",
-            background: "var(--color-accent)",
-            opacity: 0.18,
-            filter: "blur(120px)",
-            animation: "float 8s ease-in-out infinite",
-          }}
-        />
-        <div
-          className="orb-indigo"
-          style={{
-            position: "absolute",
-            bottom: "-140px",
-            left: "-140px",
-            width: "480px",
-            height: "480px",
-            borderRadius: "50%",
-            background: "#6366F1",
-            opacity: 0.15,
-            filter: "blur(120px)",
-            animation: "float 8s ease-in-out infinite 2s",
-          }}
-        />
-      </div>
+    <section ref={ref} className="relative min-h-screen overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-indigo-50/30" aria-hidden="true" />
+      <div
+        className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: "radial-gradient(circle at 0% 0%, rgba(124,58,237,0.15) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(99,102,241,0.1) 0%, transparent 50%)",
+        }}
+        aria-hidden="true"
+      />
 
       <Container>
-        <div className="flex min-h-screen flex-col items-center justify-center pt-24 pb-20 text-center">
-          {/* Eyebrow */}
+        <motion.div style={{ y, opacity }} className="flex min-h-screen flex-col items-center justify-center pt-24 pb-20 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -57,7 +36,6 @@ export function Hero() {
             <SectionLabel>🎯 AI-Powered Sales on Autopilot</SectionLabel>
           </motion.div>
 
-          {/* Headline */}
           <h1
             className="mt-8 font-semibold tracking-tight text-gray-900"
             style={{
@@ -93,10 +71,9 @@ export function Hero() {
             </motion.span>
           </h1>
 
-          {/* Subheadline */}
           <motion.p
             className="mx-auto mt-8 max-w-[560px] text-lg leading-relaxed md:text-xl"
-            style={{ color: "var(--color-text-3)" }}
+            style={{ color: "#4B5563" }}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease, delay: 0.85 }}
@@ -105,7 +82,6 @@ export function Hero() {
             built — then writes the proposal. You just confirm and hit send.
           </motion.p>
 
-          {/* CTA buttons */}
           <motion.div
             className="mt-10 flex flex-wrap items-center justify-center gap-3"
             initial={{ opacity: 0, y: 24 }}
@@ -116,7 +92,7 @@ export function Hero() {
               href="https://app.seerist.xyz/signup"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center rounded-full bg-violet-600 px-7 text-base font-semibold text-white transition-colors hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
               style={{ boxShadow: "0 8px 24px rgba(124,58,237,0.35)" }}
             >
               Start Free — No Card Needed
@@ -128,14 +104,13 @@ export function Hero() {
                 const el = document.getElementById("how-it-works");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
-              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center gap-2 rounded-full border border-input bg-card px-7 text-base font-medium text-foreground transition hover:border-border/70 hover:text-primary focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+              className="inline-flex w-full md:w-auto min-w-[44px] h-[52px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-base font-medium text-gray-700 transition hover:border-gray-300 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
             >
               See How It Works
               <span aria-hidden="true">↓</span>
             </motion.button>
           </motion.div>
 
-          {/* Social proof */}
           <motion.div
             className="mt-10 flex items-center justify-center gap-5"
             initial={{ opacity: 0 }}
@@ -146,8 +121,8 @@ export function Hero() {
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="h-8 w-8 rounded-full border-2 border-white bg-gradient-to-br from-violet-400 to-indigo-500"
-                  style={{ marginLeft: i > 0 ? "-10px" : undefined }}
+                  className="h-9 w-9 rounded-full border-2 border-white bg-gradient-to-br from-violet-400 to-indigo-500"
+                  style={{ marginLeft: i > 0 ? "-10px" : undefined, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
                 />
               ))}
             </div>
@@ -160,7 +135,6 @@ export function Hero() {
             </div>
           </motion.div>
 
-          {/* Hero mockup */}
           <motion.div
             className="mt-16 w-full max-w-[960px]"
             initial={{ opacity: 0, y: 60 }}
@@ -169,7 +143,7 @@ export function Hero() {
           >
             <HeroMockup />
           </motion.div>
-        </div>
+        </motion.div>
       </Container>
     </section>
   );

@@ -34,7 +34,7 @@ const PLAN_LABELS = ["Free", "Pro", "Agency"];
 
 function CheckBadge({ value }: { value: boolean | string }) {
   if (typeof value === "string") {
-    return <span className="text-sm font-medium text-[var(--color-text-2)]">{value}</span>;
+    return <span className="text-sm font-medium text-gray-600">{value}</span>;
   }
   return value ? (
     <svg className="h-5 w-5 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
@@ -66,10 +66,10 @@ export function ComparisonTable() {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left">
         <thead>
-          <tr className="border-b border-[var(--color-border)]">
-            <th className="pb-3 pr-6 text-sm font-semibold text-[var(--color-text-1)]">Feature</th>
+          <tr className="border-b border-gray-200">
+            <th className="pb-3 pr-6 text-sm font-semibold text-gray-900">Feature</th>
             {PLAN_LABELS.map((plan) => (
-              <th key={plan} className="whitespace-nowrap pb-3 pl-6 text-center text-sm font-semibold text-[var(--color-text-1)]">
+              <th key={plan} className="whitespace-nowrap pb-3 pl-6 text-center text-sm font-semibold text-gray-900">
                 {plan}
               </th>
             ))}
@@ -79,13 +79,13 @@ export function ComparisonTable() {
           {Object.entries(grouped).map(([group, rows]) => (
             <tbody key={group}>
               <tr>
-                <td className="pt-4 pb-2 text-xs font-semibold uppercase tracking-widest text-[var(--color-text-3)]" colSpan={4}>
+                <td className="pt-4 pb-2 text-xs font-semibold uppercase tracking-widest text-gray-500" colSpan={4}>
                   {group}
                 </td>
               </tr>
               {rows.map((row, index) => (
-                <tr key={row.name + index} className="border-b border-[var(--color-border)] last:border-0">
-                  <td className="py-3 pr-6 text-sm text-[var(--color-text-2)]">{row.name}</td>
+                <tr key={row.name + index} className="border-b border-gray-200 last:border-0">
+                  <td className="py-3 pr-6 text-sm text-gray-600">{row.name}</td>
                   <td className="py-3 pl-6 text-center">
                     <div className="flex justify-center">
                       <CheckBadge value={row.free} />

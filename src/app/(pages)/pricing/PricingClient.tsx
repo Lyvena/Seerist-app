@@ -16,7 +16,7 @@ export function PricingClient() {
 
   return (
     <>
-      <section className="pt-24 pb-16">
+      <section className="pt-24 pb-16 bg-gray-50/50">
         <Container>
           <div className="mx-auto max-w-[700px] text-center">
             <FadeUp>
@@ -24,7 +24,7 @@ export function PricingClient() {
             </FadeUp>
             <FadeUp delay={0.1}>
               <h1
-                className="font-semibold tracking-tight text-[var(--color-text-1)]"
+                className="font-semibold tracking-tight text-gray-900"
                 style={{
                   fontFamily: "var(--font-heading)",
                   fontSize: "clamp(40px, 6vw, 72px)",
@@ -37,20 +37,19 @@ export function PricingClient() {
             </FadeUp>
             <FadeUp delay={0.2}>
               <p
-                className="mx-auto mt-5 max-w-xl text-lg"
-                style={{ color: "var(--color-text-3)" }}
+                className="mx-auto mt-5 max-w-xl text-lg text-gray-600"
               >
                 Start free. Upgrade when Seerist has already paid for itself.
               </p>
             </FadeUp>
             <FadeUp delay={0.3}>
-              <div className="mt-8 inline-flex items-center rounded-full border border-[var(--color-border)] bg-white p-1">
+              <div className="mt-8 inline-flex items-center rounded-full border border-gray-200 bg-white p-1">
                 <button
                   onClick={() => setAnnual(false)}
                   className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
                     !annual
-                      ? "bg-[var(--color-text-1)] text-white"
-                      : "text-[var(--color-text-3)] hover:text-[var(--color-text-1)]"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Monthly
@@ -59,8 +58,8 @@ export function PricingClient() {
                   onClick={() => setAnnual(true)}
                   className={`relative rounded-full px-5 py-2 text-sm font-medium transition-colors ${
                     annual
-                      ? "bg-[var(--color-text-1)] text-white"
-                      : "text-[var(--color-text-3)] hover:text-[var(--color-text-1)]"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Annual
@@ -82,12 +81,12 @@ export function PricingClient() {
 
       <PricingCards annual={annual} />
 
-      <section className="py-20">
+      <section className="py-20 bg-white">
         <Container>
           <FadeUp>
             <h2
-              className="mb-10 text-center text-3xl font-semibold tracking-tight md:text-4xl"
-              style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+              className="mb-10 text-center text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Compare every feature
             </h2>
@@ -104,8 +103,8 @@ export function PricingClient() {
             </FadeUp>
             <FadeUp delay={0.1}>
               <h2
-                className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl"
-                style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+                className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Questions about pricing
               </h2>
@@ -115,7 +114,7 @@ export function PricingClient() {
         </Container>
       </section>
 
-      <section className="pb-24">
+      <section className="pb-24 bg-gray-50/50">
         <Container>
           <MoneyBackBadge />
         </Container>

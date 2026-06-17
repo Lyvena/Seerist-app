@@ -12,7 +12,7 @@ import { FeaturesSection } from "@/components/sections/features/FeaturesSection"
 
 export default function FeaturesPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-gray-50/50">
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-32">

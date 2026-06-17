@@ -4,26 +4,26 @@ import { Logo } from "@/components/layout/Logo";
 import type { ReactElement } from "react";
 
 const NAV_ITEMS: { label: string; href: string }[] = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Changelog", href: "#changelog" },
+  { label: "Features", href: "/#features" },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Changelog", href: "/changelog" },
 ];
 
 const USE_CASES: { label: string; href: string }[] = [
-  { label: "SaaS Tools", href: "#saas-tools" },
-  { label: "Templates & Themes", href: "#templates" },
-  { label: "Plugins & Extensions", href: "#plugins" },
-  { label: "Courses & Info Products", href: "#courses" },
-  { label: "APIs & SDKs", href: "#apis" },
+  { label: "SaaS Tools", href: "/use-cases#saas-tools" },
+  { label: "Templates & Themes", href: "/use-cases#templates" },
+  { label: "Plugins & Extensions", href: "/use-cases#plugins" },
+  { label: "Courses & Info Products", href: "/use-cases#courses" },
+  { label: "APIs & SDKs", href: "/use-cases#apis" },
 ];
 
 const COMPANY: { label: string; href: string }[] = [
-  { label: "About", href: "#about" },
-  { label: "Blog", href: "#blog" },
-  { label: "Privacy Policy", href: "#privacy" },
-  { label: "Terms of Service", href: "#terms" },
-  { label: "Contact", href: "#contact" },
+  { label: "About", href: "/about" },
+  { label: "Blog", href: "/blog" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Contact", href: "mailto:hello@seerist.xyz" },
 ];
 
 type SocialEntry = { label: string; href: string; renderIcon: () => ReactElement };
@@ -93,7 +93,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -104,7 +104,7 @@ export function Footer() {
                     href="https://status.seerist.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+                    className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                   >
                     Status
                   </Link>
@@ -118,7 +118,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -133,7 +133,7 @@ export function Footer() {
                   <li key={item.label}>
                     <Link
                       href={item.href}
-                      className="block min-h-[44px] text-sm text-text-2 transition-colors duration-200 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                     >
                       {item.label}
                     </Link>
@@ -144,16 +144,16 @@ export function Footer() {
           </div>
           <div
             className="mt-16 flex flex-col items-center justify-between gap-4 border-t pt-6 md:flex-row"
-            style={{ borderColor: "var(--color-border, #E5E7EB)" }}
+            style={{ borderColor: "#E5E7EB" }}
           >
             <p className="text-xs text-gray-500">© 2025 Seerist. All rights reserved.</p>
             <p className="text-xs text-gray-500">Made with ❤️ for indie founders</p>
-            <button
-              type="button"
-              className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-full border border-input px-4 text-sm text-text-2 transition-colors hover:border-border/70 hover:text-text-1 focus:outline-none focus:ring-2 focus-ring-violet-500 focus:ring-offset-2"
+            <a
+              href="https://app.seerist.xyz/signup"
+              className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-full border border-gray-200 px-4 text-sm text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
             >
-              🌐 English
-            </button>
+              Start Free — No Card
+            </a>
           </div>
         </div>
       </footer>
