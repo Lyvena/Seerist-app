@@ -6,27 +6,33 @@
 :root {
   --color-bg: #FAFAFA;
   --color-surface: #FFFFFF;
-  --color-surface-2: #F3F4F6;
+  --color-surface-2: #F8FAFC;
   --color-border: #E5E7EB;
   --color-border-strong: #D1D5DB;
 
-  --color-text-1: #0A0A0A;
-  --color-text-2: #374151;
-  --color-text-3: #4B5563;
-  --color-text-4: #9CA3AF;
+  --color-text-1: #0F172A;
+  --color-text-2: #334155;
+  --color-text-3: #64748B;
+  --color-text-4: #94A3B8;
 
   --color-accent: #7C3AED;
   --color-accent-hover: #6D28D9;
   --color-accent-light: #EDE9FE;
   --color-accent-border: #C4B5FD;
+  
+  --color-accent-2: #0EA5E9;
+  --color-accent-2-light: #E0F2FE;
 
   --color-success: #10B981;
+  --color-success-light: #ECFDF5;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
+  --color-danger-light: #FEF2F2;
 
   --gradient-hero: linear-gradient(135deg, var(--color-bg) 0%, var(--color-accent-light) 50%, var(--color-bg) 100%);
   --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
   --gradient-shimmer: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.06) 50%, transparent 100%);
+  --gradient-sky: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
 
   --font-heading: var(--font-cal), "Geist Sans", system-ui, sans-serif;
   --font-body: var(--font-geist-sans), system-ui, sans-serif;
@@ -108,29 +114,31 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  --color-bg: #0A0A0A;
-  --color-surface: #1F2937;
-  --color-surface-2: #374151;
-  --color-border: #374151;
-  --color-border-strong: #4B5563;
+  :root {
+    --color-bg: #0A0A0A;
+    --color-surface: #1F2937;
+    --color-surface-2: #374151;
+    --color-border: #374151;
+    --color-border-strong: #4B5563;
 
-  --color-text-1: #F9FAFB;
-  --color-text-2: #E5E7EB;
-  --color-text-3: #D1D5DB;
-  --color-text-4: #9CA3AF;
+    --color-text-1: #F9FAFB;
+    --color-text-2: #E5E7EB;
+    --color-text-3: #D1D5DB;
+    --color-text-4: #9CA3AF;
 
-  --color-accent: #A78BFA;
-  --color-accent-hover: #9333EA;
-  --color-accent-light: rgba(167,139,250,0.15);
-  --color-accent-border: #7C3AED;
+    --color-accent: #A78BFA;
+    --color-accent-hover: #9333EA;
+    --color-accent-light: rgba(167,139,250,0.15);
+    --color-accent-border: #7C3AED;
 
-  --color-success: #34D399;
-  --color-warning: #FBBF24;
-  --color-danger: #F87171;
+    --color-success: #34D399;
+    --color-warning: #FBBF24;
+    --color-danger: #F87171;
 
-  --gradient-hero: linear-gradient(135deg, var(--color-bg) 0%, var(--color-accent-light) 50%, var(--color-bg) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
-  --section-padding-y: var(--section-gap);
+    --gradient-hero: linear-gradient(135deg, var(--color-bg) 0%, var(--color-accent-light) 50%, var(--color-bg) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+    --section-padding-y: var(--section-gap);
+  }
 }
 
 @theme inline {

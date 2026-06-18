@@ -20,12 +20,11 @@ export function Hero() {
         className="absolute inset-0"
         aria-hidden="true"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.12) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.06) 0%, transparent 60%), #FAFAFA",
+          background: "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,58,237,0.08) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.05) 0%, transparent 60%), #FAFAFA",
         }}
       />
-
       {/* Decorative orbs */}
-      <div
+      <motion.div
         className="absolute -z-10"
         aria-hidden="true"
         style={{
@@ -33,12 +32,17 @@ export function Hero() {
           right: "10%",
           width: "500px",
           height: "500px",
-          background: "radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%)",
           borderRadius: "50%",
           filter: "blur(40px)",
         }}
+        animate={{
+          scale: [1, 1.1, 1],
+          opacity: [0.4, 0.6, 0.4],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div
+      <motion.div
         className="absolute -z-10"
         aria-hidden="true"
         style={{
@@ -46,10 +50,15 @@ export function Hero() {
           left: "5%",
           width: "400px",
           height: "400px",
-          background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(99,102,241,0.05) 0%, transparent 70%)",
           borderRadius: "50%",
           filter: "blur(60px)",
         }}
+        animate={{
+          scale: [1, 1.08, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
       <Container>

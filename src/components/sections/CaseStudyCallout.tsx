@@ -14,10 +14,11 @@ export function CaseStudyCallout() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="relative overflow-hidden rounded-[24px] flex items-center justify-between gap-8 flex-col md:flex-row"
           style={{
-            background: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 50%, #4C1D95 100%)",
+            background: "linear-gradient(135deg, #F5F3FF 0%, #E0F2FE 50%, #F0FDFA 100%)",
             padding: "clamp(40px, 6vw, 64px) clamp(32px, 5vw, 64px)",
             maxWidth: "1000px",
             marginInline: "auto",
+            border: "1px solid #E5E7EB",
           }}
         >
           {/* Decorative grid overlay */}
@@ -25,7 +26,7 @@ export function CaseStudyCallout() {
             aria-hidden="true"
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+              backgroundImage: "linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px)",
               backgroundSize: "48px 48px",
             }}
           />
@@ -34,12 +35,12 @@ export function CaseStudyCallout() {
             <span
               className="inline-flex items-center"
               style={{
-                background: "rgba(255,255,255,0.15)",
+                background: "#EDE9FE",
                 borderRadius: "999px",
                 padding: "6px 14px",
                 fontSize: "0.8125rem",
                 fontWeight: 600,
-                color: "white",
+                color: "#7C3AED",
                 marginBottom: "16px",
               }}
             >
@@ -51,7 +52,7 @@ export function CaseStudyCallout() {
                 fontFamily: "var(--font-heading)",
                 fontSize: "clamp(1.5rem, 3vw, 2rem)",
                 fontWeight: 700,
-                color: "white",
+                color: "#1E293B",
                 lineHeight: 1.2,
               }}
             >
@@ -60,7 +61,7 @@ export function CaseStudyCallout() {
             <p
               style={{
                 fontSize: "0.9375rem",
-                color: "rgba(255,255,255,0.75)",
+                color: "#64748B",
                 marginTop: "8px",
               }}
             >
@@ -70,13 +71,15 @@ export function CaseStudyCallout() {
           <FadeUp delay={0.2}>
             <a
               href="#"
-              className="inline-flex items-center gap-2 text-base font-semibold whitespace-nowrap transition-all duration-200 hover:bg-[#F5F3FF]"
+              className="inline-flex items-center gap-2 text-base font-semibold whitespace-nowrap transition-all duration-200 hover:bg-violet-50"
               style={{
                 background: "white",
                 color: "#7C3AED",
                 borderRadius: "999px",
                 padding: "14px 28px",
                 textDecoration: "none",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
               }}
             >
               Read the full story

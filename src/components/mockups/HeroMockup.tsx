@@ -246,18 +246,18 @@ export function HeroMockup() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-gray-900 p-4 text-white shadow-xl">
+            <div className="mt-4 rounded-[24px] bg-gradient-to-br from-violet-50 to-indigo-50/30 p-4 shadow-xl border border-violet-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold">Pipeline forecast</p>
-                  <p className="text-xs text-gray-400">Projected from open opportunities</p>
+                  <p className="text-sm font-semibold text-gray-900">Pipeline forecast</p>
+                  <p className="text-xs text-gray-500">Projected from open opportunities</p>
                 </div>
-                <p className="text-2xl font-semibold" style={{ fontFamily: "var(--font-heading)" }}>$4,820</p>
+                <p className="text-2xl font-semibold text-transparent bg-gradient-to-r from-violet-600 to-emerald-600 bg-clip-text" style={{ fontFamily: "var(--font-heading)" }}>$4,820</p>
               </div>
               <div className="mt-5 space-y-3">
                 {[76, 58, 88, 42].map((width, index) => (
-                  <div key={index} className="h-2 rounded-full bg-white/10">
-                    <motion.div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-emerald-300" initial={{ width: 0 }} whileInView={{ width: `${width}%` }} viewport={{ once: true }} transition={{ duration: 1.1, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }} />
+                  <div key={index} className="h-2 rounded-full bg-white/60">
+                    <motion.div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-emerald-400" initial={{ width: 0 }} whileInView={{ width: `${width}%` }} viewport={{ once: true }} transition={{ duration: 1.1, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }} />
                   </div>
                 ))}
               </div>
