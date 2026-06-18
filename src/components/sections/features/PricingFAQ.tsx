@@ -1,8 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import { FadeUp } from "@/components/animations/FadeUp";
-import { SectionLabel } from "@/components/ui/SectionLabel";
-import { Container } from "@/components/ui/Container";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 const FAQS = [
@@ -14,12 +11,12 @@ const FAQS = [
   {
     question: "Do I need to be active on freelance platforms myself?",
     answer:
-      "No. Seerist handles discovery, scoring, and proposal generation. You only need to review and approve proposals before they’re sent.",
+      "No. Seerist handles discovery, scoring, and proposal generation. You only need to review and approve proposals before they're sent.",
   },
   {
     question: "What if my product doesn't fit traditional freelance categories?",
     answer:
-      "Seerist’s AI understands context beyond keywords. It matches based on the problem the poster is trying to solve — so even niche products find the right buyers.",
+      "Seerist's AI understands context beyond keywords. It matches based on the problem the poster is trying to solve — so even niche products find the right buyers.",
   },
   {
     question: "Can I control how the proposal is written?",
@@ -38,12 +35,36 @@ const FAQS = [
   },
 ];
 
+function FAQAccordion({
+  value,
+  question,
+  answer,
+}: {
+  value: string;
+  question: string;
+  answer: string;
+}) {
+  return (
+    <AccordionItem
+      value={value}
+      className="border-b border-[#F3F4F6] bg-transparent px-0 py-[20px]"
+    >
+      <AccordionTrigger className="justify-between py-0 text-left text-[1.0625rem] font-semibold text-[#111827]">
+        {question}
+      </AccordionTrigger>
+      <AccordionContent className="pb-0 pt-3 text-[1rem] leading-relaxed text-[#6B7280]">
+        <p className="max-w-[640px]">{answer}</p>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
 export function PricingFAQ() {
   const values = FAQS.map(() => `faq-${Math.random().toString(36).slice(2, 8)}`);
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <Accordion type="single" collapsible className="space-y-3">
+    <div className="mx-auto max-w-[720px]" style={{ marginTop: "48px" }}>
+      <Accordion type="single" collapsible className="w-full">
         {FAQS.map((faq, index) => (
           <motion.div
             key={faq.question}
@@ -52,22 +73,10 @@ export function PricingFAQ() {
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.45, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
           >
-            <PricingAccordionItem value={values[index]} question={faq.question} answer={faq.answer} />
+            <FAQAccordion value={values[index]} question={faq.question} answer={faq.answer} />
           </motion.div>
         ))}
       </Accordion>
     </div>
-  );
-}
-
-function PricingAccordionItem({ value, question, answer }: { value: string; question: string; answer: string }) {
-  return (
-    <AccordionItem
-      value={value}
-      className="rounded-2xl border border-[var(--color-border)] bg-white px-6 transition-all"
-    >
-      <AccordionTrigger className="py-5 text-left text-base font-semibold text-gray-900">{question}</AccordionTrigger>
-      <AccordionContent className="pb-5 text-base leading-relaxed text-[var(--color-text-2)]">{answer}</AccordionContent>
-    </AccordionItem>
   );
 }

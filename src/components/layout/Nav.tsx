@@ -45,7 +45,7 @@ export function Nav() {
 
   useEffect(() => {
     setMounted(true);
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -58,21 +58,32 @@ export function Nav() {
         initial={{ y: -100, opacity: 0 }}
         animate={mounted ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
         transition={{ duration: 0.6, ease: ease, delay: 0.1 }}
-        className="fixed top-0 inset-x-0 z-50 h-16"
+        className="fixed top-0 inset-x-0 z-50"
         style={{
+          height: "64px",
           backgroundColor: "rgba(250,250,250,0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(229,231,235,0.8)",
-          boxShadow: scrolled ? "0 4px 20px rgba(0,0,0,0.06)" : "0 1px 3px rgba(0,0,0,0.04)",
-          transition: "box-shadow 0.3s ease",
+          backdropFilter: "blur(16px) saturate(180%)",
+          WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          borderBottom: "1px solid rgba(229,231,235,0.6)",
+          boxShadow: scrolled ? "0 1px 24px rgba(0,0,0,0.08)" : "none",
+          transition: "box-shadow 300ms ease",
         }}
       >
-        <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-[clamp(20px,5vw,80px)]">
+        <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-[clamp(20px,5vw,48px)]">
           <Logo />
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-1" style={{ gap: "4px" }}>
             {NAV_LINKS.map(({ label, href }) => (
-              <Link key={href} href={href} className="text-sm font-medium text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+              <Link
+                key={href}
+                href={href}
+                className="rounded-[8px] px-[14px] py-[8px] text-[0.9375rem] font-normal transition"
+                style={{
+                  color: "#374151",
+                  fontWeight: 450,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#F3F4F6")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
                 {label}
               </Link>
             ))}
@@ -80,16 +91,28 @@ export function Nav() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="https://app.seerist.xyz/login"
-              className="rounded-full border border-gray-200 px-5 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-300 hover:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+              className="rounded-[8px] border px-[18px] py-[8px] text-[0.9375rem] font-medium transition"
+              style={{
+                borderColor: "#E5E7EB",
+                color: "#374151",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#D1D5DB")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E5E7EB")}
             >
               Sign In
             </Link>
             <Link
               href="https://app.seerist.xyz/signup"
-              className="rounded-full bg-violet-600 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-violet-700 hover:scale-[1.02]"
-              style={{ boxShadow: "0 4px 16px rgba(124,58,237,0.25)" }}
+              className="rounded-[8px] px-[20px] py-[8px] text-[0.9375rem] font-semibold transition"
+              style={{
+                background: "#7C3AED",
+                color: "white",
+                boxShadow: "0 1px 8px rgba(124,58,237,0.25)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#6D28D9")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#7C3AED")}
             >
-              Get Started Free
+              Get Started
             </Link>
           </div>
           <button

@@ -60,103 +60,248 @@ const SOCIALS: SocialEntry[] = [
 
 export function Footer() {
   return (
-    <>
-      <div aria-hidden="true" className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, #7C3AED 50%, transparent)" }} />
-      <footer className="border-t border-gray-200 bg-white" style={{ padding: "80px 0 40px" }}>
-        <div className="container">
-          <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
-            <div className="col-span-2 md:col-span-1">
-              <div className="mb-4">
-                <Logo />
-              </div>
-              <p className="mb-6 max-w-xs text-sm text-gray-600">
-                Sell through every freelance platform. Automatically.
-              </p>
-              <div className="flex items-center gap-3">
-                {SOCIALS.map(({ label, href, renderIcon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    rel="noopener noreferrer"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
-                  >
-                    {renderIcon()}
-                  </a>
-                ))}
-              </div>
+    <footer
+      className="border-t"
+      style={{
+        background: "white",
+        borderTop: "1px solid #F3F4F6",
+        padding: "80px 0 48px",
+      }}
+    >
+      <div
+        className="container"
+        style={{
+          maxWidth: "1200px",
+          marginInline: "auto",
+          paddingInline: "clamp(20px, 5vw, 80px)",
+        }}
+      >
+        <div
+          className="grid grid-cols-1 gap-12 sm:grid-cols-2 md:grid-cols-4"
+          style={{
+            gap: "48px",
+          }}
+        >
+          <div className="sm:col-span-2 md:col-span-1">
+            <div className="mb-4">
+              <Logo />
             </div>
-            <div>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900">Product</h3>
-              <ul className="space-y-3">
-                {NAV_ITEMS.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-                <li>
+            <p
+              className="mb-6"
+              style={{
+                fontSize: "0.9375rem",
+                color: "#6B7280",
+                maxWidth: "260px",
+                lineHeight: 1.6,
+              }}
+            >
+              Sell through every freelance platform. Automatically.
+            </p>
+            <div className="flex items-center gap-2" style={{ gap: "8px" }}>
+              {SOCIALS.map(({ label, href, renderIcon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  rel="noopener noreferrer"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border transition"
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderColor: "#E5E7EB",
+                    background: "white",
+                    color: "#6B7280",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#D1D5DB";
+                    e.currentTarget.style.color = "#374151";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#E5E7EB";
+                    e.currentTarget.style.color = "#6B7280";
+                  }}
+                >
+                  {renderIcon()}
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3
+              className="mb-4 uppercase"
+              style={{
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#9CA3AF",
+              }}
+            >
+              Product
+            </h3>
+            <ul className="space-y-0">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.label} style={{ marginBottom: "10px" }}>
                   <Link
-                    href="https://status.seerist.xyz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                    href={item.href}
+                    className="block text-sm transition-colors duration-150"
+                    style={{
+                      fontSize: "0.9375rem",
+                      color: "#6B7280",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#111827")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#6B7280")
+                    }
                   >
-                    Status
+                    {item.label}
                   </Link>
                 </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900">Use Cases</h3>
-              <ul className="space-y-3">
-                {USE_CASES.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900">Company</h3>
-              <ul className="space-y-3">
-                {COMPANY.map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="block min-h-[44px] text-sm text-gray-600 transition-colors duration-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              ))}
+              <li style={{ marginBottom: "10px" }}>
+                <Link
+                  href="https://status.seerist.xyz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-sm transition"
+                  style={{
+                    fontSize: "0.9375rem",
+                    color: "#6B7280",
+                    textDecoration: "none",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "#111827")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#6B7280")
+                  }
+                >
+                  Status
+                </Link>
+              </li>
+            </ul>
           </div>
-          <div
-            className="mt-16 flex flex-col items-center justify-between gap-4 border-t pt-6 md:flex-row"
-            style={{ borderColor: "#E5E7EB" }}
-          >
-            <p className="text-xs text-gray-500">© 2025 Seerist. All rights reserved.</p>
-            <p className="text-xs text-gray-500">Made with ❤️ for indie founders</p>
-            <a
-              href="https://app.seerist.xyz/signup"
-              className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-full border border-gray-200 px-4 text-sm text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+          <div>
+            <h3
+              className="mb-4 uppercase"
+              style={{
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#9CA3AF",
+              }}
             >
-              Start Free — No Card
-            </a>
+              Use Cases
+            </h3>
+            <ul className="space-y-0">
+              {USE_CASES.map((item) => (
+                <li key={item.label} style={{ marginBottom: "10px" }}>
+                  <Link
+                    href={item.href}
+                    className="block text-sm transition"
+                    style={{
+                      fontSize: "0.9375rem",
+                      color: "#6B7280",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#111827")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#6B7280")
+                    }
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3
+              className="mb-4 uppercase"
+              style={{
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#9CA3AF",
+              }}
+            >
+              Company
+            </h3>
+            <ul className="space-y-0">
+              {COMPANY.map((item) => (
+                <li key={item.label} style={{ marginBottom: "10px" }}>
+                  <Link
+                    href={item.href}
+                    className="block text-sm transition"
+                    style={{
+                      fontSize: "0.9375rem",
+                      color: "#6B7280",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#111827")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#6B7280")
+                    }
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </footer>
-    </>
+        <div
+          className="flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row"
+          style={{
+            marginTop: "64px",
+            paddingTop: "24px",
+            borderColor: "#F3F4F6",
+          }}
+        >
+          <p
+            className="text-sm"
+            style={{
+              fontSize: "0.875rem",
+              color: "#9CA3AF",
+            }}
+          >
+            © 2025 Seerist. All rights reserved.
+          </p>
+          <p
+            className="text-sm"
+            style={{
+              fontSize: "0.875rem",
+              color: "#9CA3AF",
+            }}
+          >
+            Made for indie founders
+          </p>
+          <a
+            href="https://app.seerist.xyz/signup"
+            className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-[8px] border px-4 text-sm transition"
+            style={{
+              borderColor: "#E5E7EB",
+              color: "#6B7280",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "#D1D5DB";
+              e.currentTarget.style.color = "#111827";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#E5E7EB";
+              e.currentTarget.style.color = "#6B7280";
+            }}
+          >
+            Start Free — No Card
+          </a>
+        </div>
+      </div>
+    </footer>
   );
 }

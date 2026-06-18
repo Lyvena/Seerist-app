@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2" style={{ gap: "8px" }}>
       <svg
         width="32"
         height="32"
@@ -17,8 +17,13 @@ export function Logo() {
         <circle cx="16" cy="16" r="2.5" fill="#7C3AED" />
       </svg>
       <span
-        className="text-xl font-semibold tracking-tight"
-        style={{ fontFamily: "var(--font-heading, 'Cal Sans', 'Geist Sans', system-ui)" }}
+        className="font-semibold tracking-tight"
+        style={{
+          fontFamily: "var(--font-heading, 'Cal Sans', 'Geist Sans', system-ui)",
+          fontSize: "1.25rem",
+          letterSpacing: "-0.01em",
+          color: "#0A0A0A",
+        }}
       >
         Seerist
       </span>
