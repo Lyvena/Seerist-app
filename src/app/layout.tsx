@@ -74,7 +74,7 @@ export default function RootLayout({
           <SmoothScroll>
             <AnnouncementBanner />
             <Nav />
-            <main className="pt-20">{children}</main>
+            <main className="pt-16">{children}</main>
             <Footer />
           </SmoothScroll>
         </TooltipProvider>

@@ -1,6 +1,5 @@
 "use client";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { HeroMockup } from "@/components/mockups/HeroMockup";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -8,13 +7,8 @@ import { ArrowRight, Sparkles } from "lucide-react";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Hero() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -40]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
-
   return (
-    <section ref={ref} className="relative overflow-hidden">
+    <section className="relative overflow-hidden pt-20">
       {/* Background mesh gradient */}
       <div className="absolute inset-0" aria-hidden="true">
         <div
@@ -78,17 +72,17 @@ export function Hero() {
             backgroundSize: "64px 64px",
           }}
         />
-      </div>
+</div>
 
       <Container>
-        <motion.div style={{ y, opacity }} className="relative z-10 flex min-h-[92vh] flex-col items-center justify-center pt-16 pb-12 text-center">
+        <motion.div className="relative z-10 flex flex-col items-center justify-center text-center">
           {/* Badge */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease, delay: 0.1 }}
-            className="mb-8"
-          >
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ duration: 0.6, ease, delay: 0.1 }}
+             className="mb-8"
+           >
             <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#635BFF] shadow-sm border border-[#E4E8F2]">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inset-0 rounded-full bg-[#00C2A8] opacity-75 animate-ping" />
@@ -220,7 +214,7 @@ export function Hero() {
 
           {/* Interactive Mockup */}
           <motion.div
-            className="mt-16 w-full max-w-[920px]"
+            className="mt-16 w-full max-w-[920px] mb-24"
             initial={{ opacity: 0, y: 60 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, ease, delay: 1.1 }}
