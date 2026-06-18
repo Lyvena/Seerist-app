@@ -101,18 +101,8 @@ const TESTIMONIALS: Testimonial[] = [
 
 function StarRating() {
   return (
-    <div className="flex items-center gap-0.5 text-amber-500">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <svg
-          key={index}
-          className="h-4 w-4 fill-current"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
+    <div className="text-violet-600" style={{ fontSize: "1rem" }}>
+      {"★★★★★"}
     </div>
   );
 }
@@ -128,20 +118,33 @@ function TestimonialCard({ quote, author, role }: Testimonial) {
           transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
         },
       }}
-      className="rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-300 ease-out-expo hover:-translate-y-1 hover:shadow-md"
+      className="rounded-xl border border-[#F3F4F6] bg-white p-7 flex flex-col gap-4 h-full transition-all duration-200 ease"
+      style={{
+        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+      }}
+      whileHover={{
+        y: -4,
+        boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
+      }}
     >
       <StarRating />
-      <p className="mt-4 text-base leading-relaxed text-gray-700">{quote}</p>
-      <div className="mt-5 flex items-center gap-3">
+      <p className="text-base text-[#374151] leading-relaxed flex-1" style={{ lineHeight: 1.7 }}>{quote}</p>
+      <div className="flex items-center gap-3 border-t border-[#F9FAFB] pt-4 mt-auto">
         <div
-          className="h-9 w-9 rounded-full"
+          className="h-10 w-10 rounded-full flex items-center justify-center"
           style={{
-            background: "linear-gradient(135deg, #A78BFA, #7C3AED)",
+            background: "linear-gradient(135deg, #7C3AED, #A855F7)",
+            color: "white",
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            flexShrink: 0,
           }}
-        />
+        >
+          {author.charAt(0)}
+        </div>
         <div>
-          <p className="text-sm font-semibold text-gray-900">{author}</p>
-          <p className="text-xs text-gray-500">{role}</p>
+          <p className="text-[0.9375rem] font-semibold text-[#111827]">{author}</p>
+          <p className="text-[0.8125rem] text-[#9CA3AF] mt-0.5">{role}</p>
         </div>
       </div>
     </motion.div>
@@ -158,20 +161,24 @@ export function Testimonials() {
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
-              style={{ fontFamily: "var(--font-heading)" }}
+              className="mt-4 tracking-tight text-gray-900"
+              style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "clamp(1.75rem, 3vw, 2.75rem)",
+                fontWeight: 600,
+              }}
             >
               Joined by 200+ indie founders selling through Seerist
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600">
-              Real results from real product builders.
+            <p className="mx-auto mt-3 max-w-2xl text-[1.0625rem] text-[#6B7280]">
+              Joined by 200+ indie founders selling through Seerist
             </p>
           </FadeUp>
         </div>
         <StaggerContainer>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3" style={{ gap: "20px" }}>
             {TESTIMONIALS.map((item) => (
               <TestimonialCard key={item.id} {...item} />
             ))}

@@ -12,50 +12,79 @@ export function CaseStudyCallout() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-3xl px-8 py-16 text-center md:px-16"
+          className="relative overflow-hidden rounded-[24px] flex items-center justify-between gap-8 flex-col md:flex-row"
           style={{
-            background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+            background: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 50%, #4C1D95 100%)",
+            padding: "clamp(40px, 6vw, 64px) clamp(32px, 5vw, 64px)",
+            maxWidth: "1000px",
+            marginInline: "auto",
           }}
         >
-          {/* Decorative corner sparkles */}
-          <Sparkle className="absolute left-6 top-6 h-8 w-8 text-white/30" />
-          <Sparkle className="absolute bottom-6 right-6 h-10 w-10 text-white/25" />
-          <Sparkle className="absolute left-1/2 top-6 h-6 w-6 -translate-x-1/2 text-white/20" />
+          {/* Decorative grid overlay */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
 
-          <h3
-            className="text-3xl font-semibold tracking-tight md:text-4xl"
-            style={{ fontFamily: "var(--font-heading)", lineHeight: 1.1, color: "#FFFFFF" }}
-          >
-            📈 Case Study: How InvoicePad closed $3,200 in new sales through Upwork in 6 weeks — without a dedicated sales team.
-          </h3>
+          <div>
+            <span
+              className="inline-flex items-center"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                borderRadius: "999px",
+                padding: "6px 14px",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                color: "white",
+                marginBottom: "16px",
+              }}
+            >
+              📈 Case Study
+            </span>
+            <h3
+              className="tracking-tight"
+              style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "clamp(1.5rem, 3vw, 2rem)",
+                fontWeight: 700,
+                color: "white",
+                lineHeight: 1.2,
+              }}
+            >
+              How InvoicePad closed $3,200 in new sales through Upwork in 6 weeks — without a dedicated sales team.
+            </h3>
+            <p
+              style={{
+                fontSize: "0.9375rem",
+                color: "rgba(255,255,255,0.75)",
+                marginTop: "8px",
+              }}
+            >
+              A real example of Seerist finding buyers for a Notion template.
+            </p>
+          </div>
           <FadeUp delay={0.2}>
             <a
               href="#"
-              className="mt-6 inline-flex items-center gap-2 text-base font-medium text-white/80 transition hover:text-white"
-              style={{ textDecoration: "none" }}
+              className="inline-flex items-center gap-2 text-base font-semibold whitespace-nowrap transition-all duration-200 hover:bg-[#F5F3FF]"
+              style={{
+                background: "white",
+                color: "#7C3AED",
+                borderRadius: "999px",
+                padding: "14px 28px",
+                textDecoration: "none",
+              }}
             >
               Read the full story
-              <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
-                →
-              </span>
+              <span aria-hidden="true">→</span>
             </a>
           </FadeUp>
         </motion.div>
       </Container>
     </section>
-  );
-}
-
-function Sparkle({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="currentColor" />
-    </svg>
   );
 }
