@@ -1,55 +1,46 @@
 "use client";
-import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 
 const PLATFORMS = [
-  "Upwork",
-  "Freelancer.com",
-  "Contra",
-  "Toptal",
-  "PeoplePerHour",
-  "Fiverr",
-  "Guru",
-  "We Work Remotely",
-  "Remote.co",
-  "LinkedIn Jobs",
-  "99designs",
-  "Dribbble Jobs",
-  "Remote OK",
-  "Working Not Working",
+  { key: "upwork", name: "Upwork", short: "U", color: "#14A800" },
+  { key: "freelancer", name: "Freelancer", short: "F", color: "#0E73BB" },
+  { key: "contra", name: "Contra", short: "C", color: "#111827" },
+  { key: "toptal", name: "Toptal", short: "T", color: "#204ECF" },
+  { key: "peopleperhour", name: "PeoplePerHour", short: "P", color: "#FF7A00" },
+  { key: "fiverr", name: "Fiverr", short: "Fi", color: "#1DBF73" },
+  { key: "guru", name: "Guru", short: "G", color: "#33CC99" },
+  { key: "wework", name: "We Work Remotely", short: "W", color: "#A742B1" },
+  { key: "remoteco", name: "Remote.co", short: "R", color: "#FF4444" },
+  { key: "linkedin", name: "LinkedIn", short: "Li", color: "#0A66C2" },
+  { key: "99designs", name: "99designs", short: "99", color: "#F7476C" },
+  { key: "dribbble", name: "Dribbble", short: "Dr", color: "#EA4C89" },
+  { key: "remoteok", name: "Remote OK", short: "RO", color: "#000000" },
+  { key: "wnw", name: "Working Not Working", short: "WW", color: "#2563EB" },
 ];
 
-const BRAND_COLORS: Record<string, string> = {
-  Upwork: "#14A800",
-  "Freelancer.com": "#1BBAE5",
-  Contra: "#1A1A1A",
-  Toptal: "#2A3850",
-  PeoplePerHour: "#FFB900",
-  Fiverr: "#1DBF73",
-  Guru: "#193A6F",
-  "We Work Remotely": "#4A3AE0",
-  "Remote.co": "#0EA5E9",
-  "LinkedIn Jobs": "#0A66C2",
-  "99designs": "#F24A8A",
-  "Dribbble Jobs": "#EA4C89",
-  "Remote OK": "#2A3850",
-  "Working Not Working": "#FF5A5F",
-};
-
-function PlatformCard({ name }: { name: string }) {
-  const color = BRAND_COLORS[name] || "#7C3AED";
+function PlatformCard({ platform }: { platform: (typeof PLATFORMS)[0] }) {
   return (
     <div
-      className="flex h-[52px] min-w-[140px] items-center justify-center rounded-xl border bg-white px-4 transition-all duration-300 hover:scale-[1.04]"
-      style={{
-        borderColor: "var(--color-border)",
-        boxShadow: "var(--shadow-sm)",
-      }}
+      className="inline-flex items-center gap-3 px-5 py-2.5 bg-white border border-[#E5E7EB] rounded-xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] mr-3 whitespace-nowrap flex-shrink-0"
     >
-      <span className="text-sm font-semibold" style={{ color }}>
-        {name}
+      <div
+        className="flex items-center justify-center"
+        style={{
+          width: "28px",
+          height: "28px",
+          borderRadius: "50%",
+          background: platform.color,
+          color: "white",
+          fontSize: "0.6875rem",
+          fontWeight: 700,
+        }}
+      >
+        {platform.short}
+      </div>
+      <span className="text-[0.9375rem] font-medium text-[#374151]">
+        {platform.name}
       </span>
     </div>
   );
@@ -61,46 +52,55 @@ export function PlatformsMarquee() {
   return (
     <section className="overflow-hidden py-20">
       <Container>
-        <div className="mb-10 text-center">
+        <div className="mb-12 text-center">
           <FadeUp>
             <SectionLabel>Coverage</SectionLabel>
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl"
-              style={{ fontFamily: "var(--font-heading)", color: "var(--color-text-1)" }}
+              className="mt-4 tracking-tight"
+              style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+                fontWeight: 600,
+              }}
             >
               Monitoring 14 platforms — so you don&apos;t have to
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
             <p
-              className="mx-auto mt-3 max-w-2xl text-base"
-              style={{ color: "var(--color-text-3)" }}
+              className="mx-auto mt-3 max-w-2xl text-[1.0625rem] text-[#6B7280]"
             >
               Every posting, every day, across every major freelance and remote jobs marketplace.
             </p>
           </FadeUp>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex flex-col gap-3">
           <div
-            className="[mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]"
-            style={{ WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}
+            style={{
+              overflow: "hidden",
+              maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            }}
           >
-            <div className="flex w-max gap-3" style={{ animation: "marquee-left 30s linear infinite" }}>
-              {duplicated.map((name, index) => (
-                <PlatformCard key={`row1-${index}`} name={name} />
+            <div className="flex w-max gap-3" style={{ animation: "marquee-left 32s linear infinite" }}>
+              {duplicated.map((platform, index) => (
+                <PlatformCard key={`row1-${index}`} platform={platform} />
               ))}
             </div>
           </div>
           <div
-            className="[mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]"
-            style={{ WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}
+            style={{
+              overflow: "hidden",
+              maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            }}
           >
-            <div className="flex w-max gap-3" style={{ animation: "marquee-right 35s linear infinite" }}>
-              {duplicated.map((name, index) => (
-                <PlatformCard key={`row2-${index}`} name={name} />
+            <div className="flex w-max gap-3" style={{ animation: "marquee-right 28s linear infinite" }}>
+              {duplicated.map((platform, index) => (
+                <PlatformCard key={`row2-${index}`} platform={platform} />
               ))}
             </div>
           </div>
