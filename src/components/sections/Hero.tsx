@@ -10,7 +10,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden pt-20">
       {/* Background mesh gradient */}
-      <div className="absolute inset-0" aria-hidden="true">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div
           className="absolute inset-0"
           style={{
