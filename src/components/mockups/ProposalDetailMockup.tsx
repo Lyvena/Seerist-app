@@ -55,7 +55,18 @@ export function ProposalDetailMockup() {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white shadow-sm">
+    <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-lg" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)", padding: "24px", position: "relative", overflow: "hidden" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          content: '',
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.04) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+          pointerEvents: "none",
+        }}
+      />
       <div className="border-b border-gray-100 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -67,43 +78,40 @@ export function ProposalDetailMockup() {
         </div>
       </div>
       <div className="p-4">
-        <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-3 py-2 text-xs text-gray-600">
+        <div className="rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-xs text-gray-800">
           Opportunity: Upwork · 94 score · $300 budget · Need invoicing tool for my freelance agency
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-[#F3F4F6] p-1.5">
           {TONES.map((item) => (
             <button
               key={item}
               onClick={() => setTone(item)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                tone === item ? "bg-violet-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+                tone === item ? "bg-white shadow text-violet-600" : "bg-transparent text-gray-600 hover:bg-gray-200/50"
               }`}
+              style={{
+                boxShadow: tone === item ? "0 1px 3px rgba(0,0,0,0.1)" : undefined,
+              }}
             >
               {item}
             </button>
           ))}
         </div>
         <div className="mt-3">
-          <div className="flex items-center justify-between text-xs text-gray-600">
+          <div className="flex items-center justify-between text-xs text-gray-500">
             <span>Writing proposal...</span>
             <span className="font-semibold">{progress}%</span>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F3F4F6]">
             <motion.div
-              className="h-full rounded-full bg-violet-600"
+              className="h-full rounded-full bg-gradient-to-r from-violet-600 to-indigo-600"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4 }}
             />
           </div>
         </div>
-        <div className="mt-4 rounded-xl border border-gray-100 bg-white px-4 py-3">
-          <div className="flex items-center justify-between text-xs text-gray-600">
-            <span>Proposal preview</span>
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
-              {wordCount} words
-            </span>
-          </div>
-          <div className="mt-2 min-h-[140px] text-sm leading-relaxed text-gray-800">
+        <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-3.5 py-3.5 text-sm text-gray-800" style={{ minHeight: "120px" }}>
+          <div className="flex justify-between">
             <span>{text}</span>
             {phase === "typing" && (
               <motion.span
@@ -112,20 +120,12 @@ export function ProposalDetailMockup() {
                 transition={{ duration: 0.55, repeat: Infinity, repeatType: "reverse" }}
               />
             )}
+            <span className="text-[0.6875rem] text-gray-400 self-end ml-auto">Words: {wordCount}</span>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-2">
-          <button className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-[var(--color-border)] text-sm font-medium text-gray-700 transition hover:border-gray-400">
-            Copy
-          </button>
-          <button
-            className={`inline-flex h-10 flex-1 items-center justify-center rounded-xl text-sm font-semibold text-white transition ${
-              phase === "done" ? "bg-emerald-600" : "bg-violet-600 hover:bg-violet-700"
-            }`}
-          >
-            {phase === "done" ? "Sent ✓" : "Send"}
-          </button>
-        </div>
+        <button className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-lg bg-violet-600 px-4.5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700">
+          Generate Proposal
+        </button>
       </div>
     </div>
   );

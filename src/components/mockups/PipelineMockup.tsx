@@ -53,42 +53,62 @@ export function PipelineMockup() {
     { name: "Won", cards: cards.filter((card) => card.to === "Won") },
   ];
 
+  const getColumnStyles = (name: string) => {
+    if (name === "Won") return { headerColor: "#059669", bg: "#ECFDF5" };
+    return { headerColor: "#6B7280", bg: "#F9FAFB" };
+  };
+
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-900">Pipeline</p>
-          <p className="text-xs text-gray-500">Live deal view</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">Total value</p>
-          <p className="text-lg font-semibold text-gray-900">${pipelineValue.toLocaleString()}</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {columns.map((column) => (
-          <div key={column.name} className="rounded-xl border border-gray-100 bg-gray-50/80 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-700">{column.name}</span>
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-700">
-                {column.cards.length}
-              </span>
+    <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-lg" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)", padding: "24px", position: "relative", overflow: "hidden" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          content: '',
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.04) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+          pointerEvents: "none",
+        }}
+      />
+      <div className="grid grid-cols-4 gap-2.5">
+        {columns.map((column) => {
+          const colStyles = getColumnStyles(column.name);
+          return (
+            <div
+              key={column.name}
+              className="rounded-xl px-2.5 py-2.5"
+              style={{
+                width: "calc(25% - 6px)",
+                background: colStyles.bg,
+              }}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[0.75rem] font-semibold uppercase tracking-wider" style={{ color: colStyles.headerColor, letterSpacing: "0.05em" }}>
+                  {column.name}
+                </span>
+                <span className="rounded bg-[#E5E7EB] px-1.5 py-0.5 text-[0.6875rem] font-semibold text-[#374151]">
+                  {column.cards.length}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {column.cards.map((card) => (
+                  <motion.div
+                    key={card.id}
+                    layout
+                    className="rounded-md border border-[#E5E7EB] bg-white px-2.5 py-2"
+                    transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  >
+                    <p className="text-[0.75rem] font-semibold text-[#374151]" style={{ lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {card.title}
+                    </p>
+                    <p className="text-[0.6875rem] text-[#9CA3AF]">${card.value}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-2">
-              {column.cards.map((card) => (
-                <motion.div
-                  key={card.id}
-                  layout
-                  className="rounded-xl border border-gray-100 bg-white p-2.5"
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                >
-                  <p className="text-xs font-semibold text-gray-900">{card.title}</p>
-                  <p className="text-[11px] text-gray-500">${card.value}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

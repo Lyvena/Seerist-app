@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const OPPORTUNITIES = [
   {
@@ -28,7 +28,6 @@ const OPPORTUNITIES = [
 
 export function EmailMockup() {
   const [step, setStep] = useState<"header" | "body" | "done">("header");
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const headers = window.setTimeout(() => setStep("body"), 800);
@@ -39,55 +38,72 @@ export function EmailMockup() {
     };
   }, []);
 
+  const getScoreStyles = (score: number) => {
+    if (score >= 80) return { color: "#059669", background: "#ECFDF5" };
+    if (score >= 60) return { color: "#2563EB", background: "#EFF6FF" };
+    return { color: "#6B7280", background: "#F3F4F6" };
+  };
+
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
-      <div className="space-y-4">
-        <div className="border-b border-gray-100 pb-3">
-          <p className="text-sm font-semibold text-gray-900">From: Seerist &lt;notifications@seerist.xyz&gt;</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">
-            Subject: 🎯 Your Daily Digest · 9 new opportunities
-          </p>
+    <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-lg" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)", padding: "24px", position: "relative", overflow: "hidden" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          content: '',
+          position: "absolute",
+          inset: 0,
+          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.04) 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+          pointerEvents: "none",
+        }}
+      />
+      <div>
+        <div className="border-b border-[#E5E7EB] px-3.5 py-3.5">
+          <p className="text-[0.8125rem] font-semibold text-[#111827]">From: Seerist &lt;notifications@seerist.xyz&gt;</p>
+          <p className="mt-1 text-[0.8125rem] font-semibold text-[#374151]">Subject: 🎯 Your Daily Digest · 9 new opportunities</p>
         </div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={step === "body" || step === "done" ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-3"
+          className="space-y-2 px-1"
         >
-          {OPPORTUNITIES.map((op, index) => (
-            <motion.div
-              key={op.title}
-              initial={{ opacity: 0, x: -8 }}
-              animate={
-                step === "done"
-                  ? { opacity: 1, x: 0 }
-                  : step === "body"
-                  ? { opacity: index === 0 ? 1 : 0.4, x: index === 0 ? 0 : -8 }
-                  : {}
-              }
-              transition={{ delay: index * 0.1, duration: 0.4 }}
-              className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3"
-            >
-              <div className="flex items-center justify-between">
+          {OPPORTUNITIES.map((op, index) => {
+            const scoreStyles = getScoreStyles(op.score);
+            return (
+              <motion.div
+                key={op.title}
+                initial={{ opacity: 0, x: -8 }}
+                animate={
+                  step === "done"
+                    ? { opacity: 1, x: 0 }
+                    : step === "body"
+                    ? { opacity: index === 0 ? 1 : 0.4, x: index === 0 ? 0 : -8 }
+                    : {}
+                }
+                transition={{ delay: index * 0.1, duration: 0.4 }}
+                className="rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-2.5 flex justify-between items-center"
+              >
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{op.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {op.platform} · {op.budget}
-                  </p>
+                  <p className="text-[0.75rem] font-medium text-[#111827]">{op.title}</p>
+                  <p className="text-[0.6875rem] text-[#9CA3AF]">{op.platform} · {op.budget}</p>
                 </div>
-                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                <span
+                  className="rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold"
+                  style={{ color: scoreStyles.color, background: scoreStyles.background }}
+                >
                   {op.score}
                 </span>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
         {step === "done" && (
           <motion.button
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-violet-600 text-sm font-semibold text-white transition hover:bg-violet-700"
+            className="inline-flex h-8 w-full items-center justify-center rounded-md bg-violet-600 px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-violet-700 mt-3"
           >
             Generate Proposals →
           </motion.button>

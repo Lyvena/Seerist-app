@@ -6,24 +6,58 @@ import { ScoringMockup } from "@/components/mockups/ScoringMockup";
 
 export function FeatureSection1() {
   return (
-    <section className="py-24 bg-gray-50/50" style={{ padding: "var(--section-padding-y) 0" }}>
+    <section
+      className="overflow-hidden"
+      style={{
+        padding: "clamp(80px, 12vw, 140px) 0",
+        background: "#FFFFFF",
+      }}
+    >
       <Container>
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+        <div
+          className="grid grid-cols-1 gap-12 lg:grid-cols-2"
+          style={{
+            maxWidth: "1200px",
+            marginInline: "auto",
+            gap: "clamp(48px, 6vw, 96px)",
+            alignItems: "center",
+          }}
+        >
           <FadeUp>
-            <div className="flex flex-col justify-center">
+            <div className="flex flex-col justify-center relative">
+              <div
+                className="absolute -left-4 top-0 w-10 h-px mb-4"
+                style={{ background: "linear-gradient(90deg, #7C3AED, #A855F7)", borderRadius: "999px" }}
+              />
               <SectionLabel>Smart Filtering</SectionLabel>
               <h3
-                className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
-                style={{ fontFamily: "var(--font-heading)" }}
+                className="mt-4 tracking-tight text-gray-900"
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "clamp(1.75rem, 3vw, 2.75rem)",
+                  fontWeight: 700,
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1.15,
+                  marginBottom: "20px",
+                }}
               >
                 Every job post gets a score. You only see the ones worth your time.
               </h3>
-              <p className="mt-4 text-lg leading-relaxed text-gray-600">
+              <p
+                className="text-[1.0625rem] text-[#6B7280] max-w-[480px]"
+                style={{ lineHeight: 1.7, marginBottom: "28px" }}
+              >
                 Seerist scores every opportunity 0-100 across relevance, budget fit, and timing. Set a threshold and only the best matches show up in your feed.
               </p>
               <a
                 href="/#features"
-                className="mt-6 inline-flex items-center gap-2 text-base font-semibold text-violet-600 transition-all hover:gap-3"
+                className="inline-flex items-center gap-2 text-[0.9375rem] font-medium text-violet-600 transition-all"
+                style={{
+                  textDecoration: "none",
+                  borderBottom: "1px solid transparent",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = "#7C3AED"}
+                onMouseLeave={(e) => e.currentTarget.style.borderBottomColor = "transparent"}
               >
                 Learn more
                 <span aria-hidden="true">→</span>
