@@ -197,7 +197,7 @@ export function Hero() {
             </div>
             <div className="w-1 h-1 rounded-full bg-gray-300" />
             <p className="text-[0.9375rem] font-medium text-gray-700">200+ indie founders</p>
-            <div className="flex items-center gap-1 text-amber-500">
+            <div className="flex items-center gap-1" style={{ color: "#7C3AED" }}>
               <span className="text-[0.9375rem]">★★★★★</span>
               <span className="text-[0.9375rem] text-gray-700">4.9/5</span>
             </div>

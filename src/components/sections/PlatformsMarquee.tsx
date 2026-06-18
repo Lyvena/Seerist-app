@@ -77,7 +77,24 @@ export function PlatformsMarquee() {
           </FadeUp>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 lg:hidden">
+          <div
+            style={{
+              overflow: "hidden",
+              maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            }}
+          >
+            <div className="flex w-max gap-3" style={{ animation: "marquee-left 22s linear infinite" }}>
+              {duplicated.map((platform, index) => (
+                <PlatformCard key={`row-mobile-${index}`} platform={platform} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop: two rows */}
+        <div className="hidden lg:flex lg:flex-col lg:gap-3">
           <div
             style={{
               overflow: "hidden",

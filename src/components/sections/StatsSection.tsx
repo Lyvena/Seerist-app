@@ -61,7 +61,7 @@ export function StatsSection() {
     <section className="py-20" style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div
-          className="bg-white border border-[#E5E7EB] grid grid-cols-2 md:grid-cols-4"
+          className="bg-white border border-[#E5E7EB] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           style={{
             borderRadius: "24px",
             padding: "clamp(40px, 6vw, 72px)",

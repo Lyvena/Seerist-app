@@ -3,89 +3,87 @@ import { FadeUp } from "@/components/animations/FadeUp";
 import { Container } from "@/components/ui/Container";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { OnboardingMockup } from "@/components/mockups/OnboardingMockup";
-import { PlatformPickerMockup } from "@/components/mockups/PlatformPickerMockup";
-import { ProposalMockup } from "@/components/mockups/ProposalMockup";
-import { ScoringMockup } from "@/components/mockups/ScoringMockup";
 import { LiveFeedMockup } from "@/components/mockups/LiveFeedMockup";
 import { PipelineMockup } from "@/components/mockups/PipelineMockup";
-import type { ReactNode } from "react";
+import { motion } from "framer-motion";
+import { Package, Globe, Zap } from "lucide-react";
 
 const STEPS = [
   {
     number: "01",
-    title: "Create your account",
-    body:
-      "Sign up in 30 seconds. No credit card required. Just your email and a password — you're in.",
-    mockup: null,
-    tip: "Pro tip: Use the same email as your freelance platform accounts to keep everything in one place.",
-  },
-  {
-    number: "02",
     title: "Describe your product",
     body:
       "Paste your product name, a short description, and ideal customer. Seerist learns your product deeply so it knows which job posts are genuine fits.",
+    icon: Package,
     mockup: <OnboardingMockup />,
-    tip: "Pro tip: The more specific you are, the better Seerist scores opportunities. Add 3–5 keywords that define your ideal buyer.",
+  },
+  {
+    number: "02",
+    title: "Monitor and score",
+    body:
+      "Seerist scans all your chosen platforms 24/7. New posts are scored, ranked, and added to your live feed automatically.",
+    icon: Globe,
+    mockup: <LiveFeedMockup />,
   },
   {
     number: "03",
-    title: "Choose platforms",
+    title: "Close the deal",
     body:
-      "Select from 14 freelance and remote job platforms. Pick all of them or start with just a few — you can change anytime.",
-    mockup: <PlatformPickerMockup />,
-    tip: "Pro tip: Upwork, Freelancer, and Contra have the highest volume for SaaS products. Start there and expand as you grow.",
-  },
-  {
-    number: "04",
-    title: "Set your match criteria",
-    body:
-      "Set a minimum match score (default: 70). Add budget filters, exclude keywords, and choose which deal types to prioritize.",
-    mockup: <ScoringMockup />,
-    tip: "Pro tip: A score of 70+ filters out noise while keeping enough opportunities to review daily.",
-  },
-  {
-    number: "05",
-    title: "Let Seerist monitor and score",
-    body:
-      "Seerist scans all your chosen platforms 24/7. New posts are scored, ranked, and added to your live feed automatically.",
-    mockup: <LiveFeedMockup />,
-    tip: "Pro tip: Enable desktop notifications for high-score matches so you can jump on new opportunities immediately.",
-  },
-  {
-    number: "06",
-    title: "Review matches and send proposals",
-    body:
-      "Each morning your inbox is your pipeline. Review top matches, tweak AI proposals, and hit send. The rest is handled automatically.",
-    mockup: <ProposalMockup />,
-    tip: "Pro tip: Use the Auto-propose feature to send proposals instantly — Seerist's AI writes them in your brand voice.",
+      "Review top matches, tweak AI proposals, and hit send. Track responses in the pipeline and watch deals close automatically.",
+    icon: Zap,
+    mockup: <PipelineMockup />,
   },
 ];
 
 export function StepsSection() {
   return (
-    <section className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
+    <section className="bg-white py-24">
       <Container>
         <div className="mb-16 text-center">
-          <SectionLabel>The Process</SectionLabel>
-          <h1
-            className="mt-4 font-semibold tracking-tight md:text-5xl text-gray-900"
-            style={{
-              fontFamily: "var(--font-heading)",
-              fontSize: "var(--text-hero)",
-              lineHeight: 1.04,
-              letterSpacing: "-0.03em",
-            }}
-          >
-            From setup to first deal — in six steps.
-          </h1>
-          <p className="mt-5 text-base max-w-2xl text-gray-600">
-            Set it up once. Seerist runs automatically, day and night.
-          </p>
+          <FadeUp>
+            <SectionLabel>The Process</SectionLabel>
+          </FadeUp>
+          <FadeUp delay={0.1}>
+            <h2
+              className="tracking-tight"
+              style={{
+                fontFamily: "var(--font-heading)",
+                fontSize: "clamp(2rem, 4vw, 3.25rem)",
+                color: "#111827",
+              }}
+            >
+              From product description to closed deal — in three steps
+            </h2>
+          </FadeUp>
+          <FadeUp delay={0.2}>
+            <p
+              className="mx-auto mt-3 max-w-2xl text-[1.0625rem] text-[#6B7280]"
+            >
+              Set it up once. Seerist runs automatically, day and night.
+            </p>
+          </FadeUp>
         </div>
 
-        <div className="space-y-20">
+        <div
+          className="relative grid grid-cols-1 gap-8 lg:grid-cols-3"
+          style={{
+            gap: "32px",
+            marginTop: "64px",
+          }}
+        >
+          {/* Connector line */}
+          <div
+            className="absolute top-[40px] left-[calc(33%+32px)] right-[calc(33%+32px)] z-0 hidden lg:block"
+            style={{
+              height: "1px",
+              background: "linear-gradient(90deg, #C4B5FD, #7C3AED, #C4B5FD)",
+            }}
+          />
+
           {STEPS.map((step, index) => (
-            <StepBlock key={step.number} step={step} index={index} />
+            <FadeUp key={step.number} delay={0.3 + index * 0.1}>
+              <StepCard step={step} />
+            </FadeUp>
           ))}
         </div>
       </Container>
@@ -93,54 +91,73 @@ export function StepsSection() {
   );
 }
 
-type StepBlockProps = {
-  step: (typeof STEPS)[number];
-  index: number;
-};
-
-function StepBlock({ step, index }: StepBlockProps) {
-  const isEven = index % 2 === 0;
+function StepCard({ step }: { step: typeof STEPS[number] }) {
+  const Icon = step.icon;
   return (
-    <div
-      className={`grid grid-cols-1 gap-10 lg:grid-cols-2 ${
-        !isEven ? "lg:[&>*:first-child]:order-2" : ""
-      }`}
+    <motion.div
+      whileHover={{
+        y: -4,
+        boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
+      }}
+      className="relative flex flex-col rounded-[20px] border bg-white transition-all"
+      style={{
+        background: "white",
+        border: "1px solid #F3F4F6",
+        padding: "32px",
+        textAlign: "center",
+        zIndex: 1,
+      }}
     >
-      <FadeUp delay={index * 0.05}>
-        <div className="flex flex-col justify-center">
-          <span
-            className="text-sm font-semibold uppercase tracking-widest text-violet-600"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Step {step.number}
-          </span>
-          <h3
-            className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            {step.title}
-          </h3>
-          <p className="mt-4 text-lg leading-relaxed text-gray-600">
-            {step.body}
-          </p>
-          <div className="mt-5 rounded-2xl border border-violet-200 bg-violet-50/80 p-4 text-sm text-violet-900">
-            {step.tip}
-          </div>
-        </div>
-      </FadeUp>
-      <FadeUp delay={index * 0.05 + 0.1}>
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          {step.mockup ?? <PlaceholderMockup label={`Step ${step.number} preview`} />}
-        </div>
-      </FadeUp>
-    </div>
-  );
-}
+      {/* Step number circle */}
+      <div
+        className="flex h-[52px] w-[52px] items-center justify-center rounded-full"
+        style={{
+          background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+          color: "white",
+          fontSize: "1.125rem",
+          fontWeight: 800,
+          margin: "0 auto 20px",
+          boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
+        }}
+      >
+        {step.number}
+      </div>
 
-function PlaceholderMockup({ label }: { label: string }) {
-  return (
-    <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-400">
-      {label}
-    </div>
+      {/* Step icon */}
+      <div
+        className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px]"
+        style={{
+          background: "#EDE9FE",
+          margin: "0 auto 16px",
+          color: "#7C3AED",
+        }}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+
+      {/* Step title */}
+      <h3
+        className="font-bold"
+        style={{
+          fontFamily: "var(--font-heading)",
+          fontSize: "1.25rem",
+          color: "#0A0A0A",
+          marginBottom: "12px",
+        }}
+      >
+        {step.title}
+      </h3>
+
+      {/* Step body */}
+      <p
+        className="text-[0.9375rem] leading-relaxed"
+        style={{ color: "#6B7280" }}
+      >
+        {step.body}
+      </p>
+
+      {/* Mockup */}
+      <div className="mt-6">{step.mockup}</div>
+    </motion.div>
   );
 }

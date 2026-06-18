@@ -99,7 +99,7 @@ function FeatureItem({ text, included }: { text: string; included: boolean }) {
   );
 }
 
-function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
+function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isMobile: boolean }) {
   const isPro = plan.popular;
   return (
     <motion.div
@@ -117,12 +117,12 @@ function PlanCard({ plan, annual }: { plan: Plan; annual: boolean }) {
         borderWidth: isPro ? "2px" : "1px",
         borderColor: isPro ? "#7C3AED" : "#E5E7EB",
         padding: "32px",
-        boxShadow: isPro
+        boxShadow: isPro && !isMobile
           ? "0 20px 60px rgba(124, 58, 237, 0.18), 0 4px 16px rgba(124, 58, 237, 0.10)"
           : "0 1px 3px rgba(0,0,0,0.06)",
-        transform: isPro ? "scale(1.03) translateY(-8px)" : "none",
+        transform: isPro && !isMobile ? "scale(1.03) translateY(-8px)" : "none",
       }}
-      whileHover={isPro ? { scale: 1.04, y: -10 } : undefined}
+      whileHover={isPro && !isMobile ? { scale: 1.04, y: -10 } : undefined}
     >
       {isPro && (
         <div
@@ -257,7 +257,7 @@ export function PricingCards({ annual }: { annual: boolean }) {
       >
         {PLANS.map((plan, index) => (
           <FadeUp key={plan.name} delay={index * 0.1}>
-            <PlanCard plan={plan} annual={annual} />
+            <PlanCard plan={plan} annual={annual} isMobile={false} />
           </FadeUp>
         ))}
       </div>
@@ -275,7 +275,7 @@ export function PricingCards({ annual }: { annual: boolean }) {
             marginInline: "auto",
           }}
         >
-          <Shield className="h-4 w-4" style={{ color: "#059669" }} />
+          <Shield style={{ color: "#059669", height: "16px", width: "16px" }} />
           <span
             className="text-[0.875rem] font-medium"
             style={{ color: "#065F46" }}
@@ -288,10 +288,9 @@ export function PricingCards({ annual }: { annual: boolean }) {
   );
 }
 
-function Shield({ className, style }: { className?: string; style?: CSSProperties }) {
+function Shield({ style }: { style?: CSSProperties }) {
   return (
     <svg
-      className={className}
       style={style}
       viewBox="0 0 24 24"
       fill="none"

@@ -14,6 +14,7 @@ import { CaseStudyCallout } from "@/components/sections/CaseStudyCallout";
 import { PricingPreview } from "@/components/sections/PricingPreview";
 import { FaqSection } from "@/components/sections/FaqSection";
 import { FinalCTA } from "@/components/sections/FinalCTA";
+import { SectionDivider } from "@/components/ui/SectionDivider";
 
 export const metadata: Metadata = {
   title: "Sell Automatically on Freelance Platforms",
@@ -48,7 +49,9 @@ export default function Home() {
       <Hero />
       <main>
         <PlatformsMarquee />
+        <SectionDivider />
         <StatsSection />
+        <SectionDivider />
         <HowItWorks />
         <FeatureSection1 />
         <FeatureSection2 />
@@ -56,10 +59,13 @@ export default function Home() {
         <FeatureSection4 />
         <FeatureSection5 />
         <LogosSection />
+        <SectionDivider />
         <Testimonials />
+        <SectionDivider />
         <CaseStudyCallout />
         <PricingPreview />
         <FaqSection />
+        <SectionDivider />
         <FinalCTA />
       </main>
     </>
