@@ -10,17 +10,18 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://seerist.xyz"),
   title: {
-    default: "Seerist — Sell Your SaaS Through Every Freelance Platform",
+    default: "Seerist — AI Business Development for SaaS",
     template: "%s | Seerist",
   },
   description:
-    "Seerist monitors 14 freelance platforms for buyers who need exactly what you built — then writes the proposal. Automatic sales for indie SaaS founders.",
+    "Seerist analyzes your SaaS product and finds perfect freelance projects that need exactly what you've built. AI-powered matching, proposals, and pipeline for indie founders.",
   keywords: [
     "SaaS sales automation",
     "freelance platform monitoring",
     "Upwork automation",
     "indie hacker tools",
     "AI proposal generator",
+    "SaaS business development",
   ],
   authors: [{ name: "Seerist" }],
   openGraph: {
@@ -68,12 +69,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://app.seerist.xyz" />
       </head>
-      <body className="min-h-screen bg-white text-[#0A0A0A] antialiased">
+      <body className="min-h-screen bg-[#FAFBFE] text-[#0B1221] antialiased">
         <TooltipProvider>
           <SmoothScroll>
             <AnnouncementBanner />
             <Nav />
-            <main className="pt-24 md:pt-26">{children}</main>
+            <main className="pt-20">{children}</main>
             <Footer />
           </SmoothScroll>
         </TooltipProvider>

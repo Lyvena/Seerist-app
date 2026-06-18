@@ -1,7 +1,5 @@
 "use client";
-import { cn } from "@/lib/utils";
 import { FadeUp } from "@/components/animations/FadeUp";
-import { Container } from "@/components/ui/Container";
 
 type FeatureRow = {
   group: string;
@@ -34,23 +32,15 @@ const PLAN_LABELS = ["Free", "Pro", "Agency"];
 
 function CheckBadge({ value }: { value: boolean | string }) {
   if (typeof value === "string") {
-    return <span className="text-sm font-medium text-gray-600">{value}</span>;
+    return <span className="text-[0.875rem] font-medium text-[#5E6B8A]">{value}</span>;
   }
   return value ? (
-    <svg className="h-5 w-5 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
-      <path
-        fillRule="evenodd"
-        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-        clipRule="evenodd"
-      />
+    <svg className="h-5 w-5 text-[#635BFF]" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
     </svg>
   ) : (
-    <svg className="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-      <path
-        fillRule="evenodd"
-        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-        clipRule="evenodd"
-      />
+    <svg className="h-5 w-5 text-[#D1D7E5]" viewBox="0 0 20 20" fill="currentColor">
+      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
     </svg>
   );
 }
@@ -63,13 +53,13 @@ export function ComparisonTable() {
   }, {});
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-2xl border border-[#EBEEF5] bg-white" style={{ boxShadow: "var(--shadow-md)" }}>
       <table className="w-full min-w-[640px] text-left">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="pb-3 pr-6 text-sm font-semibold text-gray-900">Feature</th>
+          <tr className="border-b border-[#EBEEF5] bg-[#F4F6FB]">
+            <th className="px-5 py-3.5 text-[0.8125rem] font-semibold text-[#0B1221]">Feature</th>
             {PLAN_LABELS.map((plan) => (
-              <th key={plan} className="whitespace-nowrap pb-3 pl-6 text-center text-sm font-semibold text-gray-900">
+              <th key={plan} className="whitespace-nowrap px-5 py-3.5 text-center text-[0.8125rem] font-semibold text-[#0B1221]">
                 {plan}
               </th>
             ))}
@@ -79,27 +69,21 @@ export function ComparisonTable() {
           {Object.entries(grouped).map(([group, rows]) => (
             <tbody key={group}>
               <tr>
-                <td className="pt-4 pb-2 text-xs font-semibold uppercase tracking-widest text-gray-500" colSpan={4}>
+                <td className="px-5 pt-4 pb-2 text-[0.6875rem] font-semibold uppercase tracking-widest text-[#94A0BC]" colSpan={4}>
                   {group}
                 </td>
               </tr>
               {rows.map((row, index) => (
-                <tr key={row.name + index} className="border-b border-gray-200 last:border-0">
-                  <td className="py-3 pr-6 text-sm text-gray-600">{row.name}</td>
-                  <td className="py-3 pl-6 text-center">
-                    <div className="flex justify-center">
-                      <CheckBadge value={row.free} />
-                    </div>
+                <tr key={row.name + index} className="border-b border-[#F4F6FB] last:border-0">
+                  <td className="px-5 py-3 text-[0.875rem] text-[#5E6B8A]">{row.name}</td>
+                  <td className="px-5 py-3 text-center">
+                    <div className="flex justify-center"><CheckBadge value={row.free} /></div>
                   </td>
-                  <td className="py-3 pl-6 text-center">
-                    <div className="flex justify-center">
-                      <CheckBadge value={row.pro} />
-                    </div>
+                  <td className="px-5 py-3 text-center">
+                    <div className="flex justify-center"><CheckBadge value={row.pro} /></div>
                   </td>
-                  <td className="py-3 pl-6 text-center">
-                    <div className="flex justify-center">
-                      <CheckBadge value={row.agency} />
-                    </div>
+                  <td className="px-5 py-3 text-center">
+                    <div className="flex justify-center"><CheckBadge value={row.agency} /></div>
                   </td>
                 </tr>
               ))}

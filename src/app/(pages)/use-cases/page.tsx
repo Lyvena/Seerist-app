@@ -8,11 +8,13 @@ export const metadata: Metadata = {
 
 import { HeroSection } from "@/components/sections/use-cases/HeroSection";
 import { UseCasesGrid } from "@/components/sections/use-cases/UseCasesGrid";
+import { SectionDivider } from "@/components/ui/SectionDivider";
 
 export default function UseCasesPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-[#FAFBFE]">
       <HeroSection />
+      <SectionDivider />
       <UseCasesGrid />
     </div>
   );

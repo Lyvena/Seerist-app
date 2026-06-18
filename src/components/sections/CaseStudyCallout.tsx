@@ -2,90 +2,73 @@
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/Container";
 import { FadeUp } from "@/components/animations/FadeUp";
+import { ArrowRight, TrendingUp } from "lucide-react";
 
 export function CaseStudyCallout() {
   return (
-    <section className="py-20">
+    <section className="py-16">
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-[24px] flex items-center justify-between gap-8 flex-col md:flex-row"
+          className="relative overflow-hidden rounded-3xl"
           style={{
-            background: "linear-gradient(135deg, #F5F3FF 0%, #E0F2FE 50%, #F0FDFA 100%)",
-            padding: "clamp(40px, 6vw, 64px) clamp(32px, 5vw, 64px)",
-            maxWidth: "1000px",
-            marginInline: "auto",
-            border: "1px solid #E5E7EB",
+            background: "linear-gradient(135deg, #EEEDFF 0%, #E0F2FE 40%, #E0FAF6 100%)",
+            border: "1px solid #DDD6FE",
           }}
         >
-          {/* Decorative grid overlay */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: "linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px)",
-              backgroundSize: "48px 48px",
-            }}
-          />
-
-          <div>
-            <span
-              className="inline-flex items-center"
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 pointer-events-none" aria-hidden="true">
+            <div
+              className="absolute inset-0"
               style={{
-                background: "#EDE9FE",
-                borderRadius: "999px",
-                padding: "6px 14px",
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                color: "#7C3AED",
-                marginBottom: "16px",
+                background: "radial-gradient(circle, rgba(99,91,255,0.08) 0%, transparent 70%)",
               }}
-            >
-              📈 Case Study
-            </span>
-            <h3
-              className="tracking-tight"
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "clamp(1.5rem, 3vw, 2rem)",
-                fontWeight: 700,
-                color: "#1E293B",
-                lineHeight: 1.2,
-              }}
-            >
-              How InvoicePad closed $3,200 in new sales through Upwork in 6 weeks — without a dedicated sales team.
-            </h3>
-            <p
-              style={{
-                fontSize: "0.9375rem",
-                color: "#64748B",
-                marginTop: "8px",
-              }}
-            >
-              A real example of Seerist finding buyers for a Notion template.
-            </p>
+            />
           </div>
-          <FadeUp delay={0.2}>
-            <a
-              href="#"
-              className="inline-flex items-center gap-2 text-base font-semibold whitespace-nowrap transition-all duration-200 hover:bg-violet-50"
-              style={{
-                background: "white",
-                color: "#7C3AED",
-                borderRadius: "999px",
-                padding: "14px 28px",
-                textDecoration: "none",
-                border: "1px solid #E5E7EB",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-              }}
-            >
-              Read the full story
-              <span aria-hidden="true">→</span>
-            </a>
-          </FadeUp>
+
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-8 p-8 md:p-12">
+            <div className="flex-1">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-[0.75rem] font-semibold text-[#635BFF] border border-[#C7C3FF] mb-4">
+                <TrendingUp className="w-3 h-3" />
+                Case Study
+              </span>
+              <h3
+                className="tracking-tight text-[#0B1221]"
+                style={{
+                  fontFamily: "var(--font-heading)",
+                  fontSize: "clamp(1.25rem, 2.5vw, 1.75rem)",
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                }}
+              >
+                How InvoicePad closed $3,200 in new sales through Upwork in 6 weeks — without a dedicated sales team.
+              </h3>
+              <p className="mt-2 text-[0.9375rem] text-[#5E6B8A]">
+                A real example of Seerist finding buyers for a SaaS invoicing tool.
+              </p>
+            </div>
+            <FadeUp delay={0.2}>
+              <a
+                href="#"
+                className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold whitespace-nowrap transition-all duration-200 group"
+                style={{
+                  background: "white",
+                  color: "#635BFF",
+                  borderRadius: "999px",
+                  padding: "14px 28px",
+                  textDecoration: "none",
+                  border: "1px solid #C7C3FF",
+                  boxShadow: "0 2px 12px rgba(99,91,255,0.08)",
+                }}
+              >
+                Read the full story
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </FadeUp>
+          </div>
         </motion.div>
       </Container>
     </section>

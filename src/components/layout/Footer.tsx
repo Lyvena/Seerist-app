@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { Logo } from "@/components/layout/Logo";
 import type { ReactElement } from "react";
+import { ArrowRight } from "lucide-react";
 
 const NAV_ITEMS: { label: string; href: string }[] = [
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/#how-it-works" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Changelog", href: "/changelog" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "Use Cases", href: "/#use-cases" },
 ];
 
 const USE_CASES: { label: string; href: string }[] = [
@@ -60,158 +61,112 @@ const SOCIALS: SocialEntry[] = [
 
 export function Footer() {
   return (
-    <footer
-      className="border-t"
-      style={{
-        background: "white",
-        borderTop: "1px solid #F3F4F6",
-        padding: "80px 0 48px",
-      }}
-    >
+    <footer className="border-t border-[#EBEEF5] bg-white">
       <div
-        className="container"
+        className="mx-auto"
         style={{
           maxWidth: "1200px",
-          marginInline: "auto",
-          paddingInline: "clamp(20px, 5vw, 80px)",
+          padding: "64px clamp(20px, 4vw, 64px) 40px",
         }}
       >
+        {/* CTA Banner */}
         <div
-          className="grid grid-cols-1 gap-12 sm:grid-cols-2 md:grid-cols-4"
+          className="rounded-2xl p-8 mb-14 flex flex-col md:flex-row items-center justify-between gap-6"
           style={{
-            gap: "48px",
+            background: "linear-gradient(135deg, #EEEDFF 0%, #E0FAF6 100%)",
+            border: "1px solid #DDD6FE",
           }}
         >
+          <div>
+            <h3
+              className="font-bold text-[#0B1221]"
+              style={{ fontFamily: "var(--font-heading)", fontSize: "1.25rem" }}
+            >
+              Ready to find your next customer?
+            </h3>
+            <p className="text-[0.9375rem] text-[#5E6B8A] mt-1">
+              Start free. No credit card needed.
+            </p>
+          </div>
+          <Link
+            href="https://app.seerist.xyz/signup"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] px-6 py-3 text-[0.9375rem] font-semibold text-white transition-all hover:shadow-lg flex-shrink-0"
+            style={{ boxShadow: "0 4px 16px rgba(99,91,255,0.2)" }}
+          >
+            Get Started Free
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div className="sm:col-span-2 md:col-span-1">
             <div className="mb-4">
               <Logo />
             </div>
             <p
-              className="mb-6"
+              className="mb-5"
               style={{
-                fontSize: "0.9375rem",
-                color: "#6B7280",
-                maxWidth: "260px",
+                fontSize: "0.875rem",
+                color: "#5E6B8A",
+                maxWidth: "240px",
                 lineHeight: 1.6,
               }}
             >
-              Sell through every freelance platform. Automatically.
+              AI-powered business development for SaaS. Find buyers, not leads.
             </p>
-            <div className="flex items-center gap-2" style={{ gap: "8px" }}>
+            <div className="flex items-center gap-2">
               {SOCIALS.map(({ label, href, renderIcon }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
                   rel="noopener noreferrer"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-[8px] border transition"
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderColor: "#E5E7EB",
-                    background: "white",
-                    color: "#6B7280",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#D1D5DB";
-                    e.currentTarget.style.color = "#374151";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#E5E7EB";
-                    e.currentTarget.style.color = "#6B7280";
-                  }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#EBEEF5] text-[#94A0BC] hover:border-[#C7C3FF] hover:text-[#635BFF] hover:bg-[#EEEDFF] transition-all"
                 >
                   {renderIcon()}
                 </a>
               ))}
             </div>
           </div>
+
           <div>
-            <h3
-              className="mb-4 uppercase"
-              style={{
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                color: "#9CA3AF",
-              }}
-            >
+            <h3 className="mb-4 text-[0.75rem] font-semibold uppercase tracking-wider text-[#94A0BC]">
               Product
             </h3>
-            <ul className="space-y-0">
+            <ul className="space-y-2.5">
               {NAV_ITEMS.map((item) => (
-                <li key={item.label} style={{ marginBottom: "10px" }}>
+                <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="block text-sm transition-colors duration-150"
-                    style={{
-                      fontSize: "0.9375rem",
-                      color: "#6B7280",
-                      textDecoration: "none",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#111827")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#6B7280")
-                    }
+                    className="text-[0.875rem] text-[#5E6B8A] hover:text-[#635BFF] transition-colors"
                   >
                     {item.label}
                   </Link>
                 </li>
               ))}
-              <li style={{ marginBottom: "10px" }}>
+              <li>
                 <Link
                   href="https://status.seerist.xyz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-sm transition"
-                  style={{
-                    fontSize: "0.9375rem",
-                    color: "#6B7280",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "#111827")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "#6B7280")
-                  }
+                  className="text-[0.875rem] text-[#5E6B8A] hover:text-[#635BFF] transition-colors"
                 >
                   Status
                 </Link>
               </li>
             </ul>
           </div>
+
           <div>
-            <h3
-              className="mb-4 uppercase"
-              style={{
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                color: "#9CA3AF",
-              }}
-            >
+            <h3 className="mb-4 text-[0.75rem] font-semibold uppercase tracking-wider text-[#94A0BC]">
               Use Cases
             </h3>
-            <ul className="space-y-0">
+            <ul className="space-y-2.5">
               {USE_CASES.map((item) => (
-                <li key={item.label} style={{ marginBottom: "10px" }}>
+                <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="block text-sm transition"
-                    style={{
-                      fontSize: "0.9375rem",
-                      color: "#6B7280",
-                      textDecoration: "none",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#111827")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#6B7280")
-                    }
+                    className="text-[0.875rem] text-[#5E6B8A] hover:text-[#635BFF] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -219,35 +174,17 @@ export function Footer() {
               ))}
             </ul>
           </div>
+
           <div>
-            <h3
-              className="mb-4 uppercase"
-              style={{
-                fontSize: "0.8125rem",
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                color: "#9CA3AF",
-              }}
-            >
+            <h3 className="mb-4 text-[0.75rem] font-semibold uppercase tracking-wider text-[#94A0BC]">
               Company
             </h3>
-            <ul className="space-y-0">
+            <ul className="space-y-2.5">
               {COMPANY.map((item) => (
-                <li key={item.label} style={{ marginBottom: "10px" }}>
+                <li key={item.label}>
                   <Link
                     href={item.href}
-                    className="block text-sm transition"
-                    style={{
-                      fontSize: "0.9375rem",
-                      color: "#6B7280",
-                      textDecoration: "none",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#111827")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#6B7280")
-                    }
+                    className="text-[0.875rem] text-[#5E6B8A] hover:text-[#635BFF] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -256,50 +193,16 @@ export function Footer() {
             </ul>
           </div>
         </div>
+
         <div
-          className="flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row"
-          style={{
-            marginTop: "64px",
-            paddingTop: "24px",
-            borderColor: "#F3F4F6",
-          }}
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#EBEEF5] mt-12 pt-6"
         >
-          <p
-            className="text-sm"
-            style={{
-              fontSize: "0.875rem",
-              color: "#9CA3AF",
-            }}
-          >
+          <p className="text-[0.8125rem] text-[#94A0BC]">
             © 2025 Seerist. All rights reserved.
           </p>
-          <p
-            className="text-sm"
-            style={{
-              fontSize: "0.875rem",
-              color: "#9CA3AF",
-            }}
-          >
-            Made for indie founders
+          <p className="text-[0.8125rem] text-[#94A0BC]">
+            Made for indie founders ✨
           </p>
-          <a
-            href="https://app.seerist.xyz/signup"
-            className="inline-flex h-[44px] min-w-[44px] items-center gap-1 rounded-[8px] border px-4 text-sm transition"
-            style={{
-              borderColor: "#E5E7EB",
-              color: "#6B7280",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#D1D5DB";
-              e.currentTarget.style.color = "#111827";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#E5E7EB";
-              e.currentTarget.style.color = "#6B7280";
-            }}
-          >
-            Start Free — No Card
-          </a>
         </div>
       </div>
     </footer>

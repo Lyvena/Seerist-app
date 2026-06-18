@@ -1,18 +1,18 @@
 "use client";
 import { Container } from "@/components/ui/Container";
 import { FadeUp } from "@/components/animations/FadeUp";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ScoringMockup } from "@/components/mockups/ScoringMockup";
 import { ProposalDetailMockup } from "@/components/mockups/ProposalDetailMockup";
 import { LiveFeedMockup } from "@/components/mockups/LiveFeedMockup";
 import { PipelineMockup } from "@/components/mockups/PipelineMockup";
 import { EmailMockup } from "@/components/mockups/EmailMockup";
+import { ArrowRight } from "lucide-react";
 
 const FEATURES = [
   {
     label: "Smart Filtering",
     title: "Every job post gets a score. You only see the ones worth your time.",
-    body: "Seerist scores every opportunity 0-100 across relevance, budget fit, and timing. Set a threshold and only the best matches show up in your feed.",
+    body: "Seerist scores every opportunity 0–100 across relevance, budget fit, and timing. Set a threshold and only the best matches show up in your feed.",
     mockup: <ScoringMockup />,
     reverse: false,
   },
@@ -48,33 +48,33 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <div className="py-24" style={{ padding: "var(--section-padding-y) 0" }}>
+    <div style={{ padding: "var(--section-padding-y) 0" }}>
       <Container>
         <div className="mb-20 text-center">
           <FadeUp>
-            <SectionLabel>Features</SectionLabel>
+            <p className="section-label mb-4">Features</p>
           </FadeUp>
           <FadeUp delay={0.1}>
             <h1
-              className="font-semibold tracking-tight text-[var(--color-text-1)]"
+              className="font-bold tracking-tight text-[#0B1221]"
               style={{
                 fontFamily: "var(--font-heading)",
                 fontSize: "var(--text-hero)",
-                lineHeight: 1.04,
-                letterSpacing: "-0.03em",
+                lineHeight: 1.05,
+                letterSpacing: "-0.035em",
               }}
             >
               Everything you need to sell through freelance platforms.
             </h1>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p className="mx-auto mt-5 max-w-2xl text-gray-600" style={{ fontSize: "var(--text-xl)" }}>
+            <p className="mx-auto mt-5 max-w-[560px] text-[#5E6B8A]" style={{ fontSize: "var(--text-xl)" }}>
               Built for indie founders who ship great products but don&apos;t have time to manually hunt for buyers.
             </p>
           </FadeUp>
         </div>
 
-        <div className="space-y-24">
+        <div className="space-y-28">
           {FEATURES.map((feature, index) => (
             <FeatureBlock key={feature.label} {...feature} index={index} />
           ))}
@@ -96,26 +96,27 @@ type FeatureBlockProps = {
 function FeatureBlock({ label, title, body, mockup, reverse, index }: FeatureBlockProps) {
   return (
     <div
-      className={`grid grid-cols-1 gap-12 lg:grid-cols-2 ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}
+      className={`grid grid-cols-1 gap-10 lg:grid-cols-2 ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}
+      style={{ alignItems: "center" }}
     >
       <FadeUp delay={index * 0.05}>
         <div className="flex flex-col justify-center">
-          <SectionLabel>{label}</SectionLabel>
+          <p className="section-label mb-4 w-fit">{label}</p>
           <h3
-            className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl text-gray-900"
-            style={{ fontFamily: "var(--font-heading)" }}
+            className="mt-3 text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl text-[#0B1221]"
+            style={{ fontFamily: "var(--font-heading)", lineHeight: 1.15, letterSpacing: "-0.025em" }}
           >
             {title}
           </h3>
-          <p className="mt-4 text-lg leading-relaxed text-gray-600">
+          <p className="mt-4 text-[1.0625rem] leading-relaxed text-[#5E6B8A]">
             {body}
           </p>
           <a
-            href="/#how-it-works"
-            className="mt-6 inline-flex items-center gap-2 text-base font-semibold text-violet-600 transition-all hover:gap-3"
+            href="https://app.seerist.xyz/signup"
+            className="mt-6 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-[#635BFF] transition-all group"
           >
-            Learn more
-            <span aria-hidden="true">→</span>
+            Try it free
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
       </FadeUp>

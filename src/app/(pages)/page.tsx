@@ -7,8 +7,6 @@ import { FeatureSection1 } from "@/components/sections/FeatureSection1";
 import { FeatureSection2 } from "@/components/sections/FeatureSection2";
 import { FeatureSection3 } from "@/components/sections/FeatureSection3";
 import { FeatureSection4 } from "@/components/sections/FeatureSection4";
-import { FeatureSection5 } from "@/components/sections/FeatureSection5";
-import { LogosSection } from "@/components/sections/LogosSection";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { CaseStudyCallout } from "@/components/sections/CaseStudyCallout";
 import { PricingPreview } from "@/components/sections/PricingPreview";
@@ -17,9 +15,9 @@ import { FinalCTA } from "@/components/sections/FinalCTA";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
 export const metadata: Metadata = {
-  title: "Sell Automatically on Freelance Platforms",
+  title: "AI Business Development for SaaS",
   description:
-    "Seerist monitors 14 freelance platforms for buyers who need exactly what you built — then writes the proposal. Automatic sales for indie SaaS founders.",
+    "Seerist analyzes your SaaS product and finds perfect freelance projects that need exactly what you've built. AI-powered matching, proposals, and pipeline for indie founders.",
 };
 
 const jsonLd = {
@@ -52,21 +50,39 @@ export default function Home() {
         <SectionDivider />
         <StatsSection />
         <SectionDivider />
-        <HowItWorks />
-        <FeatureSection1 />
-        <FeatureSection2 />
-        <FeatureSection3 />
-        <FeatureSection4 />
-        <FeatureSection5 />
-        <LogosSection />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <HowItWorks />
+        </div>
         <SectionDivider />
-        <Testimonials />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FeatureSection1 />
+        </div>
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FeatureSection2 />
+        </div>
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FeatureSection3 />
+        </div>
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FeatureSection4 />
+        </div>
+        <SectionDivider />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <Testimonials />
+        </div>
         <SectionDivider />
         <CaseStudyCallout />
-        <PricingPreview />
-        <FaqSection />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <PricingPreview />
+        </div>
         <SectionDivider />
-        <FinalCTA />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FaqSection />
+        </div>
+        <SectionDivider />
+        <div style={{ padding: "var(--section-padding-y) 0" }}>
+          <FinalCTA />
+        </div>
       </main>
     </>
   );

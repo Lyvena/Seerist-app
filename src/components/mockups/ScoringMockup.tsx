@@ -9,8 +9,7 @@ const SUB_SCORES = [
   { label: "Timing", value: 91 },
 ];
 
-const REASON =
-  "Strong match — the poster needs exactly what InvoicePad provides, with a budget aligned to your pricing tier.";
+const REASON = "Strong match — the poster needs exactly what InvoicePad provides, with a budget aligned to your pricing tier.";
 
 export function ScoringMockup() {
   const [ready, setReady] = useState(false);
@@ -49,57 +48,54 @@ export function ScoringMockup() {
   const offset = circumference - (SCORE / 100) * circumference;
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white shadow-lg" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)", padding: "24px", position: "relative", overflow: "hidden" }}>
+    <div
+      className="rounded-2xl border border-[#EBEEF5] bg-white"
+      style={{ boxShadow: "var(--shadow-xl)", padding: "28px", position: "relative", overflow: "hidden" }}
+    >
       <div
         aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          content: '',
-          position: "absolute",
-          inset: 0,
-          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.04) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-          pointerEvents: "none",
+          backgroundImage: "radial-gradient(circle, rgba(99,91,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
         }}
       />
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+
+      <div className="relative flex flex-col gap-5">
+        <div className="flex items-center justify-between rounded-xl border border-[#EBEEF5] bg-[#F4F6FB] p-4">
           <div>
-            <p className="text-sm font-semibold text-gray-900">{REASON.split(".")[0]}.</p>
-            <p className="text-xs text-gray-500">Upwork · $200–$400 budget</p>
+            <p className="text-sm font-semibold text-[#0B1221]">{REASON.split(".")[0]}.</p>
+            <p className="text-[0.75rem] text-[#94A0BC] mt-0.5">Upwork · $200–$400 budget</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-semibold text-emerald-700">{SCORE}</div>
-            <div className="text-xs text-gray-400">/ 100</div>
+            <div className="text-2xl font-bold text-[#059669]">{SCORE}</div>
+            <div className="text-[0.6875rem] text-[#94A0BC]">/ 100</div>
           </div>
         </div>
+
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <svg className="h-32 w-32 -rotate-90" viewBox="0 0 100 100" style={{ width: "140px", height: "140px" }}>
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#F3F4F6" strokeWidth="10" strokeLinecap="round" />
+            <svg className="h-32 w-32 -rotate-90" viewBox="0 0 100 100" style={{ width: "130px", height: "130px" }}>
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#EBEEF5" strokeWidth="10" strokeLinecap="round" />
               <motion.circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="url(#scoreGradient)"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
+                cx="50" cy="50" r="45" fill="none" stroke="url(#scoreGradient)" strokeWidth="10"
+                strokeLinecap="round" strokeDasharray={circumference}
                 initial={{ strokeDashoffset: circumference }}
                 animate={ready ? { strokeDashoffset: offset } : {}}
                 transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
               />
               <defs>
                 <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#7C3AED" />
-                  <stop offset="100%" stopColor="#10B981" />
+                  <stop offset="0%" stopColor="#635BFF" />
+                  <stop offset="100%" stopColor="#00C2A8" />
                 </linearGradient>
               </defs>
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-2xl font-semibold text-gray-900">{SCORE}</div>
+              <div className="text-2xl font-bold text-[#0B1221]">{SCORE}</div>
             </div>
           </div>
+
           <div className="w-full space-y-3">
             {SUB_SCORES.map((item, index) => (
               <motion.div
@@ -108,13 +104,13 @@ export function ScoringMockup() {
                 animate={ready ? { opacity: 1, y: 0 } : {}}
                 transition={{ delay: 0.6 + index * 0.15 }}
               >
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-[0.75rem] text-[#94A0BC]">
                   <span>{item.label}</span>
-                  <span className="font-semibold text-violet-600">{item.value}%</span>
+                  <span className="font-semibold text-[#635BFF]">{item.value}%</span>
                 </div>
-                <div className="mt-1 h-2 w-full rounded-full bg-[#F3F4F6]">
+                <div className="mt-1 h-1.5 w-full rounded-full bg-[#EBEEF5]">
                   <motion.div
-                    className="h-full rounded-full bg-violet-600"
+                    className="h-full rounded-full bg-gradient-to-r from-[#635BFF] to-[#8B5CF6]"
                     initial={{ width: "0%" }}
                     animate={ready ? { width: `${item.value}%` } : {}}
                     transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.6 + index * 0.15 }}
@@ -124,11 +120,12 @@ export function ScoringMockup() {
             ))}
           </div>
         </div>
-        <div className="rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-3 text-sm text-violet-900">
+
+        <div className="rounded-xl border border-[#C7C3FF] bg-[#EEEDFF]/60 px-4 py-3 text-[0.875rem] text-[#5046E5]">
           <span>{typed}</span>
           {ready && (
             <motion.span
-              className="ml-0.5 inline-block h-3.5 w-2 bg-gray-900 align-middle"
+              className="ml-0.5 inline-block h-3 w-[2px] bg-[#635BFF] align-middle"
               animate={{ opacity: [1, 0] }}
               transition={{ duration: 0.55, repeat: Infinity, repeatType: "reverse" }}
             />

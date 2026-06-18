@@ -3,41 +3,33 @@ import { motion } from "framer-motion";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { PricingCards } from "@/components/sections/features/PricingCards";
 import { Container } from "@/components/ui/Container";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { useState } from "react";
+import { CreditCard, ArrowRight } from "lucide-react";
 
 export function PricingPreview() {
   const [annual, setAnnual] = useState(false);
 
   return (
-    <section className="bg-white py-24">
+    <section id="pricing" className="relative">
       <Container>
-        <div className="mb-12 text-center">
+        <div className="text-center mb-12">
           <FadeUp>
-            <SectionLabel>Simple Pricing</SectionLabel>
+            <p className="section-label mb-4">
+              <CreditCard className="w-3.5 h-3.5" />
+              Pricing
+            </p>
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="tracking-tight"
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "clamp(2rem, 4vw, 3.25rem)",
-                color: "#111827",
-              }}
+              className="tracking-tight text-[#0B1221]"
+              style={{ fontFamily: "var(--font-heading)" }}
             >
-              One tool. Pay as you grow.
+              Start free. Scale when you're ready.
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p
-              className="mx-auto mt-3 max-w-[560px]"
-              style={{
-                fontSize: "1.0625rem",
-                color: "#6B7280",
-                textAlign: "center",
-              }}
-            >
-              Unlimited opportunities. Unlimited growth. No hidden fees or limits.
+            <p className="mx-auto mt-3 max-w-[480px] text-[1.0625rem] text-[#5E6B8A]">
+              No hidden fees. No surprises. Upgrade only when you need more.
             </p>
           </FadeUp>
         </div>
@@ -45,42 +37,38 @@ export function PricingPreview() {
         {/* Billing Toggle */}
         <FadeUp delay={0.25}>
           <div
-            className="inline-flex items-center rounded-full"
+            className="inline-flex items-center rounded-full mx-auto flex"
             style={{
-              background: "#F3F4F6",
+              background: "#F4F6FB",
               borderRadius: "999px",
               padding: "4px",
               marginTop: "24px",
-              marginInline: "auto",
-              display: "flex",
             }}
           >
             <button
               onClick={() => setAnnual(false)}
-              className="rounded-full"
+              className="rounded-full transition-all duration-200"
               style={{
                 padding: "8px 20px",
                 fontSize: "0.9375rem",
                 fontWeight: 500,
                 background: !annual ? "white" : "transparent",
-                boxShadow: !annual ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
-                color: !annual ? "#111827" : "#6B7280",
-                transition: "all 200ms ease",
+                boxShadow: !annual ? "0 1px 4px rgba(11,18,33,0.08)" : "none",
+                color: !annual ? "#0B1221" : "#5E6B8A",
               }}
             >
               Monthly
             </button>
             <button
               onClick={() => setAnnual(true)}
-              className="rounded-full"
+              className="rounded-full transition-all duration-200"
               style={{
                 padding: "8px 20px",
                 fontSize: "0.9375rem",
                 fontWeight: 500,
                 background: annual ? "white" : "transparent",
-                boxShadow: annual ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
-                color: annual ? "#111827" : "#6B7280",
-                transition: "all 200ms ease",
+                boxShadow: annual ? "0 1px 4px rgba(11,18,33,0.08)" : "none",
+                color: annual ? "#0B1221" : "#5E6B8A",
               }}
             >
               Annual
@@ -88,11 +76,11 @@ export function PricingPreview() {
                 <span
                   className="ml-2 inline-flex items-center"
                   style={{
-                    background: "#ECFDF5",
+                    background: "#E0FAF6",
                     color: "#059669",
                     borderRadius: "999px",
-                    padding: "2px 10px",
-                    fontSize: "0.75rem",
+                    padding: "2px 8px",
+                    fontSize: "0.6875rem",
                     fontWeight: 600,
                   }}
                 >
@@ -105,14 +93,13 @@ export function PricingPreview() {
 
         <PricingCards annual={annual} />
         <FadeUp delay={0.3}>
-          <div className="mt-10 text-center">
+          <div className="mt-8 text-center">
             <a
               href="/pricing"
-              className="inline-flex items-center gap-2 text-base font-semibold text-violet-700 transition hover:gap-3"
-              style={{ textDecoration: "none" }}
+              className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-[#635BFF] transition-all group"
             >
               See full pricing details
-              <span aria-hidden="true">→</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
           </div>
         </FadeUp>

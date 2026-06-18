@@ -1,13 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Container } from "@/components/ui/Container";
 import { FadeUp } from "@/components/animations/FadeUp";
-import { OnboardingMockup } from "@/components/mockups/OnboardingMockup";
-import { LiveFeedMockup } from "@/components/mockups/LiveFeedMockup";
-import { PipelineMockup } from "@/components/mockups/PipelineMockup";
-import { Package, Globe, Zap } from "lucide-react";
+import { Package, Globe, Zap, ArrowRight } from "lucide-react";
 
 type StepKey = "describe" | "platforms" | "proposal";
 
@@ -17,17 +11,17 @@ interface Step {
   title: string;
   body: string;
   icon: typeof Package;
-  accent: string;
+  gradient: string;
 }
 
 const STEPS: Step[] = [
   {
     key: "describe",
     number: "01",
-    title: "Tell Seerist what you've built",
+    title: "Describe what you've built",
     body: "Paste in your product name, description, and ideal customer. Seerist learns your product deeply — so it knows exactly which job posts are a genuine fit.",
     icon: Package,
-    accent: "#7C3AED",
+    gradient: "from-[#635BFF] to-[#8B5CF6]",
   },
   {
     key: "platforms",
@@ -35,7 +29,7 @@ const STEPS: Step[] = [
     title: "Pick platforms to monitor",
     body: "Select from 14 freelance and remote job platforms. Set a minimum match score. Enable auto-propose for hands-free sales.",
     icon: Globe,
-    accent: "#7C3AED",
+    gradient: "from-[#8B5CF6] to-[#A78BFA]",
   },
   {
     key: "proposal",
@@ -43,77 +37,50 @@ const STEPS: Step[] = [
     title: "AI finds matches and writes pitches",
     body: "When Seerist finds a buyer who needs what you built, it scores the opportunity and generates a tailored proposal — ready to send.",
     icon: Zap,
-    accent: "#7C3AED",
+    gradient: "from-[#00C2A8] to-[#059669]",
   },
 ];
 
 export function HowItWorks() {
-  const [active, setActive] = useState<StepKey>("describe");
-  const sectionRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const cards = section.querySelectorAll("[data-step]");
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const key = (entry.target as HTMLElement).getAttribute("data-step") as StepKey | null;
-          if (!key) return;
-          if (entry.isIntersecting) setActive(key);
-        });
-      },
-      {
-        rootMargin: "-30% 0px -40% 0px",
-        threshold: 0,
-      }
-    );
-
-    cards.forEach((card) => observer.observe(card));
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <section
-      id="how-it-works"
-      ref={sectionRef}
-      className="bg-white py-24 lg:bg-white"
-    >
+    <section id="how-it-works" className="relative">
+      {/* Background accent */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(99,91,255,0.03) 0%, transparent 70%)",
+          }}
+        />
+      </div>
+
       <Container>
-        <div className="mb-16 text-center">
+        <div className="text-center mb-16">
           <FadeUp>
-            <SectionLabel>The Process</SectionLabel>
+            <p className="section-label mb-4">How it works</p>
           </FadeUp>
           <FadeUp delay={0.1}>
             <h2
-              className="tracking-tight"
-              style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "clamp(2rem, 4vw, 3.25rem)",
-                color: "#111827",
-              }}
+              className="tracking-tight text-[#0B1221]"
+              style={{ fontFamily: "var(--font-heading)" }}
             >
-              From product description to closed deal — in three steps
+              Three steps. Then it runs itself.
             </h2>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <p
-              className="mx-auto mt-3 max-w-2xl text-[1.0625rem] text-[#6B7280]"
-            >
+            <p className="mx-auto mt-4 max-w-[520px] text-[1.0625rem] text-[#5E6B8A]">
               Set it up once. Seerist runs automatically, day and night.
             </p>
           </FadeUp>
         </div>
 
-        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-3" style={{ marginTop: "64px", gap: "32px" }}>
-          {/* Connector lines */}
+        <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-3 max-w-[1000px] mx-auto">
+          {/* Connector line */}
           <div
-            className="absolute top-[40px] left-[calc(33%+32px)] right-[calc(33%+32px)] z-0 hidden lg:block"
+            className="absolute top-[60px] left-[calc(33%+24px)] right-[calc(33%+24px)] z-0 hidden lg:block"
             style={{
-              height: "1px",
-              background: "linear-gradient(90deg, #C4B5FD, #7C3AED, #C4B5FD)",
+              height: "2px",
+              background: "linear-gradient(90deg, #C7C3FF, #635BFF, #00C2A8)",
             }}
           />
 
@@ -121,77 +88,70 @@ export function HowItWorks() {
             <StepCard key={step.key} step={step} index={index} />
           ))}
         </div>
+
+        <FadeUp delay={0.4}>
+          <div className="mt-12 text-center">
+            <a
+              href="https://app.seerist.xyz/signup"
+              className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-[#635BFF] hover:text-[#5046E5] transition-colors"
+            >
+              Start with the free plan
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
+        </FadeUp>
       </Container>
     </section>
   );
 }
 
-function StepCard({ step }: { step: Step; index: number }) {
+function StepCard({ step, index }: { step: Step; index: number }) {
   const Icon = step.icon;
   return (
-    <FadeUp delay={0.3}>
-      <motion.div
-        whileHover={{
-          y: -4,
-          boxShadow: "0 12px 40px rgba(0,0,0,0.08)",
-        }}
-        className="relative flex flex-col rounded-[20px] border bg-white transition-all"
-        style={{
-          background: "white",
-          border: "1px solid #F3F4F6",
-          padding: "32px",
-          textAlign: "center",
-          zIndex: 1,
-        }}
+    <FadeUp delay={0.2 + index * 0.1}>
+      <div
+        className="relative flex flex-col rounded-2xl border border-[#EBEEF5] bg-white p-7 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+        style={{ boxShadow: "var(--shadow-md)", zIndex: 1 }}
       >
-        {/* Step number circle */}
+        {/* Step number */}
         <div
-          className="flex h-[52px] w-[52px] items-center justify-center rounded-full"
+          className="flex h-12 w-12 items-center justify-center rounded-2xl mx-auto mb-5"
           style={{
-            background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+            background: `linear-gradient(135deg, ${step.gradient.split(" ")[1]}, ${step.gradient.split(" ")[3]})`,
             color: "white",
             fontSize: "1.125rem",
             fontWeight: 800,
-            margin: "0 auto 20px",
-            boxShadow: "0 8px 20px rgba(124,58,237,0.3)",
+            boxShadow: `0 4px 16px ${step.gradient.includes("635BFF") ? "rgba(99,91,255,0.2)" : step.gradient.includes("8B5CF6") ? "rgba(139,92,246,0.2)" : "rgba(0,194,168,0.2)"}`,
           }}
         >
           {step.number}
         </div>
 
-        {/* Step icon */}
+        {/* Icon */}
         <div
-          className="flex h-[40px] w-[40px] items-center justify-center rounded-[10px]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl mx-auto mb-4"
           style={{
-            background: "#EDE9FE",
-            margin: "0 auto 16px",
-            color: "#7C3AED",
+            background: "#EEEDFF",
+            color: "#635BFF",
           }}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-4.5 w-4.5" />
         </div>
 
-        {/* Step title */}
         <h3
-          className="font-bold"
+          className="font-bold text-[#0B1221] mb-3"
           style={{
             fontFamily: "var(--font-heading)",
-            fontSize: "1.25rem",
-            color: "#0A0A0A",
-            marginBottom: "12px",
+            fontSize: "1.125rem",
           }}
         >
           {step.title}
         </h3>
 
-        {/* Step body */}
-        <p
-          className="text-[0.9375rem] leading-relaxed"
-          style={{ color: "#6B7280" }}
-        >
+        <p className="text-[0.9375rem] leading-relaxed text-[#5E6B8A]">
           {step.body}
         </p>
-      </motion.div>
+      </div>
     </FadeUp>
   );
 }

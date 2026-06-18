@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 
 type NavItem = { label: string; href: string; external?: boolean; primary?: boolean };
 
@@ -24,14 +24,18 @@ const ease = [0.16, 1, 0.3, 1] as const;
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" opacity="0.2" className="text-violet-600" />
-        <circle cx="16" cy="16" r="9" stroke="currentColor" strokeWidth="2" opacity="0.5" className="text-violet-600" />
-        <circle cx="16" cy="16" r="4" stroke="currentColor" strokeWidth="2.5" className="text-violet-600" />
-        <circle cx="16" cy="16" r="2.5" fill="currentColor" className="text-violet-600" />
-      </svg>
-      <span className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100" style={{ fontFamily: "var(--font-heading)" }}>
+    <Link href="/" className="flex items-center gap-2.5 group">
+      <div className="relative w-8 h-8">
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#635BFF] to-[#8B5CF6] rotate-6 opacity-20 group-hover:rotate-12 transition-transform duration-300" />
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#635BFF] to-[#8B5CF6] flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" opacity="0.4" />
+            <circle cx="8" cy="8" r="3.5" stroke="white" strokeWidth="1.5" opacity="0.7" />
+            <circle cx="8" cy="8" r="1.5" fill="white" />
+          </svg>
+        </div>
+      </div>
+      <span className="text-lg font-semibold tracking-tight text-[#0B1221]" style={{ fontFamily: "var(--font-heading)" }}>
         Seerist
       </span>
     </Link>
@@ -45,7 +49,7 @@ export function Nav() {
 
   useEffect(() => {
     setMounted(true);
-    const handleScroll = () => setScrolled(window.scrollY > 40);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -57,70 +61,56 @@ export function Nav() {
       <motion.nav
         initial={{ y: -100, opacity: 0 }}
         animate={mounted ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
-        transition={{ duration: 0.6, ease: ease, delay: 0.1 }}
+        transition={{ duration: 0.6, ease, delay: 0.1 }}
         className="fixed top-0 inset-x-0 z-50"
         style={{
           height: "64px",
-          backgroundColor: "rgba(250,250,250,0.85)",
-          backdropFilter: "blur(16px) saturate(180%)",
-          WebkitBackdropFilter: "blur(16px) saturate(180%)",
-          borderBottom: "1px solid rgba(229,231,235,0.6)",
-          boxShadow: scrolled ? "0 1px 24px rgba(0,0,0,0.08)" : "none",
-          transition: "box-shadow 300ms ease",
+          backgroundColor: scrolled ? "rgba(250,251,254,0.85)" : "rgba(250,251,254,0.6)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderBottom: scrolled ? "1px solid rgba(228,232,242,0.8)" : "1px solid transparent",
+          boxShadow: scrolled ? "0 1px 20px rgba(11,18,33,0.04)" : "none",
+          transition: "all 300ms ease",
         }}
       >
-        <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-[clamp(20px,5vw,48px)]">
+        <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-[clamp(20px,4vw,48px)]">
           <Logo />
-          <div className="hidden md:flex items-center gap-1" style={{ gap: "4px" }}>
+
+          <div className="hidden md:flex items-center gap-0.5">
             {NAV_LINKS.map(({ label, href }) => (
               <Link
                 key={href}
                 href={href}
-                className="rounded-[8px] px-[14px] py-[8px] text-[0.9375rem] font-normal transition"
-                style={{
-                  color: "#374151",
-                  fontWeight: 450,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#F3F4F6")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                className="relative rounded-lg px-3.5 py-2 text-[0.9375rem] font-medium text-[#5E6B8A] hover:text-[#0B1221] transition-colors duration-200"
               >
                 {label}
               </Link>
             ))}
           </div>
-          <div className="hidden md:flex items-center gap-3">
+
+          <div className="hidden md:flex items-center gap-2.5">
             <Link
               href="https://app.seerist.xyz/login"
-              className="rounded-[8px] border px-[18px] py-[8px] text-[0.9375rem] font-medium transition"
-              style={{
-                borderColor: "#E5E7EB",
-                color: "#374151",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#D1D5DB")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#E5E7EB")}
+              className="rounded-lg px-4 py-2 text-[0.9375rem] font-medium text-[#5E6B8A] hover:text-[#0B1221] transition-colors duration-200"
             >
               Sign In
             </Link>
             <Link
               href="https://app.seerist.xyz/signup"
-              className="rounded-[8px] px-[20px] py-[8px] text-[0.9375rem] font-semibold transition"
-              style={{
-                background: "#7C3AED",
-                color: "white",
-                boxShadow: "0 1px 8px rgba(124,58,237,0.25)",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#6D28D9")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#7C3AED")}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] px-5 py-2.5 text-[0.9375rem] font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
+              style={{ boxShadow: "0 2px 12px rgba(99,91,255,0.2)" }}
             >
               Get Started
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
+
           <button
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#5E6B8A] hover:bg-[#EBEEF5] transition-colors"
             aria-label="Toggle menu"
           >
-            <Menu className="h-5 w-5" />
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </motion.nav>
@@ -133,12 +123,13 @@ export function Nav() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-[60] bg-white md:hidden"
+            className="fixed inset-0 z-[60] bg-[#FAFBFE] md:hidden"
           >
-            <div className="flex h-16 items-end justify-end px-4 pb-4">
+            <div className="flex h-16 items-center justify-between px-5">
+              <Logo />
               <button
                 onClick={closeMobile}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-700 hover:bg-gray-100"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[#5E6B8A] hover:bg-[#EBEEF5]"
                 aria-label="Close menu"
               >
                 <X className="h-5 w-5" />
@@ -146,20 +137,20 @@ export function Nav() {
             </div>
             <motion.div
               variants={{
-                hidden: { transition: { staggerChildren: 0.05 } },
-                visible: { transition: { staggerChildren: 0.05 } },
+                hidden: { transition: { staggerChildren: 0.04, staggerDirection: -1 } },
+                visible: { transition: { staggerChildren: 0.04 } },
               }}
               initial="hidden"
               animate="visible"
               exit="hidden"
-              className="flex flex-col items-center gap-3 px-6"
+              className="flex flex-col items-start gap-1 px-6 pt-4"
             >
               {MOBILE_LINKS.map(({ label, href, external, primary }) => (
                 <motion.div
                   key={href}
                   variants={{
-                    hidden: { opacity: 0, y: 16 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+                    hidden: { opacity: 0, x: -20 },
+                    visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
                   }}
                 >
                   <Link
@@ -167,13 +158,14 @@ export function Nav() {
                     target={external ? "_blank" : undefined}
                     rel={external ? "noopener noreferrer" : undefined}
                     onClick={closeMobile}
-                    className={`block min-h-[44px] rounded-full px-6 py-3 text-center text-base font-medium transition-colors ${
+                    className={`block min-h-[48px] rounded-xl px-4 py-3 text-left text-base font-medium transition-colors ${
                       primary
-                        ? "bg-violet-600 text-white hover:bg-violet-700"
-                        : "text-gray-700 hover:bg-gray-100"
-                    } focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2`}
+                        ? "bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] text-white mt-4"
+                        : "text-[#2D3754] hover:bg-[#EBEEF5]"
+                    } focus:outline-none focus:ring-2 focus:ring-[#635BFF] focus:ring-offset-2`}
                   >
                     {label}
+                    {primary && <ArrowRight className="inline w-4 h-4 ml-1.5" />}
                   </Link>
                 </motion.div>
               ))}

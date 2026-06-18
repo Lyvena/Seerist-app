@@ -1,66 +1,51 @@
 "use client";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { Container } from "@/components/ui/Container";
-import { SectionLabel } from "@/components/ui/SectionLabel";
 import { PipelineMockup } from "@/components/mockups/PipelineMockup";
+import { LayoutGrid, ArrowRight } from "lucide-react";
 
 export function FeatureSection4() {
   return (
-    <section
-      className="overflow-hidden"
-      style={{
-        padding: "clamp(80px, 12vw, 140px) 0",
-        background: "#FAFAFA",
-      }}
-    >
+    <section className="relative overflow-hidden" style={{ background: "#F4F6FB" }}>
       <Container>
         <div
-          className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:[&>*:first-child]:order-2"
-          style={{
-            maxWidth: "1200px",
-            marginInline: "auto",
-            gap: "clamp(48px, 6vw, 96px)",
-            alignItems: "center",
-          }}
+          className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:[&>*:first-child]:order-2 items-center"
+          style={{ gap: "clamp(40px, 6vw, 80px)" }}
         >
           <FadeUp>
-            <div className="flex flex-col justify-center relative">
-              <SectionLabel>Track Everything</SectionLabel>
-              <div
-                className="w-10 h-px mb-4"
-                style={{ background: "linear-gradient(90deg, #7C3AED, #A855F7)", borderRadius: "999px", marginLeft: "2px" }}
-              />
+            <div className="flex flex-col justify-center">
+              <p className="section-label mb-4 w-fit">
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Track Everything
+              </p>
               <h3
-                className="mt-4 tracking-tight text-gray-900"
+                className="mt-3 tracking-tight text-[#0B1221]"
                 style={{
                   fontFamily: "var(--font-heading)",
-                  fontSize: "clamp(1.75rem, 3vw, 2.75rem)",
+                  fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
                   fontWeight: 700,
                   letterSpacing: "-0.025em",
                   lineHeight: 1.15,
-                  marginBottom: "20px",
                 }}
               >
                 Every deal in one place — from discovery to closed.
               </h3>
-              <p
-                className="text-[1.0625rem] text-[#6B7280] max-w-[480px]"
-                style={{ lineHeight: 1.7, marginBottom: "28px" }}
-              >
+              <p className="mt-4 text-[1.0625rem] text-[#5E6B8A] max-w-[480px]" style={{ lineHeight: 1.7 }}>
                 Track every opportunity through your pipeline automatically. See exactly where every deal stands and watch revenue metrics update in real time.
               </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                {["Kanban pipeline", "Revenue forecast", "Deal tracking"].map((tag) => (
+                  <span key={tag} className="inline-flex items-center rounded-full bg-[#E0FAF6] px-3 py-1 text-[0.8125rem] font-medium text-[#059669]">
+                    {tag}
+                  </span>
+                ))}
+              </div>
               <a
-                href="/#features"
-                className="inline-flex items-center gap-2 text-[0.9375rem] font-medium text-violet-600 transition-all"
-                style={{
-                  textDecoration: "none",
-                  borderBottom: "1px solid transparent",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.borderBottomColor = "#7C3AED"}
-                onMouseLeave={(e) => e.currentTarget.style.borderBottomColor = "transparent"}
+                href="/features"
+                className="inline-flex items-center gap-2 mt-6 text-[0.9375rem] font-semibold text-[#635BFF] transition-all group"
               >
                 Learn more
-                <span aria-hidden="true">→</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
           </FadeUp>

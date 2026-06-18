@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
+import { ArrowRight, Shield } from "lucide-react";
 
 interface Plan {
   name: string;
@@ -79,20 +80,17 @@ function FeatureItem({ text, included }: { text: string; included: boolean }) {
   return (
     <div className="flex items-start gap-2.5">
       <div
-        className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full"
+        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full mt-0.5"
         style={{
-          background: included ? "#EDE9FE" : "#F3F4F6",
-          color: included ? "#7C3AED" : "#D1D5DB",
-          fontSize: "0.6875rem",
+          background: included ? "#EEEDFF" : "#F4F6FB",
+          color: included ? "#635BFF" : "#D1D5DB",
+          fontSize: "0.625rem",
           fontWeight: 800,
         }}
       >
         {included ? "✓" : "✗"}
       </div>
-      <span
-        className="text-[0.9375rem]"
-        style={{ color: included ? "#374151" : "#9CA3AF" }}
-      >
+      <span className="text-[0.9375rem]" style={{ color: included ? "#2D3754" : "#94A0BC" }}>
         {text}
       </span>
     </div>
@@ -111,31 +109,30 @@ function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isM
           transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
         },
       }}
-      className="relative flex flex-col rounded-[20px] border bg-white"
+      className="relative flex flex-col rounded-2xl border bg-white"
       style={{
-        background: "white",
         borderWidth: isPro ? "2px" : "1px",
-        borderColor: isPro ? "#7C3AED" : "#E5E7EB",
+        borderColor: isPro ? "#635BFF" : "#EBEEF5",
         padding: "32px",
         boxShadow: isPro && !isMobile
-          ? "0 20px 60px rgba(124, 58, 237, 0.18), 0 4px 16px rgba(124, 58, 237, 0.10)"
-          : "0 1px 3px rgba(0,0,0,0.06)",
-        transform: isPro && !isMobile ? "scale(1.03) translateY(-8px)" : "none",
+          ? "0 20px 60px rgba(99,91,255,0.12), 0 4px 16px rgba(99,91,255,0.06)"
+          : "var(--shadow-md)",
+        transform: isPro && !isMobile ? "scale(1.02) translateY(-4px)" : "none",
       }}
-      whileHover={isPro && !isMobile ? { scale: 1.04, y: -10 } : undefined}
+      whileHover={isPro && !isMobile ? { scale: 1.03, y: -6 } : { y: -2 }}
     >
       {isPro && (
         <div
           className="absolute -top-3.5 left-1/2 -translate-x-1/2"
           style={{
-            background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+            background: "linear-gradient(135deg, #635BFF, #8B5CF6)",
             color: "white",
             borderRadius: "999px",
-            padding: "6px 20px",
-            fontSize: "0.8125rem",
+            padding: "5px 18px",
+            fontSize: "0.75rem",
             fontWeight: 600,
             whiteSpace: "nowrap",
-            boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
+            boxShadow: "0 4px 16px rgba(99,91,255,0.3)",
           }}
         >
           Most Popular
@@ -144,12 +141,8 @@ function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isM
 
       <div>
         <h3
-          className="text-[0.875rem] font-semibold uppercase"
-          style={{
-            letterSpacing: "0.06em",
-            color: isPro ? "#7C3AED" : "#6B7280",
-            marginBottom: "8px",
-          }}
+          className="text-[0.8125rem] font-semibold uppercase tracking-wider"
+          style={{ color: isPro ? "#635BFF" : "#94A0BC", marginBottom: "8px" }}
         >
           {plan.name}
         </h3>
@@ -158,76 +151,56 @@ function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isM
             className="font-bold"
             style={{
               fontFamily: "var(--font-heading)",
-              fontSize: "clamp(2.5rem, 4vw, 3.5rem)",
+              fontSize: "clamp(2.5rem, 4vw, 3.25rem)",
               letterSpacing: "-0.03em",
-              color: isPro ? "transparent" : "#0A0A0A",
-              background: isPro ? "linear-gradient(135deg, #7C3AED, #6D28D9)" : "none",
-              WebkitBackgroundClip: isPro ? "text" : "initial",
-              backgroundClip: isPro ? "text" : "initial",
+              color: isPro ? "#635BFF" : "#0B1221",
               lineHeight: 1,
             }}
           >
             ${annual ? plan.annual : plan.monthly}
           </span>
           {(annual ? plan.annual : plan.monthly) > 0 && (
-            <span
-              className="text-[1rem]"
-              style={{ color: "#9CA3AF", fontWeight: 400 }}
-            >
-              /month
-            </span>
+            <span className="text-[0.9375rem] text-[#94A0BC] font-normal">/month</span>
           )}
         </div>
-        <p
-          className="text-[0.9375rem]"
-          style={{
-            color: "#6B7280",
-            marginTop: "8px",
-            marginBottom: "24px",
-            lineHeight: 1.5,
-          }}
-        >
+        <p className="text-[0.9375rem] text-[#5E6B8A] mt-2 mb-6" style={{ lineHeight: 1.5 }}>
           {plan.subtitle}
         </p>
       </div>
 
       <Link
         href={plan.href}
-        className="inline-flex h-12 w-full items-center justify-center rounded-[10px] text-[0.9375rem] font-semibold transition-all"
+        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold transition-all"
         style={{
-          background: isPro ? "linear-gradient(135deg, #7C3AED, #6D28D9)" : "white",
-          color: isPro ? "white" : "#374151",
-          border: isPro ? "none" : "1.5px solid #D1D5DB",
-          boxShadow: isPro ? "0 8px 24px rgba(124, 58, 237, 0.3)" : "none",
+          background: isPro ? "linear-gradient(135deg, #635BFF, #8B5CF6)" : "white",
+          color: isPro ? "white" : "#2D3754",
+          border: isPro ? "none" : "1.5px solid #EBEEF5",
+          boxShadow: isPro ? "0 4px 16px rgba(99,91,255,0.2)" : "none",
         }}
         onMouseEnter={(e) => {
           if (isPro) {
-            e.currentTarget.style.boxShadow = "0 12px 32px rgba(124, 58, 237, 0.4)";
+            e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,91,255,0.3)";
           } else {
-            e.currentTarget.style.borderColor = "#9CA3AF";
-            e.currentTarget.style.background = "#F9FAFB";
+            e.currentTarget.style.borderColor = "#C7C3FF";
+            e.currentTarget.style.background = "#EEEDFF";
+            e.currentTarget.style.color = "#635BFF";
           }
         }}
         onMouseLeave={(e) => {
           if (isPro) {
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(124, 58, 237, 0.3)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(99,91,255,0.2)";
           } else {
-            e.currentTarget.style.borderColor = "#D1D5DB";
+            e.currentTarget.style.borderColor = "#EBEEF5";
             e.currentTarget.style.background = "white";
+            e.currentTarget.style.color = "#2D3754";
           }
         }}
       >
-        {plan.name === "Free"
-          ? "Get Started Free"
-          : plan.name === "Pro"
-          ? "Start Pro — 7 Days Free"
-          : "Start Agency"}
+        {plan.name === "Free" ? "Get Started Free" : plan.name === "Pro" ? "Start Pro — 7 Days Free" : "Start Agency"}
+        <ArrowRight className="w-4 h-4" />
       </Link>
 
-      <div
-        className="my-6 w-full border-t"
-        style={{ borderColor: "#F3F4F6" }}
-      />
+      <div className="my-6 w-full border-t border-[#EBEEF5]" />
 
       <div className="flex flex-col gap-2.5">
         {plan.features.map((feature) => (
@@ -243,16 +216,14 @@ function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isM
 
 export function PricingCards({ annual }: { annual: boolean }) {
   return (
-    <section className="bg-white pt-24">
+    <section className="pt-8">
       <div
-        className="grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-5 sm:grid-cols-1 lg:grid-cols-3"
         style={{
-          gap: "24px",
           alignItems: "start",
-          maxWidth: "1100px",
+          maxWidth: "1040px",
           marginInline: "auto",
-          marginTop: "56px",
-          paddingInline: "clamp(20px, 5vw, 80px)",
+          marginTop: "48px",
         }}
       >
         {PLANS.map((plan, index) => (
@@ -262,44 +233,23 @@ export function PricingCards({ annual }: { annual: boolean }) {
         ))}
       </div>
 
-      {/* Money-back guarantee */}
       <FadeUp delay={0.4}>
         <div
-          className="inline-flex items-center gap-2"
+          className="inline-flex items-center gap-2 mx-auto flex"
           style={{
-            background: "#ECFDF5",
+            background: "#E0FAF6",
             border: "1px solid #A7F3D0",
             borderRadius: "999px",
             padding: "10px 20px",
-            marginTop: "32px",
-            marginInline: "auto",
+            marginTop: "28px",
           }}
         >
           <Shield style={{ color: "#059669", height: "16px", width: "16px" }} />
-          <span
-            className="text-[0.875rem] font-medium"
-            style={{ color: "#065F46" }}
-          >
+          <span className="text-[0.875rem] font-medium" style={{ color: "#065F46" }}>
             14-day money-back guarantee · Cancel any time
           </span>
         </div>
       </FadeUp>
     </section>
-  );
-}
-
-function Shield({ style }: { style?: CSSProperties }) {
-  return (
-    <svg
-      style={style}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
   );
 }

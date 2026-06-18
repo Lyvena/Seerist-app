@@ -2,28 +2,20 @@ import Link from "next/link";
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2" style={{ gap: "8px" }}>
-      <svg
-        width="32"
-        height="32"
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <circle cx="16" cy="16" r="14" stroke="#7C3AED" strokeWidth="2" opacity="0.2" />
-        <circle cx="16" cy="16" r="9" stroke="#7C3AED" strokeWidth="2" opacity="0.5" />
-        <circle cx="16" cy="16" r="4" stroke="#7C3AED" strokeWidth="2.5" />
-        <circle cx="16" cy="16" r="2.5" fill="#7C3AED" />
-      </svg>
+    <Link href="/" className="flex items-center gap-2.5 group">
+      <div className="relative w-8 h-8">
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#635BFF] to-[#8B5CF6] rotate-6 opacity-20 group-hover:rotate-12 transition-transform duration-300" />
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#635BFF] to-[#8B5CF6] flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" opacity="0.4" />
+            <circle cx="8" cy="8" r="3.5" stroke="white" strokeWidth="1.5" opacity="0.7" />
+            <circle cx="8" cy="8" r="1.5" fill="white" />
+          </svg>
+        </div>
+      </div>
       <span
-        className="font-semibold tracking-tight"
-        style={{
-          fontFamily: "var(--font-heading, 'Cal Sans', 'Geist Sans', system-ui)",
-          fontSize: "1.25rem",
-          letterSpacing: "-0.01em",
-          color: "#0A0A0A",
-        }}
+        className="text-lg font-semibold tracking-tight text-[#0B1221]"
+        style={{ fontFamily: "var(--font-heading)" }}
       >
         Seerist
       </span>
