@@ -25,11 +25,11 @@ export function FeatureSection3() {
         >
           <FadeUp>
             <div className="flex flex-col justify-center relative">
-              <div
-                className="absolute -left-4 top-0 w-10 h-px mb-4"
-                style={{ background: "linear-gradient(90deg, #7C3AED, #A855F7)", borderRadius: "999px" }}
-              />
               <SectionLabel>Always On</SectionLabel>
+              <div
+                className="w-10 h-px mb-4"
+                style={{ background: "linear-gradient(90deg, #7C3AED, #A855F7)", borderRadius: "999px", marginLeft: "2px" }}
+              />
               <h3
                 className="mt-4 tracking-tight text-gray-900"
                 style={{
