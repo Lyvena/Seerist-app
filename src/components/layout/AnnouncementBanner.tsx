@@ -45,7 +45,7 @@ export function AnnouncementBanner() {
               AI Business Development for SaaS — Now in Public Beta
             </span>
             <Link
-              href="https://app.seerist.xyz/signup"
+              href="/signup"
               className="ml-1 inline-flex items-center gap-1 text-[0.8125rem] sm:text-xs font-semibold underline decoration-white/50 underline-offset-4 hover:decoration-white transition-colors"
             >
               Try it free <ArrowRight className="w-3 h-3" />

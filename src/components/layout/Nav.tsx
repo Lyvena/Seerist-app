@@ -16,8 +16,8 @@ const NAV_LINKS: NavItem[] = [
 
 const MOBILE_LINKS: NavItem[] = [
   ...NAV_LINKS,
-  { label: "Sign In", href: "https://app.seerist.xyz/login", external: true },
-  { label: "Get Started Free", href: "https://app.seerist.xyz/signup", external: true, primary: true },
+  { label: "Sign In", href: "/login", external: true },
+  { label: "Get Started Free", href: "/signup", external: true, primary: true },
 ];
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -90,13 +90,13 @@ export function Nav() {
 
           <div className="hidden md:flex items-center gap-2.5">
             <Link
-              href="https://app.seerist.xyz/login"
+              href="/login"
               className="rounded-lg px-4 py-2 text-[0.9375rem] font-medium text-[#5E6B8A] hover:text-[#0B1221] transition-colors duration-200"
             >
               Sign In
             </Link>
             <Link
-              href="https://app.seerist.xyz/signup"
+              href="/signup"
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] px-5 py-2.5 text-[0.9375rem] font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
               style={{ boxShadow: "0 2px 12px rgba(99,91,255,0.2)" }}
             >

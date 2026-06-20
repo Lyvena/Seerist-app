@@ -70,7 +70,7 @@ export function FinalCTA() {
                 style={{ gap: "14px", marginTop: "36px" }}
               >
                 <motion.a
-                  href="https://app.seerist.xyz/signup"
+                  href="/signup"
                   className="inline-flex items-center gap-2 h-[52px] rounded-full px-8 text-[1rem] font-semibold transition-all"
                   style={{ background: "white", color: "#635BFF" }}
                   whileHover={{ scale: 1.03, y: -2 }}

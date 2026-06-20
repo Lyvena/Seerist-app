@@ -112,7 +112,7 @@ function FeatureBlock({ label, title, body, mockup, reverse, index }: FeatureBlo
             {body}
           </p>
           <a
-            href="https://app.seerist.xyz/signup"
+            href="/signup"
             className="mt-6 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-[#635BFF] transition-all group"
           >
             Try it free

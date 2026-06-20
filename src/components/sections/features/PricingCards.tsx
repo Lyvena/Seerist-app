@@ -27,7 +27,7 @@ const PLANS: Plan[] = [
     monthly: 0,
     annual: 0,
     subtitle: "For founders just getting started.",
-    href: "https://app.seerist.xyz/signup",
+    href: "/signup",
     popular: false,
     features: [
       "1 product",
@@ -45,7 +45,7 @@ const PLANS: Plan[] = [
     monthly: 29,
     annual: 19,
     subtitle: "For serious indie founders.",
-    href: "https://app.seerist.xyz/signup?plan=pro",
+    href: "/signup?plan=pro",
     popular: true,
     features: [
       "Everything in Free",
@@ -67,7 +67,7 @@ const PLANS: Plan[] = [
     monthly: 79,
     annual: 55,
     subtitle: "For studios and prolific builders.",
-    href: "https://app.seerist.xyz/signup?agency=agency",
+    href: "/signup?agency=agency",
     popular: false,
     features: [
       "Everything in Pro",

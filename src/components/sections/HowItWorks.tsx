@@ -92,7 +92,7 @@ export function HowItWorks() {
         <FadeUp delay={0.4}>
           <div className="mt-12 text-center">
             <a
-              href="https://app.seerist.xyz/signup"
+              href="/signup"
               className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-[#635BFF] hover:text-[#5046E5] transition-colors"
             >
               Start with the free plan

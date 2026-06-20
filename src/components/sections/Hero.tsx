@@ -151,7 +151,7 @@ export function Hero() {
             transition={{ duration: 0.7, ease, delay: 0.8 }}
           >
             <motion.a
-              href="https://app.seerist.xyz/signup"
+              href="/signup"
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] px-8 text-[1.0625rem] font-semibold text-white transition-all"

@@ -89,7 +89,7 @@ export function Footer() {
             </p>
           </div>
           <Link
-            href="https://app.seerist.xyz/signup"
+            href="/signup"
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#635BFF] to-[#8B5CF6] px-6 py-3 text-[0.9375rem] font-semibold text-white transition-all hover:shadow-lg flex-shrink-0"
             style={{ boxShadow: "0 4px 16px rgba(99,91,255,0.2)" }}
           >
