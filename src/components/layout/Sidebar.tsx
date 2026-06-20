@@ -39,7 +39,7 @@ const NAV_SECTIONS = [
     label: "TOOLS",
     items: [
       { href: "/app/proposal-generator", icon: FileText, label: "Proposal Generator" },
-      { href: "/app/ai-settings", icon: Cpu, label: "AI Settings" },
+      { href: "/settings/ai", icon: Cpu, label: "AI Settings" },
     ],
   },
     {
