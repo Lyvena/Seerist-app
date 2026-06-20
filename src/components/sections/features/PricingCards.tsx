@@ -1,12 +1,16 @@
 "use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FadeUp } from "@/components/animations/FadeUp";
 import { motion } from "framer-motion";
 import type { CSSProperties } from "react";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, Shield, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Plan {
   name: string;
+  slug: string;
   monthly: number;
   annual: number;
   subtitle: string;
@@ -19,6 +23,7 @@ interface Plan {
 const PLANS: Plan[] = [
   {
     name: "Free",
+    slug: "free",
     monthly: 0,
     annual: 0,
     subtitle: "For founders just getting started.",
@@ -36,6 +41,7 @@ const PLANS: Plan[] = [
   },
   {
     name: "Pro",
+    slug: "pro",
     monthly: 29,
     annual: 19,
     subtitle: "For serious indie founders.",
@@ -57,6 +63,7 @@ const PLANS: Plan[] = [
   },
   {
     name: "Agency",
+    slug: "agency",
     monthly: 79,
     annual: 55,
     subtitle: "For studios and prolific builders.",
@@ -98,7 +105,31 @@ function FeatureItem({ text, included }: { text: string; included: boolean }) {
 }
 
 function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isMobile: boolean }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const isPro = plan.popular;
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: plan.slug, annual }),
+      });
+      const data = await res.json();
+      if (data.redirectUrl) {
+        router.push(data.redirectUrl);
+      } else {
+        toast.error(data.error || "Checkout failed");
+      }
+    } catch {
+      toast.error("Checkout failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <motion.div
       variants={{
@@ -168,37 +199,69 @@ function PlanCard({ plan, annual, isMobile }: { plan: Plan; annual: boolean; isM
         </p>
       </div>
 
-      <Link
-        href={plan.href}
-        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold transition-all"
-        style={{
-          background: isPro ? "linear-gradient(135deg, #635BFF, #8B5CF6)" : "white",
-          color: isPro ? "white" : "#2D3754",
-          border: isPro ? "none" : "1.5px solid #EBEEF5",
-          boxShadow: isPro ? "0 4px 16px rgba(99,91,255,0.2)" : "none",
-        }}
-        onMouseEnter={(e) => {
-          if (isPro) {
-            e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,91,255,0.3)";
-          } else {
+      {plan.slug === "free" ? (
+        <Link
+          href={plan.href}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold transition-all"
+          style={{
+            background: "white",
+            color: "#2D3754",
+            border: "1.5px solid #EBEEF5",
+          }}
+          onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = "#C7C3FF";
             e.currentTarget.style.background = "#EEEDFF";
             e.currentTarget.style.color = "#635BFF";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (isPro) {
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(99,91,255,0.2)";
-          } else {
+          }}
+          onMouseLeave={(e) => {
             e.currentTarget.style.borderColor = "#EBEEF5";
             e.currentTarget.style.background = "white";
             e.currentTarget.style.color = "#2D3754";
-          }
-        }}
-      >
-        {plan.name === "Free" ? "Get Started Free" : plan.name === "Pro" ? "Start Pro — 7 Days Free" : "Start Agency"}
-        <ArrowRight className="w-4 h-4" />
-      </Link>
+          }}
+        >
+          Get Started Free
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      ) : (
+        <button
+          onClick={handleCheckout}
+          disabled={loading}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold transition-all"
+          style={{
+            background: isPro ? "linear-gradient(135deg, #635BFF, #8B5CF6)" : "white",
+            color: isPro ? "white" : "#2D3754",
+            border: isPro ? "none" : "1.5px solid #EBEEF5",
+            boxShadow: isPro ? "0 4px 16px rgba(99,91,255,0.2)" : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (isPro) {
+              e.currentTarget.style.boxShadow = "0 8px 28px rgba(99,91,255,0.3)";
+            } else {
+              e.currentTarget.style.borderColor = "#C7C3FF";
+              e.currentTarget.style.background = "#EEEDFF";
+              e.currentTarget.style.color = "#635BFF";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (isPro) {
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(99,91,255,0.2)";
+            } else {
+              e.currentTarget.style.borderColor = "#EBEEF5";
+              e.currentTarget.style.background = "white";
+              e.currentTarget.style.color = "#2D3754";
+            }
+          }}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              {plan.name === "Pro" ? "Start Pro" : "Start Agency"}
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      )}
 
       <div className="my-6 w-full border-t border-[#EBEEF5]" />
 
