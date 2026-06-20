@@ -315,6 +315,21 @@ export default async function (req: Request): Promise<Response> {
         metadata: { platform: body.platform_slug, score: scoreData.total_score, title: opp.title },
       }]);
 
+      fetch(`${OSS_HOST}/functions/send-opportunity-alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: authHeader ?? '' },
+        body: JSON.stringify({
+          user_id: body.user_id,
+          opportunity_external_id: oppWithPlatform.external_id,
+          platform_slug: body.platform_slug,
+          score: scoreData.total_score,
+          title: opp.title,
+          description: opp.description,
+          budget: `${[opp.budget_min, opp.budget_max].filter((b) => b != null).join(' - ') || 'N/A'}`,
+          keywords: [...(body.product.keywords ?? []), ...(body.config.custom_keywords ?? [])],
+        }),
+      }).catch(() => {});
+
       if (body.config.auto_propose && scoreData.total_score >= 80) {
         const proposalUrl = `${OSS_HOST}/functions/generate-proposal`;
         fetch(proposalUrl, {

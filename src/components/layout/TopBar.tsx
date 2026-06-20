@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Search, Bell, Menu } from "lucide-react"
+import { Search, Menu } from "lucide-react"
 import { CommandPalette } from "./CommandPalette"
+import { NotificationBell } from "./NotificationBell"
 
 interface TopBarProps {
   onMenuClick: () => void
@@ -52,10 +53,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             </kbd>
           </button>
 
-          <button className="relative flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)]">
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--brand-primary)] ring-2 ring-[var(--surface-primary)]" />
-          </button>
+          <NotificationBell />
 
           <button className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary)] text-xs font-semibold text-white">
             A
