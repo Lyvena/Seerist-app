@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SmoothScroll } from "@/components/animations/SmoothScroll";
-import { Nav } from "@/components/layout/Nav";
-import { Footer } from "@/components/layout/Footer";
-import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://seerist.xyz"),
   title: {
-    default: "Seerist — AI Business Development for SaaS",
-    template: "%s | Seerist",
+    default: "Seerist v2",
+    template: "Seerist | %s",
   },
   description:
     "Seerist analyzes your SaaS product and finds perfect freelance projects that need exactly what you've built. AI-powered matching, proposals, and pipeline for indie founders.",
@@ -69,15 +67,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://app.seerist.xyz" />
       </head>
-      <body className="min-h-screen bg-[#FAFBFE] text-[#0B1221] antialiased">
-        <TooltipProvider>
-          <SmoothScroll>
-            <AnnouncementBanner />
-            <Nav />
-            <main className="pt-16">{children}</main>
-            <Footer />
-          </SmoothScroll>
-        </TooltipProvider>
+      <body className="font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
