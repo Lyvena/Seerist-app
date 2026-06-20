@@ -14,7 +14,7 @@ interface Action {
 }
 
 const ACTIONS: Action[] = [
-  { id: "opportunities", label: "View Opportunities", href: "/app", icon: Zap, category: "Navigate" },
+  { id: "opportunities", label: "View Opportunities", href: "/opportunities", icon: Zap, category: "Navigate" },
   { id: "live-feed", label: "View Live Feed", href: "/app/live-feed", icon: Radio, category: "Navigate" },
   { id: "pipeline", label: "View My Pipeline", href: "/app/pipeline", icon: KanbanSquare, category: "Navigate" },
   { id: "won-deals", label: "View Won Deals", href: "/app/won-deals", icon: Trophy, category: "Navigate" },

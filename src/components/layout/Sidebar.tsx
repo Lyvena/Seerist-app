@@ -21,7 +21,7 @@ const NAV_SECTIONS = [
   {
     label: "DISCOVER",
     items: [
-      { href: "/app", icon: Zap, label: "Opportunities" },
+      { href: "/opportunities", icon: Zap, label: "Opportunities" },
       { href: "/app/live-feed", icon: Radio, label: "Live Feed" },
     ],
   },

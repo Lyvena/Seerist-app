@@ -1,0 +1,52 @@
+"use server"
+
+import { admin } from "@/lib/insforge"
+
+export async function updateOpportunityStatus(id: string, status: string) {
+  const { error } = await admin.database
+    .from("opportunities")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+  return { error: error?.message ?? null }
+}
+
+export async function toggleStar(id: string, currentlyStarred: boolean) {
+  const { error } = await admin.database
+    .from("opportunities")
+    .update({ is_starred: !currentlyStarred, updated_at: new Date().toISOString() })
+    .eq("id", id)
+  return { error: error?.message ?? null }
+}
+
+export async function skipOpportunity(id: string, userId: string) {
+  const now = new Date().toISOString()
+
+  const { error: updateError } = await admin.database
+    .from("opportunities")
+    .update({ status: "skipped", updated_at: now })
+    .eq("id", id)
+
+  if (updateError) return { error: updateError.message }
+
+  const { error: logError } = await admin.database
+    .from("activity_log")
+    .insert({
+      user_id: userId,
+      entity_type: "opportunity",
+      entity_id: id,
+      action: "skipped",
+      metadata: { skipped_at: now },
+    })
+
+  return { error: logError?.message ?? null }
+}
+
+export async function markViewed(id: string) {
+  const { error } = await admin.database
+    .from("opportunities")
+    .update({ status: "viewed", updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("status", "new")
+
+  return { error: error?.message ?? null }
+}

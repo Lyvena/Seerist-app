@@ -10,7 +10,8 @@ interface TopBarProps {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  "/app": "Opportunities",
+  "/app": "Home",
+  "/opportunities": "Opportunities",
   "/app/live-feed": "Live Feed",
   "/app/pipeline": "My Pipeline",
   "/app/won-deals": "Won Deals",
