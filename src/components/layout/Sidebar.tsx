@@ -47,7 +47,7 @@ const NAV_SECTIONS = [
       items: [
         { href: "/products", icon: Package, label: "My Products" },
         { href: "/platforms", icon: Globe, label: "Platforms" },
-        { href: "/app/settings", icon: Settings2, label: "Settings" },
+        { href: "/settings", icon: Settings2, label: "Settings" },
       ],
     },
 ]
