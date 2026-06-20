@@ -22,10 +22,9 @@ interface DealDetailDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   card: PipelineCardData | null
-  userId: string
 }
 
-export function DealDetailDrawer({ open, onOpenChange, card, userId }: DealDetailDrawerProps) {
+export function DealDetailDrawer({ open, onOpenChange, card }: DealDetailDrawerProps) {
   const [stage, setStage] = useState(card?.entry.stage ?? "")
   const [dealValue, setDealValue] = useState(card?.entry.deal_value?.toString() ?? "")
   const [closeDate, setCloseDate] = useState(card?.entry.expected_close_date ?? "")

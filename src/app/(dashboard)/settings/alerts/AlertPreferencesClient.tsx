@@ -31,7 +31,7 @@ export function AlertPreferencesClient({
   const [sending, setSending] = useState(false)
 
   async function handleSave() {
-    const { error } = await saveAlertPreferences(userId, {
+    const { error } = await saveAlertPreferences({
       digest_frequency: frequency,
       min_score_for_alert: minScore,
       platforms_included: platformsIncluded,
@@ -42,7 +42,7 @@ export function AlertPreferencesClient({
 
   async function handleTestEmail() {
     setSending(true)
-    await sendTestAlert(userId, emailOverride)
+    await sendTestAlert(emailOverride)
     setSending(false)
     toast.success("Test email sent")
   }

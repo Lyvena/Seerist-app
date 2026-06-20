@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Search, Menu } from "lucide-react"
+import { Search, Menu, Sparkles } from "lucide-react"
 import { CommandPalette } from "./CommandPalette"
 import { NotificationBell } from "./NotificationBell"
 
 interface TopBarProps {
   onMenuClick: () => void
+  changelogNew?: boolean
+  onChangelogClick?: () => void
 }
 
 const PAGE_TITLES: Record<string, string> = {
@@ -23,7 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/app/settings": "Settings",
 }
 
-export function TopBar({ onMenuClick }: TopBarProps) {
+export function TopBar({ onMenuClick, changelogNew, onChangelogClick }: TopBarProps) {
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const pageTitle = PAGE_TITLES[pathname] ?? "Dashboard"
@@ -45,6 +47,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           <button
             onClick={() => setPaletteOpen(true)}
             className="hidden sm:flex items-center gap-2 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-1.5 text-sm text-[var(--text-muted)] hover:border-[var(--brand-primary-border)] hover:text-[var(--text-secondary)] transition-colors"
+            aria-label="Search"
           >
             <Search className="h-4 w-4" />
             <span>Search...</span>
@@ -53,9 +56,25 @@ export function TopBar({ onMenuClick }: TopBarProps) {
             </kbd>
           </button>
 
+          <button
+            onClick={onChangelogClick}
+            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-tertiary)] transition-colors"
+            aria-label="What's new"
+          >
+            <Sparkles className="h-4 w-4" />
+            {changelogNew && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 items-center justify-center">
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--brand-primary)]" />
+              </span>
+            )}
+          </button>
+
           <NotificationBell />
 
-          <button className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary)] text-xs font-semibold text-white">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary)] text-xs font-semibold text-white"
+            aria-label="User menu"
+          >
             A
           </button>
         </div>

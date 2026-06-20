@@ -2,6 +2,8 @@ import { createServerClient } from "@insforge/sdk/ssr"
 import { cookies } from "next/headers"
 import { PlatformsClient } from "@/components/platforms/PlatformsClient"
 
+export const revalidate = 3600
+
 export default async function PlatformsPage() {
   const insforge = createServerClient({ cookies: await cookies() })
 

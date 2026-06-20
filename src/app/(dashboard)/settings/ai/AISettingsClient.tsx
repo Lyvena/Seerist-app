@@ -105,7 +105,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
   async function handleSaveKey() {
     if (!keyInput.trim()) return
     setSaving(true)
-    const result = await saveAIKey("", keyInput)
+    const result = await saveAIKey(keyInput)
     if (result.success) {
       toast.success("API key saved and verified")
       router.refresh()
@@ -117,7 +117,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
 
   async function handleRemoveKey() {
     if (!confirm("Remove your API key? The default Seerist key will be used instead.")) return
-    const result = await removeAIKey("")
+    const result = await removeAIKey()
     if (result.success) {
       toast.success("API key removed")
       router.refresh()
@@ -128,7 +128,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
 
   async function handleSavePrefs() {
     setSaving(true)
-    const result = await updateAIPreferences("", {
+    const result = await updateAIPreferences({
       ai_model: model,
       ai_tone: tone,
       ai_max_proposal_words: maxWords,

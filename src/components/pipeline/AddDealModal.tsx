@@ -10,7 +10,6 @@ import { toast } from "sonner"
 interface AddDealModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  userId: string
 }
 
 const STAGES = [
@@ -21,7 +20,7 @@ const STAGES = [
   { key: "in_negotiation", label: "In Negotiation" },
 ]
 
-export function AddDealModal({ open, onOpenChange, userId }: AddDealModalProps) {
+export function AddDealModal({ open, onOpenChange }: AddDealModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [budgetMin, setBudgetMin] = useState("")
@@ -34,7 +33,7 @@ export function AddDealModal({ open, onOpenChange, userId }: AddDealModalProps) 
     if (!title.trim()) return
 
     setSaving(true)
-    const { error } = await addManualDeal(userId, null, {
+    const { error } = await addManualDeal(null, {
       title: title.trim(),
       description: description.trim(),
       budget_min: budgetMin ? parseFloat(budgetMin) : null,

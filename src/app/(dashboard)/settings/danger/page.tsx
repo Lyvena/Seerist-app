@@ -9,5 +9,5 @@ export default async function DangerPage() {
   const userId = userData?.user?.id ?? ""
   if (error || !userId) redirect("/login")
 
-  return <DangerZoneClient userId={userId} />
+  return <DangerZoneClient />
 }

@@ -133,7 +133,6 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
       }))
 
       const result = await completeOnboarding({
-        userId,
         product: productForm,
         platforms: platformEntries,
         alerts: alertsForm,

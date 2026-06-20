@@ -17,6 +17,8 @@ export function ScoreBadge({ score, className }: ScoreBadgeProps) {
 
   return (
     <span
+      role="status"
+      aria-label={`Score ${score} out of 100, ${tier.label}`}
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
         tier.bg,

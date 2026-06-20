@@ -61,7 +61,7 @@ export function ProductFormModal({ open, onOpenChange, product, userId }: Produc
     if (!name.trim() || !description.trim()) return
     setSaving(true)
 
-    const { error } = await upsertProduct(userId, {
+    const { error } = await upsertProduct({
       id: product?.id,
       name: name.trim(),
       description: description.trim(),

@@ -1,5 +1,6 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { createAdminClient } from "@insforge/sdk"
 import { revalidatePath } from "next/cache"
 
@@ -9,33 +10,32 @@ const insforge = createAdminClient({
 })
 
 export async function saveAlertPreferences(
-  userId: string,
   data: {
     digest_frequency: string
     min_score_for_alert: number
     platforms_included: string[]
   }
 ) {
+  const userId = await requireUser()
   const { data: existing } = await insforge.database.from("alert_preferences")
     .select("id")
     .eq("user_id", userId)
-    .single()
-
-  const payload = { user_id: userId, ...data }
+    .maybeSingle()
 
   if (existing) {
     const row = existing as { id: string }
     const { error } = await insforge.database.from("alert_preferences").update(data).eq("id", row.id)
-    revalidatePath("/app/settings/alerts")
+    revalidatePath("/settings/alerts")
     return { error }
   } else {
-    const { error } = await insforge.database.from("alert_preferences").insert([payload])
-    revalidatePath("/app/settings/alerts")
+    const { error } = await insforge.database.from("alert_preferences").insert([{ user_id: userId, ...data }])
+    revalidatePath("/settings/alerts")
     return { error }
   }
 }
 
-export async function sendTestAlert(userId: string, email: string) {
+export async function sendTestAlert(email: string) {
+  const userId = await requireUser()
   const { error } = await insforge.database.from("activity_log").insert([{
     user_id: userId,
     entity_type: "alert",

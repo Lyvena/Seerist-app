@@ -1,5 +1,6 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { createAdminClient } from "@insforge/sdk"
 import { revalidatePath } from "next/cache"
 
@@ -11,9 +12,9 @@ const insforge = createAdminClient({
 export async function movePipelineStage(
   opportunityId: string,
   newStage: string,
-  userId: string,
   prevStage?: string
 ) {
+  const userId = await requireUser()
   const { error: pipeErr } = await insforge.database.from("pipeline_entries").insert([{
     user_id: userId,
     opportunity_id: opportunityId,
@@ -44,7 +45,7 @@ export async function movePipelineStage(
     metadata: { from: prevStage ?? null, to: newStage },
   }])
 
-  revalidatePath("/app/pipeline")
+  revalidatePath("/pipeline")
   return { error: null }
 }
 
@@ -53,12 +54,13 @@ export async function updateDealValue(
   dealValue: number | null,
   currency: string
 ) {
+  const userId = await requireUser()
   const { error } = await insforge.database.from("pipeline_entries").update({
     deal_value: dealValue,
     deal_currency: currency,
   }).eq("id", entryId)
 
-  revalidatePath("/app/pipeline")
+  revalidatePath("/pipeline")
   return { error }
 }
 
@@ -74,17 +76,17 @@ export async function updateDealDetails(
     stage?: string
   }
 ) {
+  const userId = await requireUser()
   const { error } = await insforge.database.from("pipeline_entries").update({
     ...data,
     stage_changed_at: data.stage ? new Date().toISOString() : undefined,
   }).eq("id", entryId)
 
-  revalidatePath("/app/pipeline")
+  revalidatePath("/pipeline")
   return { error }
 }
 
 export async function addManualDeal(
-  userId: string,
   platformId: string | null,
   opportunityData: {
     title: string
@@ -97,6 +99,7 @@ export async function addManualDeal(
   },
   stage?: string
 ) {
+  const userId = await requireUser()
   const { data: opp, error: oppErr } = await insforge.database.from("opportunities").insert([{
     user_id: userId,
     platform_id: platformId ?? "00000000-0000-0000-0000-000000000000",
@@ -120,6 +123,6 @@ export async function addManualDeal(
     stage_changed_at: new Date().toISOString(),
   }])
 
-  revalidatePath("/app/pipeline")
+  revalidatePath("/pipeline")
   return { error: null, id: oppRow.id }
 }

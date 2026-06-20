@@ -45,18 +45,18 @@ export function PlatformsClient({ platforms, configMap, statsMap, plan, userId }
   const [syncing, setSyncing] = useState<string | null>(null)
 
   async function handleToggle(platformId: string, currentEnabled: boolean) {
-    await togglePlatform(userId, platformId, !currentEnabled)
+    await togglePlatform(platformId, !currentEnabled)
     toast.success(currentEnabled ? "Platform disabled" : "Platform enabled")
   }
 
   async function handleConfigChange(platformId: string, field: string, value: unknown) {
-    await updatePlatformConfig(userId, platformId, { [field]: value })
+    await updatePlatformConfig(platformId, { [field]: value })
   }
 
   async function handleSync(platformSlug: string) {
     setSyncing(platformSlug)
     toast.info(`Scanning ${platformSlug}...`)
-    const { ok } = await triggerPlatformScan(userId, platformSlug)
+    const { ok } = await triggerPlatformScan(platformSlug)
     setSyncing(null)
     if (ok) toast.success(`${platformSlug} scan complete`)
     else toast.error(`${platformSlug} scan failed`)

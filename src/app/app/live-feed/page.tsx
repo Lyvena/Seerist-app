@@ -250,7 +250,7 @@ export default function LiveFeedPage() {
   }
 
   async function handleSkip(id: string) {
-    await skipOpportunity(id, userId)
+    await skipOpportunity(id)
     setFeed((prev) => prev.filter((i) => i.id !== id))
     toast.success("Skipped")
   }

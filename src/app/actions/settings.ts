@@ -1,10 +1,10 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 import { revalidatePath } from "next/cache"
 
 export async function updateProfile(
-  userId: string,
   data: {
     full_name: string
     company_name: string
@@ -12,6 +12,7 @@ export async function updateProfile(
     timezone: string
   }
 ) {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("profiles")
     .update({
@@ -28,7 +29,8 @@ export async function updateProfile(
   return { success: true }
 }
 
-export async function uploadAvatar(userId: string, formData: FormData) {
+export async function uploadAvatar(formData: FormData) {
+  const userId = await requireUser()
   const file = formData.get("avatar") as File | null
   if (!file) return { error: "No file provided" }
 
@@ -43,7 +45,7 @@ export async function uploadAvatar(userId: string, formData: FormData) {
   const ext = file.name.split(".").pop() ?? "png"
   const key = `avatars/${userId}/${Date.now()}.${ext}`
 
-  const { data: uploadData, error: uploadError } = await admin.storage
+  const { error: uploadError } = await admin.storage
     .from("avatars")
     .upload(key, file)
 
@@ -59,7 +61,8 @@ export async function uploadAvatar(userId: string, formData: FormData) {
   return { success: true, url: key }
 }
 
-export async function exportUserData(userId: string) {
+export async function exportUserData() {
+  const userId = await requireUser()
   const [products, opportunities, proposals, pipeline, activity] = await Promise.all([
     admin.database.from("products").select("*").eq("user_id", userId).then(r => r.data ?? []),
     admin.database.from("opportunities").select("*").eq("user_id", userId).then(r => r.data ?? []),
@@ -99,7 +102,8 @@ export async function exportUserData(userId: string) {
   return { success: true, url: (downloadData as { signedUrl: string }).signedUrl }
 }
 
-export async function deleteAccount(userId: string) {
+export async function deleteAccount() {
+  const userId = await requireUser()
   try {
     await admin.database
       .from("subscriptions")

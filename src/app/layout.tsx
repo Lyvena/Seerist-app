@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { DashboardShell } from "@/components/dashboard-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -76,7 +77,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <NuqsAdapter>{children}</NuqsAdapter>
+            <NuqsAdapter><DashboardShell>{children}</DashboardShell></NuqsAdapter>
             <Toaster />
           </TooltipProvider>
         </ThemeProvider>

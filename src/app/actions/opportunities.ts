@@ -1,8 +1,10 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 
 export async function updateOpportunityStatus(id: string, status: string) {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("opportunities")
     .update({ status, updated_at: new Date().toISOString() })
@@ -11,6 +13,7 @@ export async function updateOpportunityStatus(id: string, status: string) {
 }
 
 export async function toggleStar(id: string, currentlyStarred: boolean) {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("opportunities")
     .update({ is_starred: !currentlyStarred, updated_at: new Date().toISOString() })
@@ -18,7 +21,8 @@ export async function toggleStar(id: string, currentlyStarred: boolean) {
   return { error: error?.message ?? null }
 }
 
-export async function skipOpportunity(id: string, userId: string) {
+export async function skipOpportunity(id: string) {
+  const userId = await requireUser()
   const now = new Date().toISOString()
 
   const { error: updateError } = await admin.database
@@ -42,6 +46,7 @@ export async function skipOpportunity(id: string, userId: string) {
 }
 
 export async function markViewed(id: string) {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("opportunities")
     .update({ status: "viewed", updated_at: new Date().toISOString() })

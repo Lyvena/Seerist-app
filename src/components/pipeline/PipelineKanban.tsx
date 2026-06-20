@@ -82,10 +82,9 @@ function formatCurrency(value: number | null, currency: string | null): string {
 
 interface PipelineKanbanProps {
   entries: PipelineCardData[]
-  userId: string
 }
 
-export function PipelineKanban({ entries, userId }: PipelineKanbanProps) {
+export function PipelineKanban({ entries }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [selectedEntry, setSelectedEntry] = useState<PipelineCardData | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -114,7 +113,7 @@ export function PipelineKanban({ entries, userId }: PipelineKanbanProps) {
     const targetStage = over.id as string
     if (card.entry.stage === targetStage) return
 
-    await movePipelineStage(card.opportunity.id, targetStage, userId, card.entry.stage)
+    await movePipelineStage(card.opportunity.id, targetStage, card.entry.stage)
   }
 
   const grouped = STAGES.map((stage) => {
@@ -249,13 +248,11 @@ export function PipelineKanban({ entries, userId }: PipelineKanbanProps) {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         card={selectedEntry}
-        userId={userId}
       />
 
       <AddDealModal
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
-        userId={userId}
       />
     </>
   )

@@ -1,9 +1,9 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 
 interface OnboardingData {
-  userId: string
   product: {
     name: string
     category: string
@@ -30,6 +30,7 @@ interface OnboardingData {
 }
 
 export async function completeOnboarding(data: OnboardingData) {
+  const userId = await requireUser()
   try {
     const embeddingText = `${data.product.name}\n${data.product.detailedDescription}\n${data.product.shortDescription}\nTarget: ${data.product.targetCustomer}`
 
@@ -47,7 +48,7 @@ export async function completeOnboarding(data: OnboardingData) {
     const productResult = await admin.database
       .from("products")
       .insert({
-        user_id: data.userId,
+        user_id: userId,
         name: data.product.name,
         description: data.product.detailedDescription,
         url: data.product.url || null,
@@ -70,7 +71,7 @@ export async function completeOnboarding(data: OnboardingData) {
     const enabledPlatforms = data.platforms.filter((p) => p.enabled)
     if (enabledPlatforms.length > 0) {
       const platformConfigs = enabledPlatforms.map((p) => ({
-        user_id: data.userId,
+        user_id: userId,
         platform_id: p.platformId,
         is_enabled: true,
         min_score: p.minScore,
@@ -88,7 +89,7 @@ export async function completeOnboarding(data: OnboardingData) {
     const alertResult = await admin.database
       .from("alert_preferences")
       .insert({
-        user_id: data.userId,
+        user_id: userId,
         digest_frequency: data.alerts.digestFrequency,
         min_score_for_alert: data.alerts.minScoreForAlert,
         platforms_included: enabledPlatforms.map((p) => p.platformId),
@@ -100,7 +101,7 @@ export async function completeOnboarding(data: OnboardingData) {
     const profileResult = await admin.database
       .from("profiles")
       .update({ onboarding_completed: true })
-      .eq("id", data.userId)
+      .eq("id", userId)
       .select()
 
     if (profileResult.error) throw new Error(`Failed to update profile: ${profileResult.error.message}`)

@@ -1,5 +1,6 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { createAdminClient } from "@insforge/sdk"
 import OpenAI from "openai"
 import { revalidatePath } from "next/cache"
@@ -22,7 +23,6 @@ function generateEmbedding(text: string) {
 }
 
 export async function upsertProduct(
-  userId: string,
   data: {
     id?: string
     name: string
@@ -37,6 +37,7 @@ export async function upsertProduct(
     anti_keywords?: string[]
   }
 ) {
+  const userId = await requireUser()
   if (!data.id) {
     const { data: existing } = await insforge.database.from("products").select("id").eq("user_id", userId).eq("is_active", true)
     const count = (existing ?? []).length
@@ -67,22 +68,24 @@ export async function upsertProduct(
 
   if (data.id) {
     const { error } = await insforge.database.from("products").update(payload).eq("id", data.id)
-    revalidatePath("/app/products")
+    revalidatePath("/products")
     return { error }
   }
 
   const { error } = await insforge.database.from("products").insert([payload])
-  revalidatePath("/app/products")
+  revalidatePath("/products")
   return { error }
 }
 
 export async function deleteProduct(productId: string) {
+  const userId = await requireUser()
   const { error } = await insforge.database.from("products").update({ is_active: false }).eq("id", productId)
-  revalidatePath("/app/products")
+  revalidatePath("/products")
   return { error }
 }
 
-export async function getProductCount(userId: string) {
+export async function getProductCount() {
+  const userId = await requireUser()
   const { data } = await insforge.database.from("products").select("id").eq("user_id", userId).eq("is_active", true)
   return (data ?? []).length
 }

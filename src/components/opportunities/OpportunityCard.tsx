@@ -65,7 +65,7 @@ export function OpportunityCard({ opportunity, userId, onGenerateProposal }: Opp
     e.preventDefault()
     e.stopPropagation()
     setSkipping(true)
-    const { error } = await skipOpportunity(opportunity.id, userId)
+    const { error } = await skipOpportunity(opportunity.id)
     if (!error) setStatus("skipped")
     setSkipping(false)
   }

@@ -1,5 +1,6 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { createAdminClient } from "@insforge/sdk"
 import { revalidatePath } from "next/cache"
 
@@ -9,15 +10,15 @@ const insforge = createAdminClient({
 })
 
 export async function togglePlatform(
-  userId: string,
   platformId: string,
   isEnabled: boolean
 ) {
+  const userId = await requireUser()
   const { data: existing } = await insforge.database.from("user_platform_configs")
     .select("id")
     .eq("user_id", userId)
     .eq("platform_id", platformId)
-    .single()
+    .maybeSingle()
 
   if (existing) {
     const row = existing as { id: string }
@@ -29,11 +30,10 @@ export async function togglePlatform(
       .insert([{ user_id: userId, platform_id: platformId, is_enabled: isEnabled }])
   }
 
-  revalidatePath("/app/platforms")
+  revalidatePath("/platforms")
 }
 
 export async function updatePlatformConfig(
-  userId: string,
   platformId: string,
   data: {
     min_score?: number
@@ -42,11 +42,12 @@ export async function updatePlatformConfig(
     custom_keywords?: string[]
   }
 ) {
+  const userId = await requireUser()
   const { data: existing } = await insforge.database.from("user_platform_configs")
     .select("id")
     .eq("user_id", userId)
     .eq("platform_id", platformId)
-    .single()
+    .maybeSingle()
 
   if (existing) {
     const row = existing as { id: string }
@@ -58,10 +59,11 @@ export async function updatePlatformConfig(
       .insert([{ user_id: userId, platform_id: platformId, is_enabled: false, ...data }])
   }
 
-  revalidatePath("/app/platforms")
+  revalidatePath("/platforms")
 }
 
-export async function triggerPlatformScan(userId: string, platformSlug: string) {
+export async function triggerPlatformScan(platformSlug: string) {
+  const userId = await requireUser()
   const ossHost = process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
   const url = `${ossHost}/functions/monitor-orchestrator`
 

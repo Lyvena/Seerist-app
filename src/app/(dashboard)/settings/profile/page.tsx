@@ -21,7 +21,6 @@ export default async function ProfilePage() {
 
   return (
     <ProfileClient
-      userId={userId}
       email={email}
       initialFullName={(p.full_name as string) ?? ""}
       initialAvatarUrl={(p.avatar_url as string) ?? ""}

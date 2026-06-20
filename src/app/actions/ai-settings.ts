@@ -1,5 +1,6 @@
 "use server"
 
+import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 import { revalidatePath } from "next/cache"
 
@@ -10,6 +11,7 @@ function getBaseUrl() {
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY
 
 export async function testAIKey(key: string): Promise<{ valid: boolean; model?: string; error?: string }> {
+  const userId = await requireUser()
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -38,7 +40,8 @@ export async function testAIKey(key: string): Promise<{ valid: boolean; model?: 
   }
 }
 
-export async function saveAIKey(userId: string, key: string) {
+export async function saveAIKey(key: string) {
+  const userId = await requireUser()
   if (!key?.trim()) return { error: "Key is required" }
 
   const test = await testAIKey(key)
@@ -59,7 +62,8 @@ export async function saveAIKey(userId: string, key: string) {
   return { success: true }
 }
 
-export async function removeAIKey(userId: string) {
+export async function removeAIKey() {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("profiles")
     .update({
@@ -74,7 +78,6 @@ export async function removeAIKey(userId: string) {
 }
 
 export async function updateAIPreferences(
-  userId: string,
   prefs: {
     ai_model: string
     ai_tone: string
@@ -86,6 +89,7 @@ export async function updateAIPreferences(
     ai_boost_repeat_posters: boolean
   }
 ) {
+  const userId = await requireUser()
   const { error } = await admin.database
     .from("profiles")
     .update({

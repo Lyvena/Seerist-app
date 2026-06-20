@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { exportUserData, deleteAccount } from "@/app/actions/settings"
 import { toast } from "sonner"
 
-export default function DangerZoneClient({ userId }: { userId: string }) {
+export default function DangerZoneClient() {
   const router = useRouter()
   const [exporting, setExporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -16,7 +16,7 @@ export default function DangerZoneClient({ userId }: { userId: string }) {
 
   async function handleExport() {
     setExporting(true)
-    const result = await exportUserData(userId)
+    const result = await exportUserData()
     if (result.success && result.url) {
       window.open(result.url, "_blank")
       toast.success("Export ready — download should start shortly")
@@ -29,7 +29,7 @@ export default function DangerZoneClient({ userId }: { userId: string }) {
   async function handleDelete() {
     if (deleteConfirm !== "DELETE") return
     setDeleting(true)
-    const result = await deleteAccount(userId)
+    const result = await deleteAccount()
     if (result.success) {
       toast.success("Account deleted. Redirecting...")
       setTimeout(() => { window.location.href = "/" }, 1500)

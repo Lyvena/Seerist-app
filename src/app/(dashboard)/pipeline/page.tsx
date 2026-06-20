@@ -81,6 +81,6 @@ export default async function PipelinePage() {
   }))
 
   return (
-    <PipelineKanban entries={entries} userId={userId ?? ""} />
+    <PipelineKanban entries={entries} />
   )
 }

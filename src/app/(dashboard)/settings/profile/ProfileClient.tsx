@@ -19,7 +19,6 @@ const TIMEZONES = Intl.supportedValuesOf?.("timeZone") ?? [
 ]
 
 interface Props {
-  userId: string
   email: string
   initialFullName: string
   initialAvatarUrl: string
@@ -29,7 +28,7 @@ interface Props {
 }
 
 export default function ProfileClient({
-  userId, email, initialFullName, initialAvatarUrl,
+  email, initialFullName, initialAvatarUrl,
   initialCompanyName, initialWebsite, initialTimezone,
 }: Props) {
   const router = useRouter()
@@ -67,7 +66,7 @@ export default function ProfileClient({
 
     const fd = new FormData()
     fd.append("avatar", file)
-    const result = await uploadAvatar(userId, fd)
+    const result = await uploadAvatar(fd)
 
     if (result.success) {
       toast.success("Avatar updated")
@@ -80,7 +79,7 @@ export default function ProfileClient({
 
   async function handleSave() {
     setSaving(true)
-    const result = await updateProfile(userId, { full_name: fullName, company_name: companyName, website, timezone })
+    const result = await updateProfile({ full_name: fullName, company_name: companyName, website, timezone })
     if (result.success) {
       toast.success("Profile saved")
       router.refresh()
