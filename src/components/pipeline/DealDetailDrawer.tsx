@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
 import { X, Clock, DollarSign, Target, Calendar, FileText, MessageSquare } from "lucide-react"
 import { ScoreBadge } from "@/components/common/ScoreBadge"
@@ -76,7 +77,7 @@ export function DealDetailDrawer({ open, onOpenChange, card }: DealDetailDrawerP
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-[var(--surface-tertiary)] overflow-hidden">
                   {opp.platform_logo_url ? (
-                    <img src={opp.platform_logo_url} alt="" className="h-4 w-4 object-contain" />
+                    <Image src={opp.platform_logo_url} alt="" width={16} height={16} className="h-4 w-4 object-contain" unoptimized />
                   ) : (
                     <span className="text-[10px] font-semibold text-[var(--text-muted)]">{opp.platform_name.charAt(0)}</span>
                   )}

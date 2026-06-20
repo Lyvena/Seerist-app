@@ -1,14 +1,11 @@
 "use server"
 
 import { requireUser } from "@/lib/auth"
-import { createAdminClient } from "@insforge/sdk"
+import { admin } from "@/lib/insforge"
 import OpenAI from "openai"
 import { revalidatePath } from "next/cache"
 
-const insforge = createAdminClient({
-  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
-})
+const insforge = admin
 
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",

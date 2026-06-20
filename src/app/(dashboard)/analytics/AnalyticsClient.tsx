@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   BarChart3, DollarSign, Calendar,
@@ -199,7 +200,7 @@ export default function AnalyticsClient({
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[var(--surface-tertiary)] overflow-hidden">
-                          {row.platformLogo ? <img src={row.platformLogo} alt="" className="h-4 w-4 object-contain" /> : <span className="text-[9px] font-semibold text-[var(--text-muted)]">{row.platformName.charAt(0)}</span>}
+                          {row.platformLogo ? <Image src={row.platformLogo} alt="" width={16} height={16} className="h-4 w-4 object-contain" unoptimized /> : <span className="text-[9px] font-semibold text-[var(--text-muted)]">{row.platformName.charAt(0)}</span>}
                         </div>
                         <span className="text-sm font-medium text-[var(--text-primary)]">{row.platformName}</span>
                       </div>

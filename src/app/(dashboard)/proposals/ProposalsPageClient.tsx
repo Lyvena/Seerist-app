@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { ExternalLink, Send, Star, FileText, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/common/PageHeader"
@@ -96,7 +97,7 @@ export function ProposalsPageClient({ proposals }: ProposalsPageClientProps) {
                       <div className="flex items-center gap-3">
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--surface-tertiary)] overflow-hidden">
                           {proposal.opportunity?.platform_logo_url ? (
-                            <img src={proposal.opportunity.platform_logo_url} alt="" className="h-4 w-4 object-contain" />
+                            <Image src={proposal.opportunity.platform_logo_url} alt="" width={16} height={16} className="h-4 w-4 object-contain" unoptimized />
                           ) : (
                             <span className="text-[10px] font-semibold text-[var(--text-muted)]">{proposal.opportunity?.platform_name?.charAt(0) ?? "?"}</span>
                           )}

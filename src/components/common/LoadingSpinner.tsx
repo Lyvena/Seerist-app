@@ -13,13 +13,14 @@ const sizeClasses = {
 
 export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center" role="status">
       <div
         className={cn(
           "animate-spin rounded-full border-[var(--border-primary)] border-t-[var(--brand-primary)]",
           sizeClasses[size],
           className
         )}
+        aria-label="Loading"
       />
     </div>
   )

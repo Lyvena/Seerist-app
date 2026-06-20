@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
 import {
   X,
@@ -235,7 +236,7 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-secondary)] overflow-hidden">
                   {opportunity?.platform_logo_url ? (
-                    <img src={opportunity.platform_logo_url} alt="" className="h-6 w-6 object-contain" />
+                    <Image src={opportunity.platform_logo_url} alt="" width={24} height={24} className="h-6 w-6 object-contain" unoptimized />
                   ) : (
                     <span className="text-sm font-semibold text-[var(--text-secondary)]">{opportunity?.platform_name?.charAt(0)}</span>
                   )}

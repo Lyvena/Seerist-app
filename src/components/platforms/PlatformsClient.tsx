@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Globe, RefreshCw, BarChart3, Sparkles, Send } from "lucide-react"
 import { PageHeader } from "@/components/common/PageHeader"
 import { Button } from "@/components/ui/button"
@@ -83,7 +84,7 @@ export function PlatformsClient({ platforms, configMap, statsMap, plan, userId }
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-secondary)] overflow-hidden">
                     {platform.logo_url ? (
-                      <img src={platform.logo_url} alt={platform.name} className="h-6 w-6 object-contain" />
+                      <Image src={platform.logo_url} alt={platform.name} width={24} height={24} className="h-6 w-6 object-contain" unoptimized />
                     ) : (
                       <Globe className="h-5 w-5 text-[var(--text-muted)]" />
                     )}

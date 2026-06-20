@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Toggle } from "./Toggle"
 import { Slider } from "./Slider"
@@ -34,7 +35,7 @@ export function PlatformCard({ platform, enabled, minScore, onEnabledChange, onM
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-secondary)]">
           {platform.logo_url ? (
-            <img src={platform.logo_url} alt={platform.name} className="h-6 w-6 object-contain" />
+            <Image src={platform.logo_url} alt={platform.name} width={24} height={24} className="h-6 w-6 object-contain" unoptimized />
           ) : (
             <span className="text-lg font-semibold text-[var(--text-secondary)]">
               {platform.name.charAt(0)}

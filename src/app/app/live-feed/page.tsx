@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef, useCallback } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   Radio, Pause, Play, Volume2, VolumeX, Star, FileText, X as XIcon,
@@ -444,7 +445,7 @@ export default function LiveFeedPage() {
               <div className="flex items-start gap-4">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-tertiary)]">
                   {item.platform_logo_url ? (
-                    <img src={item.platform_logo_url} alt="" className="h-5 w-5 object-contain" />
+                    <Image src={item.platform_logo_url} alt="" width={20} height={20} className="h-5 w-5 object-contain" unoptimized />
                   ) : (
                     <div
                       className="h-5 w-5 rounded"

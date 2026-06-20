@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import {
   User, Camera, Globe, Clock, Mail, Lock, Save,
@@ -98,7 +99,7 @@ export default function ProfileClient({
           <div className="relative shrink-0">
             <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-tertiary)]">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="" className="h-full w-full object-cover" />
+                <Image src={avatarPreview} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
               ) : (
                 <User className="h-8 w-8 text-[var(--text-muted)]" />
               )}

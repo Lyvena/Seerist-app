@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import Image from "next/image"
 import { GripVertical } from "lucide-react"
 import { ScoreBadge } from "@/components/common/ScoreBadge"
 import { formatBudget } from "@/lib/opportunities"
@@ -45,7 +46,7 @@ export function PipelineCard({ card, daysInStage, onClick }: PipelineCardProps) 
           <div className="flex items-center gap-2">
             <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[var(--surface-tertiary)] overflow-hidden">
               {card.opportunity.platform_logo_url ? (
-                <img src={card.opportunity.platform_logo_url} alt="" className="h-3.5 w-3.5 object-contain" />
+                <Image src={card.opportunity.platform_logo_url} alt="" width={14} height={14} className="h-3.5 w-3.5 object-contain" unoptimized />
               ) : (
                 <span className="text-[9px] font-semibold text-[var(--text-muted)]">{card.opportunity.platform_name.charAt(0)}</span>
               )}
