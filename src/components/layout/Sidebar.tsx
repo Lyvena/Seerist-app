@@ -28,7 +28,7 @@ const NAV_SECTIONS = [
     {
       label: "PIPELINE",
       items: [
-        { href: "/app/pipeline", icon: KanbanSquare, label: "My Pipeline" },
+        { href: "/pipeline", icon: KanbanSquare, label: "My Pipeline" },
         { href: "/proposals", icon: FileText, label: "Proposals" },
         { href: "/app/won-deals", icon: Trophy, label: "Won Deals" },
       ],
@@ -40,14 +40,14 @@ const NAV_SECTIONS = [
       { href: "/app/ai-settings", icon: Cpu, label: "AI Settings" },
     ],
   },
-  {
-    label: "MANAGE",
-    items: [
-      { href: "/app/products", icon: Package, label: "My Products" },
-      { href: "/app/platforms", icon: Globe, label: "Platforms" },
-      { href: "/app/settings", icon: Settings2, label: "Settings" },
-    ],
-  },
+    {
+      label: "MANAGE",
+      items: [
+        { href: "/products", icon: Package, label: "My Products" },
+        { href: "/platforms", icon: Globe, label: "Platforms" },
+        { href: "/app/settings", icon: Settings2, label: "Settings" },
+      ],
+    },
 ]
 
 export function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
