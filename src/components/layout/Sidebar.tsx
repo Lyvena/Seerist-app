@@ -14,17 +14,19 @@ import {
   Settings2,
   ChevronUp,
   Sparkles,
+  BarChart3,
 } from "lucide-react"
 import { NavItem } from "./NavItem"
 
 const NAV_SECTIONS = [
-  {
-    label: "DISCOVER",
-    items: [
-      { href: "/opportunities", icon: Zap, label: "Opportunities" },
-      { href: "/app/live-feed", icon: Radio, label: "Live Feed" },
-    ],
-  },
+    {
+      label: "DISCOVER",
+      items: [
+        { href: "/opportunities", icon: Zap, label: "Opportunities" },
+        { href: "/analytics", icon: BarChart3, label: "Analytics" },
+        { href: "/app/live-feed", icon: Radio, label: "Live Feed" },
+      ],
+    },
     {
       label: "PIPELINE",
       items: [
