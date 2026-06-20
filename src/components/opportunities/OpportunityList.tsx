@@ -38,6 +38,7 @@ interface OpportunityListProps {
   platformFilters: { id: string; slug: string; name: string }[]
   userId: string
   lastSyncAt: string
+  onGenerateProposal: (id: string) => void
 }
 
 export function OpportunityList({
@@ -46,6 +47,7 @@ export function OpportunityList({
   platformFilters,
   userId,
   lastSyncAt,
+  onGenerateProposal,
 }: OpportunityListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === "undefined") return "list"
@@ -127,8 +129,7 @@ export function OpportunityList({
   }
 
   function handleGenerateProposal(id: string) {
-    // TODO: open proposal modal
-    console.log("Generate proposal for:", id)
+    onGenerateProposal(id)
   }
 
   return (

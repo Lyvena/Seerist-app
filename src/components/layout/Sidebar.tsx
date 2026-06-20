@@ -25,13 +25,14 @@ const NAV_SECTIONS = [
       { href: "/app/live-feed", icon: Radio, label: "Live Feed" },
     ],
   },
-  {
-    label: "PIPELINE",
-    items: [
-      { href: "/app/pipeline", icon: KanbanSquare, label: "My Pipeline" },
-      { href: "/app/won-deals", icon: Trophy, label: "Won Deals" },
-    ],
-  },
+    {
+      label: "PIPELINE",
+      items: [
+        { href: "/app/pipeline", icon: KanbanSquare, label: "My Pipeline" },
+        { href: "/proposals", icon: FileText, label: "Proposals" },
+        { href: "/app/won-deals", icon: Trophy, label: "Won Deals" },
+      ],
+    },
   {
     label: "TOOLS",
     items: [

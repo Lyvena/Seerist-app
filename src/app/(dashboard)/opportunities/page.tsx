@@ -121,6 +121,14 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
   const platforms = platformsData ?? []
   const lastSyncAt = new Date().toISOString()
 
+  const { data: productsData } = await insforge.database
+    .from("products")
+    .select("id")
+    .eq("user_id", userId ?? "")
+    .limit(1)
+
+  const productId = (productsData as Array<{ id: string }> | null)?.[0]?.id ?? ""
+
   return (
     <OpportunityPageClient
       initialOpportunities={opportunities}
@@ -128,6 +136,7 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
       platforms={platforms}
       userId={userId ?? ""}
       lastSyncAt={lastSyncAt}
+      productId={productId}
     />
   )
 }
