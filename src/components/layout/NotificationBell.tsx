@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, CheckCheck, ExternalLink } from "lucide-react"
-import { createClient } from "@insforge/sdk"
+import { insforgeBrowser } from "@/lib/insforge/client"
 import { cn } from "@/lib/utils"
 
-interface Notification {
+interface NotificationItem {
   id: string
   type: string
   title: string
@@ -15,11 +15,6 @@ interface Notification {
   is_read: boolean
   created_at: string
 }
-
-const insforge = createClient({
-  baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-  anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-})
 
 function timeAgo(date: string): string {
   const diff = Date.now() - new Date(date).getTime()
@@ -34,7 +29,7 @@ function timeAgo(date: string): string {
 export function NotificationBell() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -49,13 +44,14 @@ export function NotificationBell() {
   }, [])
 
   const fetchNotifications = useCallback(async () => {
-    const { data } = await insforge.database
+    const client = insforgeBrowser()
+    const { data } = await client.database
       .from("notifications")
       .select("id, type, title, body, link, is_read, created_at")
       .order("created_at", { ascending: false })
       .limit(10)
 
-    const items = (data ?? []) as Notification[]
+    const items = (data ?? []) as NotificationItem[]
     setNotifications(items)
     setUnreadCount(items.filter((n) => !n.is_read).length)
   }, [])
@@ -71,19 +67,21 @@ export function NotificationBell() {
   }, [open, fetchNotifications])
 
   async function markAllRead() {
+    const client = insforgeBrowser()
     const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id)
     if (unreadIds.length === 0) return
     for (const id of unreadIds) {
-      await insforge.database.from("notifications").update({ is_read: true }).eq("id", id)
+      await client.database.from("notifications").update({ is_read: true }).eq("id", id)
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
     setUnreadCount(0)
   }
 
-  async function handleNotificationClick(n: Notification) {
+  async function handleNotificationClick(n: NotificationItem) {
+    const client = insforgeBrowser()
     if (!n.is_read) {
-      await insforge.database.from("notifications").update({ is_read: true }).eq("id", n.id)
-      setNotifications((prev) => prev.map((p) => p.id === n.id ? { ...p, is_read: true } : p))
+      await client.database.from("notifications").update({ is_read: true }).eq("id", n.id)
+      setNotifications((prev) => prev.map((p) => (p.id === n.id ? { ...p, is_read: true } : p)))
       setUnreadCount((c) => Math.max(0, c - 1))
     }
     if (n.link) router.push(n.link)

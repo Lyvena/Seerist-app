@@ -10,7 +10,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     // OAuth redirects here after authentication - session is already established
     // Just redirect to the dashboard
-    router.replace("/app")
+    router.replace("/dashboard")
   }, [router])
 
   return (

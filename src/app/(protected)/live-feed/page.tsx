@@ -10,11 +10,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { ScoreBadge } from "@/components/common/ScoreBadge"
 import { EmptyState } from "@/components/common/EmptyState"
-import { ProposalModal } from "@/components/proposals/ProposalModal"
-import { insforge } from "@/lib/insforge-browser"
+import { insforgeBrowser } from "@/lib/insforge/client"
 import { toggleStar, skipOpportunity } from "@/app/actions/opportunities"
 import { formatBudget } from "@/lib/opportunities"
 import { toast } from "sonner"
+import { ProposalModal } from "@/components/proposals/ProposalModal"
 
 /* ─── Types ─── */
 interface FeedItem {
@@ -133,7 +133,7 @@ export default function LiveFeedPage() {
 
   /* get userId on mount */
   useEffect(() => {
-    insforge.auth.getCurrentUser().then(({ data }) => {
+    insforgeBrowser().auth.getCurrentUser().then(({ data }) => {
       if (data?.user?.id) setUserId(data.user.id)
     })
   }, [])
@@ -204,11 +204,12 @@ export default function LiveFeedPage() {
     let unsub = false
     async function subscribe() {
       try {
-        await insforge.realtime.connect()
+        const client = insforgeBrowser()
+        await client.realtime.connect()
         const channel = `opportunities:${userId}`
-        const res = await insforge.realtime.subscribe(channel)
+        const res = await client.realtime.subscribe(channel)
         if (!res.ok || unsub) return
-        insforge.realtime.on("new_opportunity", (msg: unknown) => {
+        client.realtime.on("new_opportunity", (msg: unknown) => {
           if (unsub) return
           const payload = (msg as { payload?: Record<string, unknown> })?.payload ?? msg
           if (payload && (payload as Record<string, unknown>).id) {
@@ -218,7 +219,7 @@ export default function LiveFeedPage() {
       } catch { /* realtime fallback to polling */ }
     }
     subscribe()
-    return () => { unsub = true; insforge.realtime.disconnect() }
+    return () => { unsub = true; insforgeBrowser().realtime.disconnect() }
   }, [userId, addToFeed])
 
   /* clear "new" animation after 1s */

@@ -13,7 +13,7 @@ export async function signUpWithEmail(email: string, password: string) {
   return insforge.auth.signUp({ email, password })
 }
 
-export async function signOut() {
+export async function signOutAction() {
   const insforge = createServerClient({ cookies: await cookies() })
   return insforge.auth.signOut()
 }

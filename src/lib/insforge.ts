@@ -1,8 +1,5 @@
-import { createAdminClient } from "@insforge/sdk"
+// Legacy re-export for backward compatibility
+import { insforgeAdmin } from "./insforge/client"
 
-const projectConfig = {
-  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
-}
-
-export const admin = createAdminClient(projectConfig)
+export const admin = insforgeAdmin
+export { insforgeAdmin } from "./insforge/client"

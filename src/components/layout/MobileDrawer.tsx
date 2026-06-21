@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 import { SidebarContent } from "./Sidebar"
+import { useAuth } from "@/components/auth/AuthProvider"
 
 interface MobileDrawerProps {
   open: boolean
@@ -11,6 +12,9 @@ interface MobileDrawerProps {
 }
 
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
+  const { user } = useAuth()
+  const initials = user?.email?.slice(0, 2).toUpperCase() ?? "U"
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden"
@@ -69,12 +73,11 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
             <SidebarContent onNavClick={handleNavClick} />
 
             <div className="flex items-center gap-3 border-t border-[var(--sidebar-border)] px-4 py-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--sidebar-fg-muted)] text-xs font-semibold text-white">
-                A
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--sidebar-accent)] text-xs font-semibold text-white">
+                {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">Andrey</p>
-                <p className="text-[11px] text-[var(--sidebar-fg-muted)]">Free Plan</p>
+                <p className="text-sm font-medium text-white truncate">{user?.email ?? "User"}</p>
               </div>
             </div>
           </motion.aside>

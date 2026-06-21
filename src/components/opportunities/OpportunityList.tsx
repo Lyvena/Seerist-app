@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { useQueryState } from "nuqs"
-import { RefreshCw, LayoutList, LayoutGrid, Loader2, Search, Radio, SlidersHorizontal } from "lucide-react"
+import { RefreshCw, LayoutList, LayoutGrid, Loader2, Search, Radio, SlidersHorizontal, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { OpportunityCard } from "./OpportunityCard"
 import { SkeletonCard } from "./SkeletonCard"
@@ -58,19 +58,67 @@ export function OpportunityList({
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [scoring, setScoring] = useState(false)
   const [syncTime, setSyncTime] = useState(lastSyncAt)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const [platformFilter] = useQueryState("platforms", { defaultValue: "" })
-  const [scoreMin] = useQueryState("score_min", { defaultValue: "60" })
-  const [scoreMax] = useQueryState("score_max", { defaultValue: "100" })
-  const [budgetMin] = useQueryState("budget_min", { defaultValue: "" })
-  const [budgetMax] = useQueryState("budget_max", { defaultValue: "" })
-  const [budgetType] = useQueryState("budget_type", { defaultValue: "" })
-  const [statusFilter] = useQueryState("status", { defaultValue: "" })
-  const [dateRange] = useQueryState("date", { defaultValue: "" })
-  const [starredOnly] = useQueryState("starred", { defaultValue: "" })
-  const [sortBy] = useQueryState("sort", { defaultValue: "score" })
+  const hasNoScore = useMemo(() => opportunities.some((o) => o.ai_score == null), [opportunities])
+
+  const [platformFilter] = useQueryState("platforms", { defaultValue: "", parse: (v) => v })
+  const [scoreMin] = useQueryState("score_min", { defaultValue: "60", parse: (v) => v })
+  const [scoreMax] = useQueryState("score_max", { defaultValue: "100", parse: (v) => v })
+  const [budgetMin] = useQueryState("budget_min", { defaultValue: "", parse: (v) => v })
+  const [budgetMax] = useQueryState("budget_max", { defaultValue: "", parse: (v) => v })
+  const [budgetType] = useQueryState("budget_type", { defaultValue: "", parse: (v) => v })
+  const [statusFilter] = useQueryState("status", { defaultValue: "", parse: (v) => v })
+  const [dateRange] = useQueryState("date", { defaultValue: "", parse: (v) => v })
+  const [starredOnly] = useQueryState("starred", { defaultValue: "", parse: (v) => v })
+  const [sortBy] = useQueryState("sort", { defaultValue: "score", parse: (v) => v })
+
+  async function refreshScores() {
+    if (!userId || scoring) return
+    setScoring(true)
+    const idsWithoutScore = opportunities.filter((o) => o.ai_score == null).map((o) => o.id)
+    if (idsWithoutScore.length === 0) {
+      setScoring(false)
+      return
+    }
+
+    const response = await fetch("/api/opportunities/score", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ opportunity_ids: idsWithoutScore }),
+    })
+
+if (response.ok) {
+      // Poll for updated scores
+      const pollInterval = setInterval(async () => {
+        const { insforgeBrowser } = await import("@/lib/insforge/client")
+        const { data } = await insforgeBrowser().database
+           .from("opportunities")
+           .select("id, ai_score, ai_score_breakdown")
+           .in("id", idsWithoutScore)
+           .eq("user_id", userId)
+
+        if (data && data.some((o: { ai_score: number | null }) => o.ai_score != null)) {
+          setOpportunities((prev) =>
+            prev.map((opp) => {
+              const updated = data.find((o: { id: string }) => o.id === opp.id)
+              return updated ? { ...opp, ai_score: updated.ai_score, ai_score_breakdown: updated.ai_score_breakdown } : opp
+            })
+          )
+          if (data.every((o: { ai_score: number | null }) => o.ai_score != null)) {
+            clearInterval(pollInterval)
+            setScoring(false)
+          }
+        }
+      }, 1000)
+
+      setTimeout(() => clearInterval(pollInterval), 30000)
+    } else {
+      setScoring(false)
+    }
+  }
 
   function changeView(mode: ViewMode) {
     setViewMode(mode)
@@ -134,14 +182,31 @@ export function OpportunityList({
 
   return (
     <div className="flex-1 min-w-0">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2" role="region" aria-label="Opportunity list controls">
+        <div className="flex items-center gap-2">
           <p className="text-sm text-[var(--text-secondary)]">
             <span className="font-semibold text-[var(--text-primary)]">{totalCount}</span> opportunities
           </p>
           <span className="text-xs text-[var(--text-muted)]">
             Last synced: <time dateTime={syncTime}>{timeAgo(syncTime)}</time>
           </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          {hasNoScore && (
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={refreshScores}
+              disabled={scoring}
+              className="gap-1.5 text-[var(--brand-primary)]"
+              aria-live="polite"
+              aria-label={scoring ? "Scoring opportunities" : "Refresh AI scores"}
+            >
+              <Zap className={`h-3 w-3 ${scoring ? "animate-pulse" : ""}`} aria-hidden="true" />
+              {scoring ? "Scoring..." : "Refresh scores"}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="xs"
@@ -154,19 +219,21 @@ export function OpportunityList({
             }}
             disabled={syncing}
             className="gap-1 text-[var(--text-muted)]"
+            aria-label="Sync opportunities"
           >
-            <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
             Sync
           </Button>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 sm:ml-auto" role="toolbar" aria-label="View options">
           <Button
             variant="ghost"
             size="icon-xs"
             onClick={() => changeView("list")}
             className={viewMode === "list" ? "text-[var(--brand-primary)]" : "text-[var(--text-muted)]"}
             aria-label="List view"
+            aria-pressed={viewMode === "list"}
           >
             <LayoutList className="h-4 w-4" />
           </Button>
@@ -176,6 +243,7 @@ export function OpportunityList({
             onClick={() => changeView("grid")}
             className={viewMode === "grid" ? "text-[var(--brand-primary)]" : "text-[var(--text-muted)]"}
             aria-label="Grid view"
+            aria-pressed={viewMode === "grid"}
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -183,24 +251,24 @@ export function OpportunityList({
       </div>
 
       {enrichedOpportunities.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface-tertiary)]">
+        <div className="flex flex-col items-center justify-center py-12 text-center" role="status" aria-live="polite">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-tertiary)]">
             {hasActiveFilters ? (
-              <SlidersHorizontal className="h-6 w-6 text-[var(--text-muted)]" />
+              <SlidersHorizontal className="h-5 w-5 text-[var(--text-muted)]" aria-hidden="true" />
             ) : platformFilters.length === 0 ? (
-              <Radio className="h-6 w-6 text-[var(--text-muted)]" />
+              <Radio className="h-5 w-5 text-[var(--text-muted)]" aria-hidden="true" />
             ) : (
-              <Search className="h-6 w-6 text-[var(--text-muted)]" />
+              <Search className="h-5 w-5 text-[var(--text-muted)]" aria-hidden="true" />
             )}
           </div>
-          <h3 className="mt-4 text-base font-semibold text-[var(--text-primary)]">
+          <h3 className="mt-3 text-sm font-semibold text-[var(--text-primary)]">
             {hasActiveFilters
               ? "No matching opportunities"
               : platformFilters.length === 0
               ? "Set up platforms to start discovering"
               : "No opportunities found"}
           </h3>
-          <p className="mt-1 max-w-sm text-sm text-[var(--text-muted)]">
+          <p className="mt-1 max-w-sm text-xs text-[var(--text-muted)]">
             {hasActiveFilters
               ? "Try relaxing your filters"
               : platformFilters.length === 0
@@ -214,10 +282,10 @@ export function OpportunityList({
               onClick={() => {
                 const params = new URLSearchParams(window.location.search)
                 Array.from(params.keys()).forEach((k) => params.delete(k))
-                window.history.replaceState(null, "", `/app/opportunities${params.toString() ? `?${params.toString()}` : ""}`)
+                window.history.replaceState(null, "", `/opportunities${params.toString() ? `?${params.toString()}` : ""}`)
                 window.location.reload()
               }}
-              className="mt-4"
+              className="mt-3"
             >
               Reset filters
             </Button>
@@ -225,7 +293,11 @@ export function OpportunityList({
         </div>
       )}
 
-      <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2" : "space-y-3"}>
+      <div
+        className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2" : "space-y-2"}
+        role="list"
+        aria-label="Opportunities"
+      >
         {enrichedOpportunities.map((opp) => (
           <OpportunityCard
             key={opp.id}
@@ -237,18 +309,18 @@ export function OpportunityList({
       </div>
 
       {loading && (
-        <div className={viewMode === "grid" ? "grid gap-4 sm:grid-cols-2 mt-4" : "space-y-3 mt-4"}>
+        <div className={viewMode === "grid" ? "grid gap-3 sm:grid-cols-2 mt-3" : "space-y-2 mt-3"} aria-label="Loading opportunities">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       )}
 
-      <div ref={sentinelRef} className="h-4" />
+      <div ref={sentinelRef} className="h-4" aria-hidden="true" />
 
-      {enrichedOpportunities.length >= PAGE_SIZE && hasMore && (
-        <div className="flex justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-[var(--text-muted)]" />
+      {loading && (
+        <div className="flex justify-center py-4" role="status" aria-label="Loading more opportunities">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--text-muted)]" />
         </div>
       )}
     </div>

@@ -44,6 +44,7 @@ export default async function PipelinePage() {
     .select("id, opportunity_id, stage, stage_changed_at, deal_value, deal_currency, close_probability, expected_close_date, notes, created_at, opportunities!inner(id, title, description, poster_name, poster_company, post_url, ai_score, budget_min, budget_max, budget_currency, budget_type, status, required_skills, posted_at, platform_name, platform_logo_url)")
     .eq("user_id", userId ?? "")
     .order("stage_changed_at", { ascending: false })
+    .limit(100)
 
   const raw = entriesRaw as unknown as PipelineEntryRaw[] | null
 

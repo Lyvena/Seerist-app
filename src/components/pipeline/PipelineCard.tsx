@@ -17,6 +17,7 @@ interface PipelineCardProps {
 export function PipelineCard({ card, daysInStage, onClick }: PipelineCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.entry.id,
+    data: { stage: card.entry.stage },
   })
 
   const style = {

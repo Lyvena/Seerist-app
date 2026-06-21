@@ -9,20 +9,55 @@ const insforge = createAdminClient({
   apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
 })
 
+const OPPORTUNITIES_CHANNEL = "realtime_broadcast"
+
+async function broadcastStatusChange(userId: string, opportunityId: string, newStage: string) {
+  try {
+    await fetch(`${process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"}/api/realtime/broadcast`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.INSFORGE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        channel: OPPORTUNITIES_CHANNEL.replace("realtime_broadcast", `opportunities:${userId}`),
+        event: "status_changed",
+        payload: { opportunity_id: opportunityId, status: newStage },
+      }),
+    })
+  } catch { /* ignore */ }
+}
+
 export async function movePipelineStage(
   opportunityId: string,
   newStage: string,
   prevStage?: string
 ) {
   const userId = await requireUser()
-  const { error: pipeErr } = await insforge.database.from("pipeline_entries").insert([{
-    user_id: userId,
-    opportunity_id: opportunityId,
-    stage: newStage,
-    stage_changed_at: new Date().toISOString(),
-  }])
 
-  if (pipeErr) return { error: pipeErr }
+  const { data: existing } = await insforge.database
+    .from("pipeline_entries")
+    .select("id")
+    .eq("opportunity_id", opportunityId)
+    .maybeSingle()
+
+  if (existing) {
+    const { error: pipeErr } = await insforge.database
+      .from("pipeline_entries")
+      .update({ stage: newStage, stage_changed_at: new Date().toISOString() })
+      .eq("id", (existing as { id: string }).id)
+
+    if (pipeErr) return { error: pipeErr }
+  } else {
+    const { error: pipeErr } = await insforge.database.from("pipeline_entries").insert([{
+      user_id: userId,
+      opportunity_id: opportunityId,
+      stage: newStage,
+      stage_changed_at: new Date().toISOString(),
+    }])
+
+    if (pipeErr) return { error: pipeErr }
+  }
 
   const statusMap: Record<string, string> = {
     discovered: "new",
@@ -44,6 +79,8 @@ export async function movePipelineStage(
     action: "stage_changed",
     metadata: { from: prevStage ?? null, to: newStage },
   }])
+
+  await broadcastStatusChange(userId, opportunityId, newStage)
 
   revalidatePath("/pipeline")
   return { error: null }

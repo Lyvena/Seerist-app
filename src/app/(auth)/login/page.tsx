@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       const { data, error } = await signInWithEmail(email, password)
       if (error) throw error
-      router.push("/app")
+      router.push("/dashboard")
       router.refresh()
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials")

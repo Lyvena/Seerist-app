@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import Image from "next/image"
 import { ExternalLink, Send, Star, FileText, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ interface ProposalRow {
   id: string
   content: string
   version: number
-  tone: string
+  tone_used: string
   word_count: number | null
   model_used: string | null
   is_ai_generated: boolean
@@ -85,11 +85,10 @@ export function ProposalsPageClient({ proposals }: ProposalsPageClientProps) {
                 <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
-            <tbody>
+<tbody>
               {proposals.map((proposal) => (
-                <>
+                <React.Fragment key={proposal.id}>
                   <tr
-                    key={proposal.id}
                     onClick={() => setExpandedId(expandedId === proposal.id ? null : proposal.id)}
                     className="border-b border-[var(--border-primary)] bg-[var(--surface-primary)] transition-colors hover:bg-[var(--surface-secondary)] cursor-pointer"
                   >
@@ -112,7 +111,7 @@ export function ProposalsPageClient({ proposals }: ProposalsPageClientProps) {
                       <span className="rounded-md bg-[var(--surface-tertiary)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">v{proposal.version}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm capitalize text-[var(--text-secondary)]">{proposal.tone}</span>
+                      <span className="text-sm capitalize text-[var(--text-secondary)]">{proposal.tone_used.replace(/_/g, " ")}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-[var(--text-secondary)]">{proposal.word_count ?? "—"}</span>
@@ -149,7 +148,7 @@ export function ProposalsPageClient({ proposals }: ProposalsPageClientProps) {
                     </td>
                   </tr>
                   {expandedId === proposal.id && (
-                    <tr key={`${proposal.id}-expanded`}>
+                    <tr>
                       <td colSpan={8} className="border-b border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-4">
                         <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg bg-[var(--surface-primary)] p-4 text-sm text-[var(--text-primary)] leading-relaxed scrollbar-thin">
                           {proposal.content}
@@ -176,7 +175,7 @@ export function ProposalsPageClient({ proposals }: ProposalsPageClientProps) {
                       </td>
                     </tr>
                   )}
-                </>
+</React.Fragment>
               ))}
             </tbody>
           </table>

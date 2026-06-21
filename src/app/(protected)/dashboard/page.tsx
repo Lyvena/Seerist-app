@@ -12,11 +12,11 @@ const ONBOARDING_STEPS = [
   { label: "Generate your first proposal", done: false },
 ]
 
-export default function AppPage() {
+export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Home"
+        title="Dashboard"
         subtitle="Your opportunities at a glance"
       >
         <Button variant="default" className="gap-1.5">

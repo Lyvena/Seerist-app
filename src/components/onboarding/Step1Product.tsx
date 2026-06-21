@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Input } from "./Input"
 import { Textarea } from "./Textarea"
 import { Select } from "./Select"
@@ -36,6 +35,9 @@ interface Step1ProductProps {
     pricingModel: string
     keywords: string[]
     antiKeywords: string[]
+    digestFrequency: string
+    minScoreForAlert: number
+    alertEmail: string
   }
   errors: Partial<Record<string, string>>
   onChange: (field: string, value: unknown) => void
@@ -94,6 +96,28 @@ export function Step1Product({ formData, errors, onChange }: Step1ProductProps) 
         placeholder="Describe your product in detail — features, value prop, tech stack. Used for AI matching (max 1000 chars)."
         required
       />
+
+      <div>
+        <p className="text-xs font-medium text-[var(--text-muted)] mb-2">Tone preference examples</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-3">
+            <p className="text-xs font-semibold text-[var(--text-primary)] mb-1">Professional</p>
+            <p className="text-[10px] text-[var(--text-secondary)]">I noticed your project requires custom React development. Our Invoicer Pro solution specifically handles payment integration for SaaS applications.</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-3">
+            <p className="text-xs font-semibold text-[var(--text-primary)] mb-1">Casual</p>
+            <p className="text-[10px] text-[var(--text-secondary)]">Hey! Your job caught my eye. I built something similar last month — happy to chat about how it could work for you.</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-3">
+            <p className="text-xs font-semibold text-[var(--text-primary)] mb-1">Enthusiastic</p>
+            <p className="text-[10px] text-[var(--text-secondary)]">This is EXACTLY what I built InvoiceFlow for! Let me show you how it can save you 20+ hours weekly on client billing!</p>
+          </div>
+          <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-3">
+            <p className="text-xs font-semibold text-[var(--text-primary)] mb-1">Concise</p>
+            <p className="text-[10px] text-[var(--text-secondary)]">Full-stack developer. Built invoicing tool for freelancers. 50+ clients. Clean code, fast delivery. Examples: invoice.ly/demo</p>
+          </div>
+        </div>
+      </div>
 
       <Textarea
         label="Target customer (ICP) *"

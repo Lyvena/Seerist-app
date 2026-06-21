@@ -113,6 +113,7 @@ Return ONLY the proposal text. No preamble, no labels, no markdown.`;
 
   const [forClient, forSave] = aiResp.body!.tee();
 
+  let savedProposalId: string | null = null;
   (async () => {
     const reader = forSave.getReader();
     const decoder = new TextDecoder();
@@ -141,23 +142,26 @@ Return ONLY the proposal text. No preamble, no labels, no markdown.`;
 
     if (proposalText) {
       const wordCount = proposalText.split(/\s+/).filter(Boolean).length;
+      const modelUsed = userModel;
 
       const { data: existing } = await client.database.from('proposals').select('version').eq('opportunity_id', opportunity_id).eq('user_id', userId).order('version', { ascending: false }).limit(1);
       const currentVersion = ((existing ?? []) as { version: number }[])[0]?.version ?? 0;
       const version = regenerate ? currentVersion + 1 : Math.max(currentVersion, 1);
 
-      await client.database.from('proposals').insert([{
+      const { data: inserted } = await client.database.from('proposals').insert([{
         user_id: userId,
         opportunity_id,
         product_id,
         content: proposalText,
         version,
-        tone,
+        tone_used: tone,
         word_count: wordCount,
         is_ai_generated: true,
-        model_used: userModel,
+        model_used: modelUsed,
         generation_prompt: userPrompt.slice(0, 500),
-      } as Record<string, unknown>]);
+      } as Record<string, unknown>]).select('id').single();
+
+      savedProposalId = (inserted as { id: string })?.id ?? null;
 
       await client.database.from('opportunities').update({ status: 'proposing', updated_at: new Date().toISOString() }).eq('id', opportunity_id).eq('status', 'new');
 
@@ -166,7 +170,7 @@ Return ONLY the proposal text. No preamble, no labels, no markdown.`;
         entity_type: 'proposal',
         entity_id: opportunity_id,
         action: 'generated',
-        metadata: { version, tone, word_count: wordCount, model: userModel },
+        metadata: { version, tone, word_count: wordCount, model: modelUsed },
       } as Record<string, unknown>]);
     }
   })();
@@ -199,7 +203,16 @@ Return ONLY the proposal text. No preamble, no labels, no markdown.`;
           } catch {}
         }
       }
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const saveResult = {
+        done: true,
+        proposal_id: savedProposalId,
+        model_used: modelUsed,
+        tokens_used: null,
+      };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(saveResult)}\n\n`));
       controller.close();
     },
   });

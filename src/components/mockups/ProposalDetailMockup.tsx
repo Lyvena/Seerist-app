@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import { motion } from "framer-motion";
 
 const TONES = ["Professional", "Casual", "Concise", "Enthusiastic"] as const;
 const PROPOSAL = "Hey Marcus, saw your post about needing an invoicing solution for your freelance agency. InvoicePad was built exactly for this — it handles recurring invoices, payment reminders, and client portals out of the box.";
 
-export function ProposalDetailMockup() {
+function ProposalDetailMockupComponent() {
   const [phase, setPhase] = useState<"idle" | "writing" | "typing" | "done">("idle");
   const [text, setText] = useState("");
   const [tone, setTone] = useState<(typeof TONES)[number]>("Professional");
@@ -131,3 +131,5 @@ export function ProposalDetailMockup() {
     </div>
   );
 }
+
+export const ProposalDetailMockup = memo(ProposalDetailMockupComponent)

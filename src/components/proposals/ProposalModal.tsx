@@ -26,7 +26,7 @@ interface Proposal {
   id: string
   content: string
   version: number
-  tone: string
+  tone_used: string
   word_count: number | null
   model_used: string | null
   tokens_used: number | null
@@ -74,11 +74,12 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [sending, setSending] = useState(false)
+  const [saving, setSaving] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !opportunity) {
       setStreamedContent("")
       setGenerating(false)
       setEditMode(false)
@@ -86,9 +87,33 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
       setRating(0)
       setCustomInstructions("")
       setActiveVersion(1)
+      setProposals([])
       if (abortRef.current) abortRef.current.abort()
+      return
     }
-  }, [open])
+
+    loadExistingProposals()
+  }, [open, opportunity?.id])
+
+  async function loadExistingProposals() {
+    if (!opportunity) return
+    try {
+      const { insforgeBrowser } = await import("@/lib/insforge/client")
+      const { data } = await insforgeBrowser().database
+        .from("proposals")
+        .select("id, content, version, tone_used, word_count, model_used, tokens_used, sent_at, rating")
+        .eq("opportunity_id", opportunity.id)
+        .eq("user_id", userId)
+        .order("version", { ascending: true })
+
+      if (data && data.length > 0) {
+        setProposals(data as Proposal[])
+        setActiveVersion((data as Proposal[])[(data as Proposal[]).length - 1].version)
+      }
+    } catch (err) {
+      console.error("Failed to load proposals:", err)
+    }
+  }
 
   const currentProposal = proposals.find((p) => p.version === activeVersion)
   const displayContent = streamedContent || currentProposal?.content || ""
@@ -148,19 +173,20 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
             try {
               const data = JSON.parse(line.slice(6))
               if (data.done) {
+                const nextVersion = proposals.length + 1
                 const newProposal: Proposal = {
-                  id: crypto.randomUUID(),
+                  id: data.proposal_id ?? crypto.randomUUID(),
                   content: fullText,
-                  version: proposals.length + 1,
-                  tone,
+                  version: nextVersion,
+                  tone_used: tone,
                   word_count: fullText.split(/\s+/).filter(Boolean).length,
-                  model_used: null,
-                  tokens_used: null,
+                  model_used: data.model_used ?? null,
+                  tokens_used: data.tokens_used ?? null,
                   sent_at: null,
                   rating: null,
                 }
                 setProposals((prev) => [...prev, newProposal])
-                setActiveVersion(newProposal.version)
+                setActiveVersion(nextVersion)
                 break
               }
               if (data.error) {
@@ -171,7 +197,7 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
                 fullText += data.content
                 setStreamedContent(fullText)
               }
-            } catch {}
+} catch {}
           }
         }
       }
@@ -185,15 +211,64 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
     }
   }
 
-  function toggleEdit() {
-    if (editMode) {
-      setEditMode(false)
+  async function saveEditedProposal() {
+    if (!currentProposal || !opportunity) return
+    setSaving(true)
+
+    try {
+      const { insforgeBrowser } = await import("@/lib/insforge/client")
+      await insforgeBrowser().database
+        .from("proposals")
+        .update({
+          content: editedContent,
+          word_count: editedContent.split(/\s+/).filter(Boolean).length,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", currentProposal.id)
+
       setProposals((prev) =>
         prev.map((p) => (p.version === activeVersion ? { ...p, content: editedContent, word_count: editedContent.split(/\s+/).filter(Boolean).length } : p))
       )
+    } catch (err) {
+      console.error("Failed to save:", err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleEdit() {
+    if (editMode) {
+      await saveEditedProposal()
+      setEditMode(false)
     } else {
       setEditedContent(displayContent)
       setEditMode(true)
+    }
+  }
+
+  async function handleMarkSent() {
+    if (!opportunity || !currentProposal) return
+    setSending(true)
+    try {
+      const { insforgeBrowser } = await import("@/lib/insforge/client")
+      const now = new Date().toISOString()
+      const client = insforgeBrowser()
+
+      await client.database
+        .from("proposals")
+        .update({ sent_at: now, status: "sent" })
+        .eq("id", currentProposal.id)
+
+      await client.database
+        .from("opportunities")
+        .update({ status: "proposed", updated_at: now })
+        .eq("id", opportunity.id)
+
+      setProposals((prev) => prev.map((p) => (p.version === activeVersion ? { ...p, sent_at: now } : p)))
+    } catch (err) {
+      console.error("Failed to mark sent:", err)
+    } finally {
+      setSending(false)
     }
   }
 
@@ -201,15 +276,6 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
     navigator.clipboard.writeText(displayContent)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  async function handleMarkSent() {
-    if (!opportunity || !currentProposal) return
-    setSending(true)
-    try {
-      await fetch("/api/proposals/generate", { method: "POST", body: JSON.stringify({ /* placeholder */ }) })
-    } catch {}
-    setSending(false)
   }
 
   function handleRate(value: number) {
@@ -408,7 +474,7 @@ export function ProposalModal({ open, onOpenChange, opportunity, productId, user
                             >
                               {proposals.map((p) => (
                                 <option key={p.version} value={p.version}>
-                                  v{p.version} ({p.tone})
+                                  v{p.version} ({p.tone_used})
                                 </option>
                               ))}
                             </select>

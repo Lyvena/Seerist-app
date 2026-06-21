@@ -2,37 +2,43 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Search, Menu, Sparkles } from "lucide-react"
+import { Search, Menu } from "lucide-react"
 import { CommandPalette } from "./CommandPalette"
 import { NotificationBell } from "./NotificationBell"
+import { UserMenu } from "@/components/auth/UserMenu"
+import { ProductSwitcher } from "./ProductSwitcher"
 
 interface TopBarProps {
   onMenuClick: () => void
-  changelogNew?: boolean
-  onChangelogClick?: () => void
+  currentProductId?: string
+  onProductChange?: (productId: string) => void
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  "/app": "Home",
+  "/dashboard": "Dashboard",
   "/opportunities": "Opportunities",
-  "/app/live-feed": "Live Feed",
-  "/app/pipeline": "My Pipeline",
-  "/app/won-deals": "Won Deals",
-  "/app/proposal-generator": "Proposal Generator",
-  "/app/ai-settings": "AI Settings",
-  "/app/products": "My Products",
-  "/app/platforms": "Platforms",
-  "/app/settings": "Settings",
+  "/live-feed": "Live Feed",
+  "/pipeline": "Pipeline",
+  "/proposals": "Proposals",
+  "/won-deals": "Won Deals",
+  "/proposal-generator": "Proposal Generator",
+  "/analytics": "Analytics",
+  "/products": "Products",
+  "/platforms": "Platforms",
+  "/settings": "Settings",
+  "/onboarding": "Onboarding",
 }
 
-export function TopBar({ onMenuClick, changelogNew, onChangelogClick }: TopBarProps) {
+export function TopBar({ onMenuClick, currentProductId, onProductChange }: TopBarProps) {
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const pageTitle = PAGE_TITLES[pathname] ?? "Dashboard"
 
+  const showProductSwitcher = ["/dashboard", "/opportunities", "/live-feed", "/pipeline", "/proposals"].includes(pathname)
+
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 lg:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-[var(--border-primary)] bg-[var(--surface-primary)] px-4 lg:px-6">
         <button
           onClick={onMenuClick}
           className="flex md:hidden h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)]"
@@ -41,7 +47,11 @@ export function TopBar({ onMenuClick, changelogNew, onChangelogClick }: TopBarPr
           <Menu className="h-5 w-5" />
         </button>
 
-        <h1 className="text-base font-semibold text-[var(--text-primary)]">{pageTitle}</h1>
+        <h1 className="hidden md:block text-base font-semibold text-[var(--text-primary)]">{pageTitle}</h1>
+
+        {showProductSwitcher && (
+          <ProductSwitcher currentProductId={currentProductId} onProductChange={onProductChange} />
+        )}
 
         <div className="flex flex-1 items-center justify-end gap-2">
           <button
@@ -56,27 +66,8 @@ export function TopBar({ onMenuClick, changelogNew, onChangelogClick }: TopBarPr
             </kbd>
           </button>
 
-          <button
-            onClick={onChangelogClick}
-            className="relative flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface-tertiary)] transition-colors"
-            aria-label="What's new"
-          >
-            <Sparkles className="h-4 w-4" />
-            {changelogNew && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 items-center justify-center">
-                <span className="h-2.5 w-2.5 rounded-full bg-[var(--brand-primary)]" />
-              </span>
-            )}
-          </button>
-
           <NotificationBell />
-
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary)] text-xs font-semibold text-white"
-            aria-label="User menu"
-          >
-            A
-          </button>
+          <UserMenu />
         </div>
       </header>
 

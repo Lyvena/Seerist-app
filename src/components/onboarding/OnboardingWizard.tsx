@@ -2,20 +2,19 @@
 
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProgressBar } from "./ProgressBar"
 import { Step1Product } from "./Step1Product"
 import { Step2Platforms } from "./Step2Platforms"
-import { Step3Alerts } from "./Step3Alerts"
-import { Step4Confirm } from "./Step4Confirm"
+import { Step3StartScanning } from "./Step3StartScanning"
+import { Celebration } from "./Celebration"
 import { completeOnboarding } from "@/app/actions/onboarding"
 
 const STEPS = [
   { label: "Product", component: "Step1Product" },
   { label: "Platforms", component: "Step2Platforms" },
-  { label: "Alerts", component: "Step3Alerts" },
-  { label: "Confirm", component: "Step4Confirm" },
+  { label: "Start Scanning", component: "Step3StartScanning" },
 ]
 
 const INITIAL_PRODUCT = {
@@ -30,9 +29,6 @@ const INITIAL_PRODUCT = {
   pricingModel: "",
   keywords: [] as string[],
   antiKeywords: [] as string[],
-}
-
-const INITIAL_ALERTS = {
   digestFrequency: "daily",
   minScoreForAlert: 70,
   alertEmail: "",
@@ -55,10 +51,13 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWizardProps) {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [saving, setSaving] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const [productForm, setProductForm] = useState(INITIAL_PRODUCT)
+  const [productForm, setProductForm] = useState(() => ({
+    ...INITIAL_PRODUCT,
+    alertEmail: userEmail,
+  }))
   const [selectedPlatforms, setSelectedPlatforms] = useState<Record<string, { enabled: boolean; minScore: number }>>(() => {
     const preSelectedSlugs = ["upwork", "freelancer", "weworkremotely", "contra", "peopleperhour"]
     const initial: Record<string, { enabled: boolean; minScore: number }> = {}
@@ -70,15 +69,10 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
     }
     return initial
   })
-  const [alertsForm, setAlertsForm] = useState({ ...INITIAL_ALERTS, alertEmail: userEmail })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const updateProduct = useCallback((field: string, value: unknown) => {
     setProductForm((prev) => ({ ...prev, [field]: value as never }))
-  }, [])
-
-  const updateAlerts = useCallback((field: string, value: unknown) => {
-    setAlertsForm((prev) => ({ ...prev, [field]: value as never }))
   }, [])
 
   const handlePlatformToggle = useCallback((platformId: string, enabled: boolean) => {
@@ -109,9 +103,8 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
     }
 
     if (current === 3) {
-      if (!alertsForm.digestFrequency) newErrors.digestFrequency = "Digest frequency is required"
-      if (!alertsForm.alertEmail.trim()) newErrors.alertEmail = "Email is required"
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alertsForm.alertEmail)) newErrors.alertEmail = "Invalid email format"
+      if (!productForm.alertEmail.trim()) newErrors.alertEmail = "Email is required"
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(productForm.alertEmail)) newErrors.alertEmail = "Invalid email format"
     }
 
     setErrors(newErrors)
@@ -120,10 +113,9 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
 
   async function handleNext() {
     if (!validateStep(step)) return
-    if (step < 4) {
+    if (step < 3) {
       setStep((s) => s + 1)
     } else {
-      setSaving(true)
       setSaveError(null)
 
       const platformEntries = Object.entries(selectedPlatforms).map(([platformId, config]) => ({
@@ -135,29 +127,35 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
       const result = await completeOnboarding({
         product: productForm,
         platforms: platformEntries,
-        alerts: alertsForm,
+        alerts: {
+          digestFrequency: productForm.digestFrequency,
+          minScoreForAlert: productForm.minScoreForAlert,
+          alertEmail: productForm.alertEmail,
+        },
       })
 
       if (result.success) {
-        router.push("/app")
+        setShowCelebration(true)
       } else {
         setSaveError(result.error ?? "Something went wrong")
-        setSaving(false)
       }
     }
   }
 
   function handleSkip() {
-    setSaving(true)
     router.push("/app")
   }
 
-  const canGoBack = step > 1 && !saving
-  const canSkip = step >= 3
+  const canGoBack = step > 1 && !showCelebration
+  const canSkip = step >= 2
+
+  if (showCelebration) {
+    return <Celebration productName={productForm.name} onComplete={() => router.push("/app")} />
+  }
 
   return (
     <div className="mx-auto max-w-3xl py-8">
-      <ProgressBar currentStep={step} totalSteps={4} labels={STEPS.map((s) => s.label)} />
+      <ProgressBar currentStep={step} totalSteps={3} labels={STEPS.map((s) => s.label)} />
 
       <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-8">
         {step === 1 && (
@@ -172,15 +170,17 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
           />
         )}
         {step === 3 && (
-          <Step3Alerts formData={alertsForm} errors={errors} onChange={updateAlerts} />
-        )}
-        {step === 4 && (
-          <Step4Confirm
+          <Step3StartScanning
+            formData={{
+              digestFrequency: productForm.digestFrequency,
+              minScoreForAlert: productForm.minScoreForAlert,
+              alertEmail: productForm.alertEmail,
+            }}
+            errors={errors}
+            onChange={updateProduct}
             summary={{
               productName: productForm.name,
               platformCount: Object.values(selectedPlatforms).filter((p) => p.enabled).length,
-              digestFrequency: alertsForm.digestFrequency,
-              minScore: alertsForm.minScoreForAlert,
             }}
           />
         )}
@@ -191,15 +191,7 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
           </div>
         )}
 
-        {saving && (
-          <div className="mt-6 flex flex-col items-center gap-3 py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-[var(--brand-primary)]" />
-            <p className="text-sm font-medium text-[var(--text-primary)]">Setting up your workspace...</p>
-            <p className="text-xs text-[var(--text-muted)]">Saving your product, configuring platforms, and preparing your matches.</p>
-          </div>
-        )}
-
-        {!saving && (
+        {!showCelebration && (
           <div className="mt-8 flex items-center justify-between border-t border-[var(--border-primary)] pt-6">
             <div className="flex items-center gap-3">
               {canGoBack && (
@@ -211,23 +203,22 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
             </div>
             <div className="flex items-center gap-3">
               {canSkip && (
-                <Button variant="ghost" onClick={handleSkip} className="text-[var(--text-muted)]" disabled={saving}>
+                <Button variant="ghost" onClick={handleSkip} className="text-[var(--text-muted)]">
                   Skip for now
                 </Button>
               )}
               <Button
                 variant="default"
                 onClick={handleNext}
-                disabled={saving}
                 className="gap-1.5"
               >
-                {step < 4 ? (
+                {step < 3 ? (
                   <>
                     Continue
                     <ArrowRight className="h-4 w-4" />
                   </>
                 ) : (
-                  "Open My Dashboard →"
+                  "Start Scanning Opportunities →"
                 )}
               </Button>
             </div>

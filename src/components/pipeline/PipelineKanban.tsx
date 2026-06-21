@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -13,8 +13,8 @@ import {
 } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Plus, BarChart3, DollarSign, TrendingUp, Clock } from "lucide-react"
-import { PageHeader } from "@/components/common/PageHeader"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/common/PageHeader"
 import { PipelineColumn } from "./PipelineColumn"
 import { PipelineCard } from "./PipelineCard"
 import { DealDetailDrawer } from "./DealDetailDrawer"
@@ -84,12 +84,95 @@ interface PipelineKanbanProps {
   entries: PipelineCardData[]
 }
 
-export function PipelineKanban({ entries }: PipelineKanbanProps) {
+export function PipelineKanban({ entries: initialEntries }: PipelineKanbanProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [selectedEntry, setSelectedEntry] = useState<PipelineCardData | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [closedTab, setClosedTab] = useState<"won" | "lost">("won")
+  const [entries, setEntries] = useState<PipelineCardData[]>(initialEntries)
+
+  useEffect(() => {
+    setEntries(initialEntries)
+  }, [initialEntries])
+
+  useEffect(() => {
+    async function subscribeRealtime() {
+      const { insforgeBrowser } = await import("@/lib/insforge/client")
+      const client = insforgeBrowser()
+      const { data: userData } = await client.auth.getCurrentUser()
+      const userId = userData?.user?.id
+      if (!userId) return
+
+      await client.realtime.connect()
+      const channel = `opportunities:${userId}`
+      await client.realtime.subscribe(channel)
+
+      client.realtime.on("new_opportunity", (msg: unknown) => {
+        const payload = (msg as { payload?: Record<string, unknown> })?.payload ?? msg
+        if (payload && (payload as Record<string, unknown>).id) {
+          const opp = payload as Record<string, unknown>
+          const platformArr = (opp.platforms as Array<{ slug: string; name: string; logo_url: string | null }> | undefined)
+          const p = platformArr?.[0] ?? { slug: "", name: "Unknown", logo_url: null }
+
+          const newEntry: PipelineCardData = {
+            entry: {
+              id: crypto.randomUUID(),
+              opportunity_id: opp.id as string,
+              stage: "discovered",
+              stage_changed_at: new Date().toISOString(),
+              deal_value: null,
+              deal_currency: null,
+              close_probability: null,
+              expected_close_date: null,
+              notes: null,
+              created_at: opp.created_at as string ?? new Date().toISOString(),
+            },
+            opportunity: {
+              id: opp.id as string,
+              title: opp.title as string ?? "",
+              description: opp.description as string ?? "",
+              poster_name: opp.poster_name as string | null ?? null,
+              poster_company: opp.poster_company as string | null ?? null,
+              post_url: opp.post_url as string ?? "",
+              ai_score: opp.ai_score as number | null ?? null,
+              budget_min: opp.budget_min as number | null ?? null,
+              budget_max: opp.budget_max as number | null ?? null,
+              budget_currency: opp.budget_currency as string | null ?? null,
+              budget_type: opp.budget_type as string | null ?? null,
+              status: opp.status as string | null ?? null,
+              required_skills: opp.required_skills as string[] | null ?? null,
+              posted_at: opp.posted_at as string | null ?? null,
+              platform_name: p.name,
+              platform_logo_url: p.logo_url,
+            },
+          }
+          setEntries((prev) => [newEntry, ...prev])
+        }
+      })
+
+      client.realtime.on("status_changed", (msg: unknown) => {
+        const payload = (msg as { payload?: Record<string, unknown> })?.payload ?? msg
+        const data = (payload ?? {}) as Record<string, unknown>
+        if (data.opportunity_id && data.status) {
+          setEntries((prev) =>
+            prev.map((e) =>
+              e.opportunity.id === data.opportunity_id
+                ? {
+                    ...e,
+                    opportunity: { ...e.opportunity, status: data.status as string },
+                    entry: { ...e.entry, stage: data.status as string },
+                  }
+                : e
+            )
+          )
+        }
+      })
+    }
+
+    subscribeRealtime()
+    return () => {}
+  }, [])
 
   const activeCard = activeId ? entries.find((e) => e.entry.id === activeId) : null
 
@@ -101,19 +184,34 @@ export function PipelineKanban({ entries }: PipelineKanbanProps) {
     setActiveId(event.active.id as string)
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null)
+async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
+    const draggedId = active.id as string
+    const oldStage = (active.data.current as { stage?: string })?.stage ?? ""
+
     if (!over) return
 
-    const entryId = active.id as string
-    const card = entries.find((e) => e.entry.id === entryId)
-    if (!card) return
-
     const targetStage = over.id as string
-    if (card.entry.stage === targetStage) return
+    if (oldStage === targetStage) {
+      setActiveId(null)
+      return
+    }
 
-    await movePipelineStage(card.opportunity.id, targetStage, card.entry.stage)
+    // Optimistic update
+    const card = entries.find((e) => e.entry.id === draggedId)
+    if (card) {
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.entry.id === draggedId
+            ? { ...e, entry: { ...e.entry, stage: targetStage, stage_changed_at: new Date().toISOString() } }
+            : e
+        )
+      )
+    }
+    setActiveId(null)
+
+    // Persist
+    await movePipelineStage(card?.opportunity.id ?? "", targetStage, oldStage)
   }
 
   const grouped = STAGES.map((stage) => {

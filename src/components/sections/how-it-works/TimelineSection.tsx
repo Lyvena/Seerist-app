@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -44,11 +44,26 @@ const EVENTS = [
   },
 ];
 
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+}
+
 export function TimelineSection() {
   const containerRef = useRef<HTMLElement | null>(null);
-  const [visibleCount, setVisibleCount] = useState(0);
+  const prefersReduced = useReducedMotion();
+  const [visibleCount, setVisibleCount] = useState(prefersReduced ? EVENTS.length : 0);
 
   useEffect(() => {
+    if (prefersReduced) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -58,7 +73,6 @@ export function TimelineSection() {
     const ctx = ScrollTrigger.create({
       trigger: container,
       start: "top 70%",
-      end: "bottom 80%",
       onUpdate: (self) => {
         const progress = self.progress;
         const next = Math.ceil(progress * items.length);
@@ -67,7 +81,35 @@ export function TimelineSection() {
     });
 
     return () => ctx.kill();
-  }, []);
+  }, [prefersReduced]);
+
+  const renderedEvents = useMemo(() => EVENTS.map((event, index) => {
+    const isVisible = index < visibleCount;
+    const isLeft = index % 2 === 0;
+    return (
+      <div
+        key={event.time}
+        data-timeline-event
+        className="relative grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8"
+      >
+        <div className={`md:text-right ${isLeft ? "" : "md:order-2"}`}>
+          <motion.div
+            initial={prefersReduced ? false : { opacity: 0, y: 12 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            transition={prefersReduced ? undefined : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm"
+          >
+            <span className="text-xs font-semibold uppercase tracking-widest text-violet-700">
+              {event.time}
+            </span>
+            <p className="mt-1 text-base font-semibold text-gray-900">{event.label}</p>
+            <p className="text-sm text-gray-500">{event.detail}</p>
+          </motion.div>
+        </div>
+        <div className={`hidden md:block ${isLeft ? "" : "md:order-1"}`} />
+      </div>
+    );
+  }), [visibleCount, prefersReduced]);
 
   return (
     <section ref={containerRef} className="bg-white py-24">
@@ -90,33 +132,7 @@ export function TimelineSection() {
             aria-hidden="true"
           />
           <div className="space-y-8">
-            {EVENTS.map((event, index) => {
-              const isVisible = index < visibleCount;
-              const isLeft = index % 2 === 0;
-              return (
-                <div
-                  key={event.time}
-                  data-timeline-event
-                  className="relative grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8"
-                >
-                  <div className={`md:text-right ${isLeft ? "" : "md:order-2"}`}>
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={isVisible ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                      className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm"
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-widest text-violet-700">
-                        {event.time}
-                      </span>
-                      <p className="mt-1 text-base font-semibold text-gray-900">{event.label}</p>
-                      <p className="text-sm text-gray-500">{event.detail}</p>
-                    </motion.div>
-                  </div>
-                  <div className={`hidden md:block ${isLeft ? "" : "md:order-1"}`} />
-                </div>
-              );
-            })}
+            {renderedEvents}
           </div>
         </div>
       </div>

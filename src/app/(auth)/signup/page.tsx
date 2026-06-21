@@ -30,8 +30,7 @@ export default function SignupPage() {
     try {
       const { data, error } = await signUpWithEmail(email, password)
       if (error) throw error
-      toast.success("Account created! Check your email to verify.")
-      router.push("/app")
+      router.push("/onboarding")
       router.refresh()
     } catch (err: any) {
       toast.error(err.message || "Failed to create account")

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { admin } from "@/lib/insforge"
+import { createAdminClient } from "@insforge/sdk"
 import { dailyDigest, weeklyDigest } from "@/lib/email-templates"
+
+const admin = createAdminClient({
+  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
+  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
+})
 
 export async function POST(request: NextRequest) {
   try {

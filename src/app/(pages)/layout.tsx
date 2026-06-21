@@ -1,17 +1,22 @@
-"use client";
-import { motion } from "framer-motion";
+import { ThemeProvider } from "next-themes"
+import { Toaster } from "@/components/ui/sonner"
+import { NuqsAdapter } from "nuqs/adapters/next/app"
+import "../globals.css"
 
-const ease = [0.16, 1, 0.3, 1] as const;
-
-export default function PagesLayout({ children }: { children: React.ReactNode }) {
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5, ease }}
-    >
-      {children}
-    </motion.div>
-  );
+    <html lang="en">
+      <body className="font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <NuqsAdapter>{children}</NuqsAdapter>
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
+  )
 }

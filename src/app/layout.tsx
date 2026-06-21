@@ -2,15 +2,23 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { DashboardShell } from "@/components/dashboard-shell";
 import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://seerist.xyz"),
   title: {
-    default: "Seerist v2",
+    default: "Seerist",
     template: "Seerist | %s",
   },
   description:
@@ -21,7 +29,6 @@ export const metadata: Metadata = {
     "Upwork automation",
     "indie hacker tools",
     "AI proposal generator",
-    "SaaS business development",
   ],
   authors: [{ name: "Seerist" }],
   openGraph: {
@@ -35,24 +42,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     creator: "@seeristxyz",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  alternates: {
-    canonical: "https://seerist.xyz",
-  },
+  robots: { index: true, follow: true },
 };
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export default function RootLayout({
   children,
@@ -60,14 +51,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="https://app.seerist.xyz" />
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider
@@ -76,10 +62,8 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            <NuqsAdapter><DashboardShell>{children}</DashboardShell></NuqsAdapter>
-            <Toaster />
-          </TooltipProvider>
+          <NuqsAdapter>{children}</NuqsAdapter>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

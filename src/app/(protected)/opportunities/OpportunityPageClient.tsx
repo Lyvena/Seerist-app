@@ -97,7 +97,7 @@ export function OpportunityPageClient({
   }
 
   return (
-    <div className="flex gap-8">
+    <div className="flex gap-4">
       <FilterSidebar platforms={platforms} totalCount={totalCount} />
       <OpportunityList
         initialOpportunities={initialOpportunities}

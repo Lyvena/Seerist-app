@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import { motion } from "framer-motion";
 
 const SCORE = 94;
@@ -11,7 +11,7 @@ const SUB_SCORES = [
 
 const REASON = "Strong match — the poster needs exactly what InvoicePad provides, with a budget aligned to your pricing tier.";
 
-export function ScoringMockup() {
+function ScoringMockupComponent() {
   const [ready, setReady] = useState(false);
   const [typed, setTyped] = useState("");
   const rafRef = useRef<number | null>(null);
@@ -130,8 +130,10 @@ export function ScoringMockup() {
               transition={{ duration: 0.55, repeat: Infinity, repeatType: "reverse" }}
             />
           )}
-        </div>
-      </div>
-    </div>
-  );
+</div>
+       </div>
+     </div>
+   );
 }
+
+export const ScoringMockup = memo(ScoringMockupComponent)

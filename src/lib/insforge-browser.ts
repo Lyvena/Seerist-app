@@ -1,5 +1,3 @@
-import { createBrowserClient } from "@insforge/sdk/ssr"
+import { insforgeBrowser } from "./insforge/client"
 
-export const insforge = createBrowserClient({
-  refreshUrl: "/api/auth/refresh",
-})
+export const insforge = insforgeBrowser()
