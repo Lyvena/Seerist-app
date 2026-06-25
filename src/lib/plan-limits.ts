@@ -59,7 +59,7 @@ export function canUseFeature(plan: string | null | undefined, feature: "autoPro
   }
 }
 
-function safePlan(plan: string | null | undefined): PlanTier {
+export function safePlan(plan: string | null | undefined): PlanTier {
   if (plan === "pro" || plan === "agency") return plan
   return "free"
 }

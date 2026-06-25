@@ -2,21 +2,24 @@
 
 import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
-import OpenAI from "openai"
 import { revalidatePath } from "next/cache"
+import { canAddProduct, safePlan } from "@/lib/plan-limits"
 
 const insforge = admin
 
-const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-})
-
-function generateEmbedding(text: string) {
-  return openai.embeddings.create({
-    model: "openai/text-embedding-3-small",
-    input: text.slice(0, 8000),
-  })
+// Generate an embedding vector via the InsForge Model Gateway (OpenRouter).
+// Returns null on failure so product save never blocks on AI availability.
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  try {
+    const result = await admin.ai.embeddings.create({
+      model: "openai/text-embedding-3-small",
+      input: text.slice(0, 8000),
+    })
+    return result.data?.[0]?.embedding ?? null
+  } catch (e) {
+    console.warn("Embedding generation failed, continuing without it:", e)
+    return null
+  }
 }
 
 export async function upsertProduct(
@@ -35,23 +38,34 @@ export async function upsertProduct(
   }
 ) {
   const userId = await requireUser()
+  const { data: profile } = await insforge.database
+    .from("profiles")
+    .select("plan")
+    .eq("id", userId)
+    .maybeSingle()
+  const plan = safePlan((profile as { plan: string | null } | null)?.plan)
+
   if (!data.id) {
-    const { data: existing } = await insforge.database.from("products").select("id").eq("user_id", userId).eq("is_active", true)
+    const { data: existing } = await insforge.database
+      .from("products")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
     const count = (existing ?? []).length
-    if (count >= 1) {
-      return { error: new Error("Free plan allows only 1 product. Upgrade to Pro.") }
+    const access = canAddProduct(plan, count)
+    if (!access.allowed) {
+      return { error: access.reason ?? "Product limit reached." }
     }
   }
 
   const embedText = `${data.name}\n${data.description}\n${data.target_customer ?? ""}\n${(data.keywords ?? []).join(", ")}`
-  const embedResp = await generateEmbedding(embedText)
-  const embedding = embedResp.data?.[0]?.embedding ?? null
+  const embedding = await generateEmbedding(embedText)
 
   const payload = {
     user_id: userId,
     name: data.name,
     description: data.description,
-    url: data.url ?? null,
+    url: data.url || null,
     category: data.category ?? null,
     target_customer: data.target_customer ?? null,
     key_benefits: data.key_benefits ?? [],
@@ -64,25 +78,40 @@ export async function upsertProduct(
   }
 
   if (data.id) {
-    const { error } = await insforge.database.from("products").update(payload).eq("id", data.id)
+    const { error } = await insforge.database
+      .from("products")
+      .update({ ...payload, updated_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("user_id", userId)
     revalidatePath("/products")
-    return { error }
+    revalidatePath("/dashboard")
+    return { error: error?.message ?? null }
   }
 
   const { error } = await insforge.database.from("products").insert([payload])
   revalidatePath("/products")
-  return { error }
+  revalidatePath("/dashboard")
+  return { error: error?.message ?? null }
 }
 
 export async function deleteProduct(productId: string) {
   const userId = await requireUser()
-  const { error } = await insforge.database.from("products").update({ is_active: false }).eq("id", productId)
+  const { error } = await insforge.database
+    .from("products")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("id", productId)
+    .eq("user_id", userId)
   revalidatePath("/products")
-  return { error }
+  revalidatePath("/dashboard")
+  return { error: error?.message ?? null }
 }
 
 export async function getProductCount() {
   const userId = await requireUser()
-  const { data } = await insforge.database.from("products").select("id").eq("user_id", userId).eq("is_active", true)
+  const { data } = await insforge.database
+    .from("products")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_active", true)
   return (data ?? []).length
 }

@@ -1,42 +1,33 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@insforge/sdk/ssr"
+import { cookies } from "next/headers"
 import { admin } from "@/lib/insforge"
-import { PLAN_LIMITS, type PlanTier } from "@/lib/plan-limits"
+import { PLAN_LIMITS, PLAN_PRICES, type PlanTier } from "@/lib/plan-limits"
 
-async function getUserIdFromToken(token: string): Promise<string | null> {
-  const baseUrl = process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
-  try {
-    const res = await fetch(`${baseUrl}/api/auth/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data?.user?.id ?? data?.id ?? null
-  } catch {
-    return null
-  }
-}
-
+// Creates (or reactivates) a subscription for the logged-in user and activates
+// the plan. Authenticated via the user's session cookie.
+//
+// NOTE: This activates the plan directly. To require a real Stripe payment,
+// wire `admin.payments.stripe.createCheckoutSession(...)` here and gate plan
+// activation behind the Stripe webhook (payment-webhook edge function).
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("Authorization")
-    if (!authHeader?.startsWith("Bearer ")) {
+    const insforge = createServerClient({ cookies: await cookies() })
+    const { data: userData, error: authError } = await insforge.auth.getCurrentUser()
+    const userId = userData?.user?.id
+    if (authError || !userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const token = authHeader.slice(7)
-    const userId = await getUserIdFromToken(token)
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { plan, annual } = body as { plan: string; annual: boolean }
+    const body = await request.json().catch(() => ({}))
+    const { plan, annual } = body as { plan?: string; annual?: boolean }
 
     if (plan !== "pro" && plan !== "agency") {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
-    const limits = PLAN_LIMITS[plan as PlanTier]
+    const tier = plan as PlanTier
+    const limits = PLAN_LIMITS[tier]
     const now = new Date()
     const periodEnd = new Date(now)
     if (annual) {
@@ -49,8 +40,6 @@ export async function POST(request: NextRequest) {
       .from("subscriptions")
       .select("id")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
       .maybeSingle()
 
     if (existingSub) {
@@ -67,19 +56,18 @@ export async function POST(request: NextRequest) {
           updated_at: now.toISOString(),
         })
         .eq("id", (existingSub as { id: string }).id)
+        .eq("user_id", userId)
     } else {
-      await admin.database
-        .from("subscriptions")
-        .insert([{
-          user_id: userId,
-          plan,
-          status: "active",
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          cancel_at_period_end: false,
-          monthly_opportunity_quota: limits.opportunities,
-          monthly_proposal_quota: limits.proposals,
-        }])
+      await admin.database.from("subscriptions").insert([{
+        user_id: userId,
+        plan,
+        status: "active",
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        cancel_at_period_end: false,
+        monthly_opportunity_quota: limits.opportunities,
+        monthly_proposal_quota: limits.proposals,
+      }])
     }
 
     await admin.database
@@ -90,7 +78,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       plan,
-      annual,
+      annual: Boolean(annual),
+      amount: annual ? PLAN_PRICES[tier].annual : PLAN_PRICES[tier].monthly,
       redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://seerist.xyz"}/settings/billing?success=true`,
     })
   } catch (err) {

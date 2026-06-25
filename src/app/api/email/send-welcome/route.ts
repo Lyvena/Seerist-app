@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { admin } from "@/lib/insforge"
+import { resolveUserEmail, safeEqual } from "@/lib/email"
 import { welcome } from "@/lib/email-templates"
 
 export async function POST(request: NextRequest) {
   try {
     const apiKey = request.headers.get("x-api-key")
-    if (apiKey !== process.env.INSFORGE_API_KEY) {
+    const expected = process.env.INSFORGE_API_KEY
+    if (!expected || !apiKey || !safeEqual(apiKey, expected)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { userId } = await request.json()
+    const body = await request.json().catch(() => null)
+    const { userId, email: callerEmail } = body ?? {}
+    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 })
 
-    const authRes = await fetch(`${process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"}/api/admin/users/${userId}`, {
-      headers: { Authorization: `Bearer ${process.env.INSFORGE_API_KEY}` },
-    })
-    const authData = await authRes.json().catch(() => ({}))
-    const email = (authData as any)?.email ?? (authData as any)?.user?.email
-    if (!email) return NextResponse.json({ error: "No email" }, { status: 200 })
+    const email = await resolveUserEmail(userId, callerEmail)
+    if (!email) return NextResponse.json({ error: "No email on file" }, { status: 200 })
 
     const { data: profile } = await admin.database
       .from("profiles")
@@ -24,12 +24,9 @@ export async function POST(request: NextRequest) {
       .eq("id", userId)
       .maybeSingle()
 
-    const name = (profile as any)?.full_name ?? "there"
+    const name = (profile as { full_name: string | null } | null)?.full_name ?? "there"
 
-    const html = welcome({
-      name,
-      onboardingUrl: "https://seerist.xyz/onboarding",
-    })
+    const html = welcome({ name, onboardingUrl: "https://seerist.xyz/onboarding" })
 
     await admin.emails.send({
       to: email,

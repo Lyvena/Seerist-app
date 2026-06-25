@@ -1,36 +1,36 @@
 "use server"
 
 import { requireUser } from "@/lib/auth"
-import { createAdminClient } from "@insforge/sdk"
+import { admin } from "@/lib/insforge"
 import { revalidatePath } from "next/cache"
 
-const insforge = createAdminClient({
-  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
-})
-
-export async function togglePlatform(
-  platformId: string,
-  isEnabled: boolean
-) {
+export async function togglePlatform(platformId: string, isEnabled: boolean) {
   const userId = await requireUser()
-  const { data: existing } = await insforge.database.from("user_platform_configs")
+  const { data: existing, error: findErr } = await admin.database
+    .from("user_platform_configs")
     .select("id")
     .eq("user_id", userId)
     .eq("platform_id", platformId)
     .maybeSingle()
 
+  if (findErr) return { error: findErr.message }
+
+  let error: { message: string } | null = null
   if (existing) {
     const row = existing as { id: string }
-    await insforge.database.from("user_platform_configs")
+    ;({ error } = await admin.database
+      .from("user_platform_configs")
       .update({ is_enabled: isEnabled })
       .eq("id", row.id)
+      .eq("user_id", userId))
   } else {
-    await insforge.database.from("user_platform_configs")
-      .insert([{ user_id: userId, platform_id: platformId, is_enabled: isEnabled }])
+    ;({ error } = await admin.database
+      .from("user_platform_configs")
+      .insert([{ user_id: userId, platform_id: platformId, is_enabled: isEnabled }]))
   }
 
   revalidatePath("/platforms")
+  return { error: error?.message ?? null }
 }
 
 export async function updatePlatformConfig(
@@ -40,38 +40,55 @@ export async function updatePlatformConfig(
     auto_propose?: boolean
     notify_email?: boolean
     custom_keywords?: string[]
+    is_enabled?: boolean
   }
 ) {
   const userId = await requireUser()
-  const { data: existing } = await insforge.database.from("user_platform_configs")
+  const { data: existing, error: findErr } = await admin.database
+    .from("user_platform_configs")
     .select("id")
     .eq("user_id", userId)
     .eq("platform_id", platformId)
     .maybeSingle()
 
+  if (findErr) return { error: findErr.message }
+
+  let error: { message: string } | null = null
   if (existing) {
     const row = existing as { id: string }
-    await insforge.database.from("user_platform_configs")
+    ;({ error } = await admin.database
+      .from("user_platform_configs")
       .update(data)
       .eq("id", row.id)
+      .eq("user_id", userId))
   } else {
-    await insforge.database.from("user_platform_configs")
-      .insert([{ user_id: userId, platform_id: platformId, is_enabled: false, ...data }])
+    ;({ error } = await admin.database
+      .from("user_platform_configs")
+      .insert([{ user_id: userId, platform_id: platformId, is_enabled: true, ...data }]))
   }
 
   revalidatePath("/platforms")
+  return { error: error?.message ?? null }
 }
 
 export async function triggerPlatformScan(platformSlug: string) {
   const userId = await requireUser()
-  const ossHost = process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
+  const ossHost = process.env.INSFORGE_URL
+  if (!ossHost) return { ok: false, error: "INSFORGE_URL is not configured" }
   const url = `${ossHost}/functions/monitor-orchestrator`
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.INSFORGE_API_KEY}` },
-    body: JSON.stringify({ user_id: userId, platform_slug: platformSlug }),
-  })
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.INSFORGE_API_KEY}`,
+      },
+      body: JSON.stringify({ user_id: userId, platform_slug: platformSlug }),
+    })
 
-  return { ok: res.ok, data: await res.json().catch(() => ({})) }
+    return { ok: res.ok, data: await res.json().catch(() => ({})) }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Scan failed" }
+  }
 }

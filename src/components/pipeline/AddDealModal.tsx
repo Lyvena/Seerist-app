@@ -6,6 +6,7 @@ import { X, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { addManualDeal } from "@/app/actions/pipeline"
 import { toast } from "sonner"
+import type { PipelineStage } from "@/lib/db/schemas"
 
 interface AddDealModalProps {
   open: boolean
@@ -25,7 +26,7 @@ export function AddDealModal({ open, onOpenChange }: AddDealModalProps) {
   const [description, setDescription] = useState("")
   const [budgetMin, setBudgetMin] = useState("")
   const [budgetMax, setBudgetMax] = useState("")
-  const [stage, setStage] = useState("discovered")
+  const [stage, setStage] = useState<PipelineStage>("discovered")
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -116,7 +117,7 @@ export function AddDealModal({ open, onOpenChange }: AddDealModalProps) {
               <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">Pipeline Stage</label>
               <select
                 value={stage}
-                onChange={(e) => setStage(e.target.value)}
+                onChange={(e) => setStage(e.target.value as PipelineStage)}
                 className="w-full rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
               >
                 {STAGES.map((s) => (

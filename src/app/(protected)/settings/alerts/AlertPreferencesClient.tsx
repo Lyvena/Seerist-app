@@ -6,11 +6,14 @@ import { PageHeader } from "@/components/common/PageHeader"
 import { Button } from "@/components/ui/button"
 import { saveAlertPreferences, sendTestAlert } from "@/app/actions/alerts"
 import { toast } from "sonner"
+import { DIGEST_FREQUENCIES } from "@/lib/db/schemas"
+
+type DigestFrequency = (typeof DIGEST_FREQUENCIES)[number]
 
 interface AlertPreferencesClientProps {
   userId: string
   email: string
-  initialDigestFrequency: string
+  initialDigestFrequency: DigestFrequency
   initialMinScore: number
   initialPlatforms: string[]
   enabledPlatformIds: string[]
@@ -24,7 +27,7 @@ export function AlertPreferencesClient({
   initialPlatforms,
   enabledPlatformIds,
 }: AlertPreferencesClientProps) {
-  const [frequency, setFrequency] = useState(initialDigestFrequency)
+  const [frequency, setFrequency] = useState<DigestFrequency>(initialDigestFrequency)
   const [minScore, setMinScore] = useState(initialMinScore)
   const [platformsIncluded, setPlatformsIncluded] = useState(initialPlatforms)
   const [emailOverride, setEmailOverride] = useState(email)
@@ -58,7 +61,7 @@ export function AlertPreferencesClient({
             Digest Frequency
           </h3>
           <div className="mt-4 space-y-2">
-            {["never", "realtime", "daily", "weekly"].map((freq) => (
+            {(["never", "realtime", "daily", "weekly"] as DigestFrequency[]).map((freq) => (
               <label key={freq} className="flex cursor-pointer items-center gap-3 rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-4 py-3 hover:bg-[var(--surface-tertiary)]">
                 <input type="radio" name="frequency" value={freq} checked={frequency === freq}
                   onChange={() => setFrequency(freq)} className="h-4 w-4 accent-[var(--brand-primary)]" />

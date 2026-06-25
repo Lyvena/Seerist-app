@@ -88,12 +88,12 @@ export default function BillingClient({
 
         <div className="mt-6 flex flex-wrap gap-3">
           {isFree ? (
-            <Button variant="default" onClick={() => router.push("/pricing")}>
+            <Button variant="default" onClick={() => router.push("/settings/billing?upgrade=pro")}>
               Upgrade Plan <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           ) : (
             <>
-              <Button variant="default" onClick={() => router.push("/pricing")}>
+              <Button variant="default" onClick={() => router.push("/settings/billing?upgrade=change")}>
                 Change Plan <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
               {paymentProviderId && (
@@ -179,7 +179,7 @@ export default function BillingClient({
             <p className="text-sm font-medium text-[var(--text-primary)]">You&apos;re on the Free plan</p>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">Upgrade to Pro or Agency to unlock unlimited opportunities, auto-propose, analytics, and more.</p>
           </div>
-          <Button variant="default" size="sm" className="ml-auto shrink-0" onClick={() => router.push("/pricing")}>
+          <Button variant="default" size="sm" className="ml-auto shrink-0" onClick={() => router.push("/settings/billing?upgrade=pro")}>
             View Plans
           </Button>
         </div>

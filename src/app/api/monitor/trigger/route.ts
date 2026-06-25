@@ -1,40 +1,51 @@
-import { NextRequest } from "next/server"
-import { admin } from "@/lib/insforge"
+import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@insforge/sdk/ssr"
+import { cookies } from "next/headers"
 
+// Triggers the monitor-orchestrator edge function on behalf of the logged-in
+// user. Authenticated via the user's session cookie (not the admin key).
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { platform_slug } = body
+  try {
+    const insforge = createServerClient({ cookies: await cookies() })
+    const { data: userData, error: authError } = await insforge.auth.getCurrentUser()
+    const userId = userData?.user?.id
+    if (authError || !userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-  if (!platform_slug) {
-    return Response.json({ error: "platform_slug is required" }, { status: 400 })
+    const body = await request.json().catch(() => ({}))
+    const { platform_slug } = body ?? {}
+    if (!platform_slug) {
+      return NextResponse.json({ error: "platform_slug is required" }, { status: 400 })
+    }
+
+    const accessToken = (await cookies()).get("insforge_access_token")?.value
+    const ossHost = process.env.INSFORGE_URL
+    if (!ossHost) {
+      return NextResponse.json({ error: "Server is not configured" }, { status: 500 })
+    }
+
+    const edgeResponse = await fetch(`${ossHost}/functions/monitor-orchestrator`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ user_id: userId, platform_slug }),
+    })
+
+    if (!edgeResponse.ok) {
+      const errorText = await edgeResponse.text()
+      return NextResponse.json(
+        { error: "Scan trigger failed", detail: errorText },
+        { status: edgeResponse.status }
+      )
+    }
+
+    const result = await edgeResponse.json()
+    return NextResponse.json({ success: true, result })
+  } catch (err) {
+    console.error("monitor/trigger error:", err)
+    return NextResponse.json({ error: "Internal error" }, { status: 500 })
   }
-
-  const authHeader = request.headers.get("Authorization") ?? ""
-
-  const ossHost = process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
-  const functionUrl = `${ossHost}/functions/monitor-orchestrator`
-
-  const { data: userData } = await admin.auth.getCurrentUser()
-  const userId = userData?.user?.id
-
-  const edgeResponse = await fetch(functionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: authHeader,
-    },
-    body: JSON.stringify({
-      user_id: userId,
-      platform_slug,
-    }),
-  })
-
-  if (!edgeResponse.ok) {
-    const errorText = await edgeResponse.text()
-    return Response.json({ error: "Scan trigger failed", detail: errorText }, { status: edgeResponse.status })
-  }
-
-  const result = await edgeResponse.json()
-
-  return Response.json({ success: true, result })
 }

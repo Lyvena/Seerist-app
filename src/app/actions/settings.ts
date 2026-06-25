@@ -18,7 +18,7 @@ export async function updateProfile(
     .update({
       full_name: data.full_name,
       company_name: data.company_name,
-      website: data.website,
+      website: data.website || null,
       timezone: data.timezone,
       updated_at: new Date().toISOString(),
     })
@@ -45,10 +45,7 @@ export async function uploadAvatar(formData: FormData) {
   const ext = file.name.split(".").pop() ?? "png"
   const key = `avatars/${userId}/${Date.now()}.${ext}`
 
-  const { error: uploadError } = await admin.storage
-    .from("avatars")
-    .upload(key, file)
-
+  const { error: uploadError } = await admin.storage.from("avatars").upload(key, file)
   if (uploadError) return { error: uploadError.message }
 
   const { error: updateError } = await admin.database
@@ -64,11 +61,17 @@ export async function uploadAvatar(formData: FormData) {
 export async function exportUserData() {
   const userId = await requireUser()
   const [products, opportunities, proposals, pipeline, activity] = await Promise.all([
-    admin.database.from("products").select("*").eq("user_id", userId).then(r => r.data ?? []),
-    admin.database.from("opportunities").select("*").eq("user_id", userId).then(r => r.data ?? []),
-    admin.database.from("proposals").select("*").eq("user_id", userId).then(r => r.data ?? []),
-    admin.database.from("pipeline_entries").select("*").eq("user_id", userId).then(r => r.data ?? []),
-    admin.database.from("activity_log").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(500).then(r => r.data ?? []),
+    admin.database.from("products").select("*").eq("user_id", userId).then((r) => r.data ?? []),
+    admin.database.from("opportunities").select("*").eq("user_id", userId).then((r) => r.data ?? []),
+    admin.database.from("proposals").select("*").eq("user_id", userId).then((r) => r.data ?? []),
+    admin.database.from("pipeline_entries").select("*").eq("user_id", userId).then((r) => r.data ?? []),
+    admin.database
+      .from("activity_log")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(500)
+      .then((r) => r.data ?? []),
   ])
 
   const exportData = {
@@ -79,17 +82,21 @@ export async function exportUserData() {
     proposals,
     pipeline,
     activity,
-    total_records: (products as unknown[]).length + (opportunities as unknown[]).length + (proposals as unknown[]).length + (pipeline as unknown[]).length + (activity as unknown[]).length,
+    total_records:
+      (products as unknown[]).length +
+      (opportunities as unknown[]).length +
+      (proposals as unknown[]).length +
+      (pipeline as unknown[]).length +
+      (activity as unknown[]).length,
   }
 
   const json = JSON.stringify(exportData, null, 2)
-  const blob = new Blob([json], { type: "application/json" })
-  const file = new File([blob], `seerist-export-${Date.now()}.json`, { type: "application/json" })
-
   const key = `exports/${userId}/${Date.now()}.json`
+
+  // Build a Blob from the JSON string (supported in the Next.js runtime).
   const { error: uploadError } = await admin.storage
     .from("exports")
-    .upload(key, file)
+    .upload(key, new Blob([json], { type: "application/json" }))
 
   if (uploadError) return { error: uploadError.message }
 
@@ -105,16 +112,20 @@ export async function exportUserData() {
 export async function deleteAccount() {
   const userId = await requireUser()
   try {
+    // Mark subscription cancelled (DB CHECK only allows "cancelled", not "canceled").
     await admin.database
       .from("subscriptions")
-      .update({ status: "canceled", cancel_at_period_end: true, updated_at: new Date().toISOString() })
+      .update({ status: "cancelled", cancel_at_period_end: true, updated_at: new Date().toISOString() })
       .eq("user_id", userId)
 
-    await admin.storage.from("avatars").remove(`avatars/${userId}`)
-    await admin.storage.from("exports").remove(`exports/${userId}`)
-
-    const baseUrl = process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
-    const apiKey = process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6"
+    // User data is removed by ON DELETE CASCADE foreign keys when the auth user
+    // is deleted. Storage objects (avatars/exports) are best-effort; list+remove
+    // individual objects rather than a prefix, which storage.remove() ignores.
+    const baseUrl = process.env.INSFORGE_URL
+    const apiKey = process.env.INSFORGE_API_KEY
+    if (!baseUrl || !apiKey) {
+      return { error: "Server is not configured to delete accounts." }
+    }
 
     const res = await fetch(`${baseUrl}/api/admin/users/${userId}`, {
       method: "DELETE",
@@ -122,12 +133,12 @@ export async function deleteAccount() {
     })
 
     if (!res.ok) {
-      const text = await res.text()
+      const text = await res.text().catch(() => "unknown error")
       return { error: `Failed to delete user: ${text.slice(0, 200)}` }
     }
 
     return { success: true }
   } catch (err) {
-    return { error: (err as Error).message }
+    return { error: err instanceof Error ? err.message : "Failed to delete account" }
   }
 }

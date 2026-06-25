@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createAdminClient } from "@insforge/sdk"
+import { admin } from "@/lib/insforge"
+import { resolveUserEmail, safeEqual } from "@/lib/email"
 import { dailyDigest, weeklyDigest } from "@/lib/email-templates"
 
-const admin = createAdminClient({
-  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
-})
-
+// Invoked by the daily/weekly cron schedule. Authenticated via INSFORGE_API_KEY.
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { mode } = body as { mode: "daily" | "weekly" }
-    const isWeekly = mode === "weekly"
+    const apiKey = request.headers.get("x-api-key")
+    const expected = process.env.INSFORGE_API_KEY
+    if (!expected || !apiKey || !safeEqual(apiKey, expected)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json().catch(() => ({}))
+    const isWeekly = body?.mode === "weekly"
 
     const { data: alertUsers } = await admin.database
       .from("pending_alerts")
@@ -19,31 +21,34 @@ export async function POST(request: NextRequest) {
       .limit(1000)
 
     const userIds = [...new Set(((alertUsers ?? []) as Array<{ user_id: string }>).map((a) => a.user_id))]
+    if (userIds.length === 0) {
+      return NextResponse.json({ sent: 0, totalUsers: 0 })
+    }
 
     const { data: allProfiles } = await admin.database
       .from("profiles")
-      .select("id, full_name, plan")
-      .in("id", userIds.length > 0 ? userIds : ["none"])
+      .select("id, full_name")
+      .in("id", userIds)
 
-    const profiles = (allProfiles ?? []) as Array<{ id: string; full_name: string | null; plan: string | null }>
+    const profiles = (allProfiles ?? []) as Array<{ id: string; full_name: string | null }>
     let sent = 0
 
     for (const profile of profiles) {
-      const authRes = await fetch(`${process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"}/api/admin/users/${profile.id}`, {
-        headers: { Authorization: `Bearer ${process.env.INSFORGE_API_KEY}` },
-      })
-      const authData = await authRes.json().catch(() => ({}))
-      const email = (authData as any)?.email ?? (authData as any)?.user?.email
+      const email = await resolveUserEmail(profile.id)
       const name = profile.full_name ?? "there"
       if (!email) continue
 
       const { data: alerts } = await admin.database
         .from("pending_alerts")
-        .select("*")
+        .select("id, score, platform_slug, title, opportunity_external_id")
         .eq("user_id", profile.id)
 
       const alertList = (alerts ?? []) as Array<{
-        score: number; platform_slug: string; title: string; opportunity_external_id: string
+        id: string
+        score: number
+        platform_slug: string
+        title: string
+        opportunity_external_id: string
       }>
 
       if (alertList.length === 0) continue
@@ -59,10 +64,13 @@ export async function POST(request: NextRequest) {
       let worstPlatform: string | null = null
       let minCount = Infinity
       platformCounts.forEach((count, slug) => {
-        if (count < minCount) { minCount = count; worstPlatform = slug }
+        if (count < minCount) {
+          minCount = count
+          worstPlatform = slug
+        }
       })
 
-      const topOpps = alertList
+      const topOpps = [...alertList]
         .sort((a, b) => b.score - a.score)
         .slice(0, 5)
         .map((a) => ({
@@ -73,42 +81,53 @@ export async function POST(request: NextRequest) {
         }))
 
       if (isWeekly) {
-        const prevWeekStart = new Date()
-        prevWeekStart.setDate(prevWeekStart.getDate() - 14)
-        const { count: prevCount } = await admin.database
-          .from("pending_alerts")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id)
-          .gte("created_at", prevWeekStart.toISOString()) as any
-
         const html = weeklyDigest({
-          name, discovered: totalOpps, prevDiscovered: prevCount ?? 0,
-          highScore, proposalsSent: 0, winRate: 0, platformsScanned: platformCounts.size,
-          topOpps, totalOpps, digestUrl: `https://seerist.xyz/opportunities`,
+          name,
+          discovered: totalOpps,
+          prevDiscovered: 0,
+          highScore,
+          proposalsSent: 0,
+          winRate: 0,
+          platformsScanned: platformCounts.size,
+          topOpps,
+          totalOpps,
+          digestUrl: "https://seerist.xyz/opportunities",
         })
 
         await admin.emails.send({
-          to: email, subject: `Your Seerist Weekly Digest — ${totalOpps} new opportunities`,
-          html, from: "Seerist", replyTo: "support@seerist.xyz",
+          to: email,
+          subject: `Your Seerist Weekly Digest — ${totalOpps} new opportunities`,
+          html,
+          from: "Seerist",
+          replyTo: "support@seerist.xyz",
         })
       } else {
         const html = dailyDigest({
-          name, discovered: totalOpps, highScore,
+          name,
+          discovered: totalOpps,
+          highScore,
           platformsScanned: platformCounts.size,
-          topOpps, totalOpps, worstPlatform,
-          digestUrl: `https://seerist.xyz/opportunities`,
+          topOpps,
+          totalOpps,
+          worstPlatform,
+          digestUrl: "https://seerist.xyz/opportunities",
         })
 
         await admin.emails.send({
-          to: email, subject: `Your Seerist Daily Digest — ${totalOpps} new opportunities`,
-          html, from: "Seerist", replyTo: "support@seerist.xyz",
+          to: email,
+          subject: `Your Seerist Daily Digest — ${totalOpps} new opportunities`,
+          html,
+          from: "Seerist",
+          replyTo: "support@seerist.xyz",
         })
       }
 
+      // Delete only the alerts we just consumed (by id), not the whole user set,
+      // so alerts arriving during processing aren't lost.
       await admin.database
         .from("pending_alerts")
         .delete()
-        .eq("user_id", profile.id)
+        .in("id", alertList.map((a) => a.id))
 
       sent++
     }

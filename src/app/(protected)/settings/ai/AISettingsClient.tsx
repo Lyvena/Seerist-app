@@ -157,7 +157,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
             <p className="text-sm font-medium text-[var(--text-primary)]">Free plan limitations</p>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">Free plan is locked to GPT-4o Mini. Upgrade to Pro for custom models and BYOK.</p>
           </div>
-          <Button variant="default" size="sm" onClick={() => router.push("/pricing")}>Upgrade</Button>
+          <Button variant="default" size="sm" onClick={() => router.push("/settings/billing?upgrade=pro")}>Upgrade</Button>
         </div>
       )}
 
@@ -221,7 +221,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
 
         {!isPro ? (
           <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4">
-            <p className="text-sm text-[var(--text-muted)]">BYOK is a Pro feature. <button onClick={() => router.push("/pricing")} className="text-[var(--brand-primary)] hover:underline">Upgrade to Pro</button> to use your own API key and leverage your own AI credits.</p>
+            <p className="text-sm text-[var(--text-muted)]">BYOK is a Pro feature. <button onClick={() => router.push("/settings/billing?upgrade=pro")} className="text-[var(--brand-primary)] hover:underline">Upgrade to Pro</button> to use your own API key and leverage your own AI credits.</p>
           </div>
         ) : hasKey ? (
           <div className="space-y-4">

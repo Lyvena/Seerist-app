@@ -4,21 +4,17 @@ import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 import { revalidatePath } from "next/cache"
 
-function getBaseUrl() {
-  return process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app"
-}
-
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY
-
 export async function testAIKey(key: string): Promise<{ valid: boolean; model?: string; error?: string }> {
-  const userId = await requireUser()
+  await requireUser()
+  if (!key?.trim()) return { valid: false, error: "Key is required" }
+
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${key}`,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://seerist.xyz",
+        "HTTP-Referer": process.env.NEXT_PUBLIC_WEBSITE_URL ?? "https://seerist.xyz",
         "X-Title": "Seerist",
       },
       body: JSON.stringify({
@@ -36,7 +32,7 @@ export async function testAIKey(key: string): Promise<{ valid: boolean; model?: 
     const data = await res.json()
     return { valid: true, model: data?.model ?? "unknown" }
   } catch (err) {
-    return { valid: false, error: (err as Error).message }
+    return { valid: false, error: err instanceof Error ? err.message : "Request failed" }
   }
 }
 
@@ -51,10 +47,7 @@ export async function saveAIKey(key: string) {
 
   const { error } = await admin.database
     .from("profiles")
-    .update({
-      ai_api_key: key,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ai_api_key: key, updated_at: new Date().toISOString() })
     .eq("id", userId)
 
   if (error) return { error: error.message }
@@ -66,10 +59,7 @@ export async function removeAIKey() {
   const userId = await requireUser()
   const { error } = await admin.database
     .from("profiles")
-    .update({
-      ai_api_key: null,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ai_api_key: null, updated_at: new Date().toISOString() })
     .eq("id", userId)
 
   if (error) return { error: error.message }
@@ -92,10 +82,7 @@ export async function updateAIPreferences(
   const userId = await requireUser()
   const { error } = await admin.database
     .from("profiles")
-    .update({
-      ...prefs,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ...prefs, updated_at: new Date().toISOString() })
     .eq("id", userId)
 
   if (error) return { error: error.message }

@@ -15,14 +15,14 @@ interface Action {
 
 const ACTIONS: Action[] = [
   { id: "opportunities", label: "View Opportunities", href: "/opportunities", icon: Zap, category: "Navigate" },
-  { id: "live-feed", label: "View Live Feed", href: "/app/live-feed", icon: Radio, category: "Navigate" },
-  { id: "pipeline", label: "View My Pipeline", href: "/app/pipeline", icon: KanbanSquare, category: "Navigate" },
-  { id: "won-deals", label: "View Won Deals", href: "/app/won-deals", icon: Trophy, category: "Navigate" },
-  { id: "proposal", label: "Generate Proposal", href: "/app/proposal-generator", icon: FileText, category: "Navigate" },
-  { id: "ai-settings", label: "AI Settings", href: "/app/ai-settings", icon: Cpu, category: "Navigate" },
-  { id: "products", label: "My Products", href: "/app/products", icon: Package, category: "Navigate" },
-  { id: "platforms", label: "Platforms", href: "/app/platforms", icon: Globe, category: "Navigate" },
-  { id: "settings", label: "Settings", href: "/app/settings", icon: Settings2, category: "Navigate" },
+  { id: "live-feed", label: "View Live Feed", href: "/live-feed", icon: Radio, category: "Navigate" },
+  { id: "pipeline", label: "View My Pipeline", href: "/pipeline", icon: KanbanSquare, category: "Navigate" },
+  { id: "won-deals", label: "View Won Deals", href: "/won-deals", icon: Trophy, category: "Navigate" },
+  { id: "proposal", label: "Generate Proposal", href: "/proposal-generator", icon: FileText, category: "Navigate" },
+  { id: "ai-settings", label: "AI Settings", href: "/settings/ai", icon: Cpu, category: "Navigate" },
+  { id: "products", label: "My Products", href: "/products", icon: Package, category: "Navigate" },
+  { id: "platforms", label: "Platforms", href: "/platforms", icon: Globe, category: "Navigate" },
+  { id: "settings", label: "Settings", href: "/settings", icon: Settings2, category: "Navigate" },
 ]
 
 function highlightMatch(text: string, query: string) {

@@ -73,7 +73,7 @@ export function ProductFormModal({ open, onOpenChange, product, userId }: Produc
 
     setSaving(false)
     if (error) {
-      toast.error(error.message)
+      toast.error(error)
       return
     }
     toast.success(product ? "Product updated" : "Product created")

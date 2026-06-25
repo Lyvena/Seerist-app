@@ -37,7 +37,7 @@ export async function completeOnboarding(data: OnboardingData) {
     let embedding: number[] | null = null
     try {
       const result = await admin.ai.embeddings.create({
-        model: "openai/text-embedding-ada-002",
+        model: "openai/text-embedding-3-small",
         input: embeddingText,
       })
       embedding = result.data[0].embedding
@@ -70,31 +70,64 @@ export async function completeOnboarding(data: OnboardingData) {
 
     const enabledPlatforms = data.platforms.filter((p) => p.enabled)
     if (enabledPlatforms.length > 0) {
-      const platformConfigs = enabledPlatforms.map((p) => ({
-        user_id: userId,
-        platform_id: p.platformId,
-        is_enabled: true,
-        min_score: p.minScore,
-        notify_email: true,
-      }))
-
-      const platformResult = await admin.database
+      // Fetch existing configs so we update (not duplicate) on re-runs; the
+      // (user_id, platform_id) pair is unique.
+      const { data: existingConfigs } = await admin.database
         .from("user_platform_configs")
-        .insert(platformConfigs)
-        .select()
+        .select("id, platform_id")
+        .eq("user_id", userId)
+      const existingByPlatform = new Map(
+        ((existingConfigs ?? []) as Array<{ id: string; platform_id: string }>).map((c) => [c.platform_id, c.id])
+      )
 
-      if (platformResult.error) throw new Error(`Failed to save platform configs: ${platformResult.error.message}`)
+      for (const p of enabledPlatforms) {
+        const cfg = {
+          user_id: userId,
+          platform_id: p.platformId,
+          is_enabled: true,
+          min_score: p.minScore,
+          notify_email: true,
+        }
+        const existingId = existingByPlatform.get(p.platformId)
+        if (existingId) {
+          const { error } = await admin.database
+            .from("user_platform_configs")
+            .update(cfg)
+            .eq("id", existingId)
+            .eq("user_id", userId)
+          if (error) throw new Error(`Failed to save platform configs: ${error.message}`)
+        } else {
+          const { error } = await admin.database.from("user_platform_configs").insert([cfg])
+          if (error) throw new Error(`Failed to save platform configs: ${error.message}`)
+        }
+      }
     }
 
-    const alertResult = await admin.database
+    // alert_preferences may already exist (the handle_new_user trigger creates a
+    // default row on signup), so update it if present, otherwise insert.
+    const { data: existingAlert } = await admin.database
       .from("alert_preferences")
-      .insert({
-        user_id: userId,
-        digest_frequency: data.alerts.digestFrequency,
-        min_score_for_alert: data.alerts.minScoreForAlert,
-        platforms_included: enabledPlatforms.map((p) => p.platformId),
-      })
-      .select()
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle()
+
+    const alertPayload = {
+      user_id: userId,
+      digest_frequency: data.alerts.digestFrequency,
+      min_score_for_alert: data.alerts.minScoreForAlert,
+      platforms_included: enabledPlatforms.map((p) => p.platformId),
+    }
+
+    let alertResult
+    if (existingAlert) {
+      alertResult = await admin.database
+        .from("alert_preferences")
+        .update({ ...alertPayload, updated_at: new Date().toISOString() })
+        .eq("id", (existingAlert as { id: string }).id)
+        .eq("user_id", userId)
+    } else {
+      alertResult = await admin.database.from("alert_preferences").insert([alertPayload])
+    }
 
     if (alertResult.error) throw new Error(`Failed to save alert preferences: ${alertResult.error.message}`)
 
