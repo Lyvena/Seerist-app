@@ -2,10 +2,6 @@ import { createAdminClient, type InsForgeClient } from "@insforge/sdk"
 import { createBrowserClient } from "@insforge/sdk/ssr"
 
 // ─── Server admin client (bypasses RLS) ────────────────────────────────────
-// Credentials come from the environment only — never hardcode them as defaults.
-// The client is created lazily so that module import (e.g. during `next build`
-// type-checking) doesn't throw when env vars aren't present; it will throw
-// with a clear message on first actual use if misconfigured.
 function getConfig() {
   const baseUrl = process.env.INSFORGE_URL ?? process.env.NEXT_PUBLIC_INSFORGE_URL
   const apiKey = process.env.INSFORGE_API_KEY
@@ -26,10 +22,17 @@ export const insforgeAdmin = new Proxy({} as InsForgeClient, {
 })
 
 // ─── Browser client (user-authenticated, respects RLS) ─────────────────────
-// Reads NEXT_PUBLIC_INSFORGE_URL / NEXT_PUBLIC_INSFORGE_ANON_KEY from the
-// environment (auto-injected by InsForge deployments).
 export function insforgeBrowser() {
+  const baseUrl = process.env.NEXT_PUBLIC_INSFORGE_URL
+  const anonKey = process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY
+  if (!baseUrl || !anonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_INSFORGE_URL or NEXT_PUBLIC_INSFORGE_ANON_KEY"
+    )
+  }
   return createBrowserClient({
+    baseUrl,
+    anonKey,
     refreshUrl: "/api/auth/refresh",
   })
 }
