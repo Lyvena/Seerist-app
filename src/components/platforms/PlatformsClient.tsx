@@ -148,7 +148,7 @@ export function PlatformsClient({ platforms, configMap, statsMap, plan, userId }
 
               {!platform.is_supported && (
                 <div className="mt-3">
-                  <a href="mailto:akshay@lyvena.xyz?subject=Request%20Platform%3A%20{platform.name}" className="text-xs text-[var(--brand-primary)] hover:underline">
+                  <a href={`mailto:akshay@lyvena.xyz?subject=Request%20Platform%3A%20${platform.name}`} className="text-xs text-[var(--brand-primary)] hover:underline">
                     + Request Platform
                   </a>
                 </div>

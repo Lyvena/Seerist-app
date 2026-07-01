@@ -18,6 +18,11 @@ export async function verifyEmail(email: string, otp: string) {
   return insforge.auth.verifyEmail({ email, otp })
 }
 
+export async function resendVerificationEmail(email: string) {
+  const insforge = createServerClient({ cookies: await cookies() })
+  return insforge.auth.resendVerificationEmail({ email })
+}
+
 export async function signOutAction() {
   const insforge = createServerClient({ cookies: await cookies() })
   return insforge.auth.signOut()

@@ -15,14 +15,14 @@ export default function ProtectedLayout({
 
   return (
     <AuthProvider>
-      <div className="flex h-screen overflow-hidden bg-[var(--surface-secondary)]">
+      <div className="flex h-screen overflow-hidden bg-[var(--surface-bg)]">
         <Sidebar />
 
         <div className="flex flex-1 flex-col md:pl-[var(--sidebar-width)]">
           <TopBar onMenuClick={() => setMobileMenuOpen(true)} />
 
           <main className="flex-1 overflow-y-auto scrollbar-thin">
-            <div className="mx-auto w-full max-w-7xl px-4 py-4 lg:px-6">
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {children}
             </div>
           </main>

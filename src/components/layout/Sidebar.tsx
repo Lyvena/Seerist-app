@@ -1,10 +1,9 @@
 "use client"
 
-import { usePathname } from "next/navigation"
-import Link from "next/link"
 import { Zap, Radio, KanbanSquare, Trophy, FileText, Cpu, Package, Globe, Settings2, BarChart3 } from "lucide-react"
 import { NavItem } from "./NavItem"
 import { ProductSwitcher } from "./ProductSwitcher"
+import { Logo } from "./Logo"
 import { useAuth } from "@/components/auth/AuthProvider"
 
 const NAV_SECTIONS = [
@@ -37,13 +36,13 @@ const NAV_SECTIONS = [
 
 export function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   return (
-    <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 py-3 scrollbar-none">
+    <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4 scrollbar-none">
       {NAV_SECTIONS.map((section) => (
         <div key={section.label}>
-          <p className="mb-1 px-3 text-[10px] font-semibold tracking-[0.08em] text-[var(--sidebar-fg-muted)]">
+          <p className="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-[var(--sidebar-fg-muted)] uppercase">
             {section.label}
           </p>
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col gap-0.5">
             {section.items.map((item) => (
               <NavItem key={item.href} href={item.href} icon={item.icon} label={item.label} onClick={onNavClick} />
             ))}
@@ -60,29 +59,23 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-[var(--sidebar-width)] md:fixed md:inset-y-0 md:z-30 bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)]">
-      <div className="flex h-14 items-center gap-2 px-3 border-b border-[var(--sidebar-border)]">
-        <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--sidebar-accent)]">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="white" strokeWidth="1.5" opacity="0.4" />
-            <circle cx="8" cy="8" r="3.5" stroke="white" strokeWidth="1.5" opacity="0.7" />
-            <circle cx="8" cy="8" r="1.5" fill="white" />
-          </svg>
-        </div>
-        <span className="text-sm font-semibold tracking-tight text-white">Seerist</span>
+      <div className="flex h-16 items-center px-5">
+        <Logo variant="light" href="/dashboard" />
       </div>
 
       <SidebarContent />
 
-      <div className="border-t border-[var(--sidebar-border)] p-2">
+      <div className="border-t border-[var(--sidebar-border)] p-3">
         <ProductSwitcher />
       </div>
 
-      <div className="flex items-center gap-2.5 border-t border-[var(--sidebar-border)] px-3 py-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--sidebar-accent)] text-xs font-semibold text-white">
+      <div className="flex items-center gap-3 border-t border-[var(--sidebar-border)] px-5 py-3.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--sidebar-accent)]/25 text-xs font-semibold text-[var(--sidebar-accent)] ring-1 ring-[var(--sidebar-accent)]/30">
           {initials}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-white truncate">{user?.email ?? "User"}</p>
+          <p className="text-[11px] text-[var(--sidebar-fg-muted)]">Free plan</p>
         </div>
       </div>
     </aside>

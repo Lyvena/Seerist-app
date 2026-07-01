@@ -58,6 +58,8 @@ interface OpportunityPageClientProps {
   userId: string
   lastSyncAt: string
   productId: string
+  currentPage: number
+  pageSize: number
 }
 
 export function OpportunityPageClient({
@@ -67,6 +69,8 @@ export function OpportunityPageClient({
   userId,
   lastSyncAt,
   productId,
+  currentPage,
+  pageSize,
 }: OpportunityPageClientProps) {
   const [selectedOpportunity, setSelectedOpportunity] = useState<OpportunityModalData | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -105,6 +109,8 @@ export function OpportunityPageClient({
         platformFilters={platforms}
         userId={userId}
         lastSyncAt={lastSyncAt}
+        currentPage={currentPage}
+        pageSize={pageSize}
         onGenerateProposal={handleGenerateProposal}
       />
       <ProposalModal

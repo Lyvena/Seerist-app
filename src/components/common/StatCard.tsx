@@ -13,7 +13,7 @@ export function StatCard({ label, value, icon: Icon, trend, className }: StatCar
   return (
     <div
       className={cn(
-        "rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-5",
+        "group rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-5 transition-shadow hover:shadow-[var(--shadow-md)]",
         className
       )}
     >
@@ -25,8 +25,8 @@ export function StatCard({ label, value, icon: Icon, trend, className }: StatCar
           </div>
         )}
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
+      <div className="mt-3 flex items-baseline gap-2">
+        <span className="font-cal text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
           {value}
         </span>
         {trend && (

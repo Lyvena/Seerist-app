@@ -97,18 +97,21 @@ export function PipelineKanban({ entries: initialEntries }: PipelineKanbanProps)
   }, [initialEntries])
 
   useEffect(() => {
+    let unsub = false
     async function subscribeRealtime() {
       const { insforgeBrowser } = await import("@/lib/insforge/client")
       const client = insforgeBrowser()
       const { data: userData } = await client.auth.getCurrentUser()
       const userId = userData?.user?.id
-      if (!userId) return
+      if (!userId || unsub) return
 
       await client.realtime.connect()
       const channel = `opportunities:${userId}`
       await client.realtime.subscribe(channel)
+      if (unsub) return
 
       client.realtime.on("new_opportunity", (msg: unknown) => {
+        if (unsub) return
         const payload = (msg as { payload?: Record<string, unknown> })?.payload ?? msg
         if (payload && (payload as Record<string, unknown>).id) {
           const opp = payload as Record<string, unknown>
@@ -152,6 +155,7 @@ export function PipelineKanban({ entries: initialEntries }: PipelineKanbanProps)
       })
 
       client.realtime.on("status_changed", (msg: unknown) => {
+        if (unsub) return
         const payload = (msg as { payload?: Record<string, unknown> })?.payload ?? msg
         const data = (payload ?? {}) as Record<string, unknown>
         if (data.opportunity_id && data.status) {
@@ -171,7 +175,12 @@ export function PipelineKanban({ entries: initialEntries }: PipelineKanbanProps)
     }
 
     subscribeRealtime()
-    return () => {}
+    return () => {
+      unsub = true
+      void import("@/lib/insforge/client").then(({ insforgeBrowser }) => {
+        insforgeBrowser().realtime.disconnect()
+      })
+    }
   }, [])
 
   const activeCard = activeId ? entries.find((e) => e.entry.id === activeId) : null

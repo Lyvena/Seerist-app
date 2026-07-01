@@ -26,7 +26,7 @@ const RANGE_OPTIONS = [
 
 const CHART_COLORS = ["var(--brand-primary)", "var(--status-info)", "var(--status-success)", "var(--status-warning)", "var(--status-error)"]
 
-const SCORE_COLORS = ["#ef4444", "#f97316", "#eab308", "#3b82f6", "#22c55e"]
+const SCORE_COLORS = ["var(--score-critical)", "var(--score-low)", "var(--status-warning)", "var(--score-medium)", "var(--score-high)"]
 
 type SortKey = "opps" | "avgScore" | "proposals" | "won" | "winRate" | "avgDeal"
 
@@ -334,7 +334,7 @@ export default function AnalyticsClient({
         </h3>
 
         {!isPro && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-white/60 backdrop-blur-sm">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-[var(--surface-primary)]/70 backdrop-blur-sm">
             <ShieldAlert className="h-8 w-8 text-[var(--text-muted)] mb-2" />
             <p className="text-sm font-semibold text-[var(--text-primary)]">Upgrade to Pro</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">Revenue metrics are available on Pro and Agency plans</p>

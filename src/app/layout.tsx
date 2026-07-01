@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Cal Sans is loaded via @font-face in globals.css (self-hosted woff2).
+// We expose --font-cal here so components can reference it consistently.
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://seerist.xyz"),
   title: {
@@ -51,10 +54,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-      </head>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"

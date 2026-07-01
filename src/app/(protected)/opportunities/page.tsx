@@ -44,6 +44,8 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
   const dateRange = typeof params.date === "string" ? params.date : ""
   const starredOnly = typeof params.starred === "string" ? params.starred : ""
   const sortBy = typeof params.sort === "string" ? params.sort : "score"
+  const page = Math.max(1, parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1)
+  const PAGE_SIZE = 20
 
   let query = insforge.database
     .from("opportunities")
@@ -100,7 +102,7 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
   }
   const sortCol = sortMapping[sortBy] ?? "ai_score"
   query = query.order(sortCol, { ascending: sortBy === "budget_max" ? false : false })
-  query = query.limit(20)
+  query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
 
   const raw = await query
   const opportunities = ((raw.data ?? []) as Array<Record<string, unknown>>).map((opp: Record<string, unknown>) => {
@@ -137,6 +139,8 @@ export default async function OpportunitiesPage({ searchParams }: Props) {
       userId={userId ?? ""}
       lastSyncAt={lastSyncAt}
       productId={productId}
+      currentPage={page}
+      pageSize={PAGE_SIZE}
     />
   )
 }

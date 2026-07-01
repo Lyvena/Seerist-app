@@ -143,14 +143,14 @@ export function OnboardingWizard({ userId, platforms, userEmail }: OnboardingWiz
   }
 
   function handleSkip() {
-    router.push("/app")
+    router.push("/dashboard")
   }
 
   const canGoBack = step > 1 && !showCelebration
   const canSkip = step >= 2
 
   if (showCelebration) {
-    return <Celebration productName={productForm.name} onComplete={() => router.push("/app")} />
+    return <Celebration productName={productForm.name} onComplete={() => router.push("/dashboard")} />
   }
 
   return (

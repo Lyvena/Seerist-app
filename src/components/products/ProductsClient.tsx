@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Plus, Pencil, Trash2, Package, BarChart3, Sparkles } from "lucide-react"
 import { PageHeader } from "@/components/common/PageHeader"
+import { EmptyState } from "@/components/common/EmptyState"
 import { Button } from "@/components/ui/button"
 import { ScoreBadge } from "@/components/common/ScoreBadge"
 import { deleteProduct } from "@/app/actions/products"
@@ -106,18 +107,18 @@ export function ProductsClient({ products, opportunityCounts, plan, userId }: Pr
         ))}
 
         {products.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--surface-tertiary)]">
-              <Package className="h-6 w-6 text-[var(--text-muted)]" />
-            </div>
-            <h3 className="mt-4 text-base font-semibold text-[var(--text-primary)]">No products yet</h3>
-            <p className="mt-1 max-w-sm text-sm text-[var(--text-muted)]">
-              Add your first product to start matching with opportunities.
-            </p>
-            <Button variant="default" size="sm" className="mt-4 gap-1.5" onClick={handleAdd}>
-              <Plus className="h-4 w-4" />
-              Add Product
-            </Button>
+          <div className="col-span-full">
+            <EmptyState
+              icon={Package}
+              title="No products yet"
+              description="Add your first product to start matching with opportunities."
+              action={
+                <Button size="sm" className="gap-1.5" onClick={handleAdd}>
+                  <Plus className="h-4 w-4" />
+                  Add Product
+                </Button>
+              }
+            />
           </div>
         )}
       </div>
