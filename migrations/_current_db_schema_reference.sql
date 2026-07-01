@@ -201,8 +201,8 @@ BEGIN
   INSERT INTO public.profiles (id, full_name, avatar_url)
   VALUES (
     NEW.id,
-    NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'avatar_url'
+    NEW.metadata->>'full_name',
+    NEW.metadata->>'avatar_url'
   );
   INSERT INTO public.subscriptions (user_id, plan)
   VALUES (NEW.id, 'free');
