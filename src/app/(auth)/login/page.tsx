@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Loader2, Mail, ShieldCheck } from "lucide-react"
+import { Eye, EyeOff, Mail, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,16 +27,17 @@ export default function LoginPage() {
     try {
       const { error } = await signInWithEmail(email, password)
       if (error) {
-        if (error.error === "AUTH_NEED_VERIFICATION") {
+        // The server action surfaces needsVerification=true for the 403 case.
+        if (error.needsVerification) {
           setNeedsVerification(true)
-          toast.success("Verification code sent to your email")
+          toast.info("Please verify your email", { description: "We sent a 6-digit code to your inbox." })
           return
         }
-        throw error
+        throw new Error(error.message)
       }
       router.push("/dashboard")
       router.refresh()
-    } catch (err: unknown) {
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid credentials")
     } finally {
       setLoading(false)
@@ -52,11 +53,12 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const { error } = await verifyEmail(email, otp)
-      if (error) throw error
+      if (error) throw new Error(error.message)
       toast.success("Welcome back!")
+      // verifyEmail() auto-saves the session — go straight to the dashboard.
       router.push("/dashboard")
       router.refresh()
-    } catch (err: unknown) {
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid code")
     } finally {
       setLoading(false)
@@ -67,7 +69,7 @@ export default function LoginPage() {
     setResending(true)
     try {
       const { error } = await resendVerificationEmail(email)
-      if (error) throw error
+      if (error) throw new Error(error.message)
       toast.success("New code sent to your email")
     } catch {
       toast.error("Failed to resend code")
@@ -76,6 +78,7 @@ export default function LoginPage() {
     }
   }
 
+  // ─── Email verification step (reached from login of an unverified account) ──
   if (needsVerification) {
     return (
       <div className="space-y-6">
@@ -118,6 +121,7 @@ export default function LoginPage() {
     )
   }
 
+  // ─── Default sign-in form ─────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       <div className="text-center">

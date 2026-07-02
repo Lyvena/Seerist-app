@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Mail, ArrowLeft, Check } from "lucide-react"
+import { Eye, EyeOff, Mail, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +13,8 @@ import { toast } from "sonner"
 
 export default function SignupPage() {
   const router = useRouter()
+  // step is "signup" | "verify" when verification is required, or we go straight
+  // to onboarding if the backend doesn't require verification.
   const [step, setStep] = useState<"signup" | "verify">("signup")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -34,11 +36,25 @@ export default function SignupPage() {
     }
     setLoading(true)
     try {
-      const { error } = await signUpWithEmail(email, password)
-      if (error) throw error
-      setStep("verify")
-      toast.success("Verification code sent to your email")
-    } catch (err: unknown) {
+      const { data, error } = await signUpWithEmail(email, password)
+      if (error) throw new Error(error.message)
+
+      // Branch on the actual InsForge response. If verification is required,
+      // stay on the same page and show the OTP input. Otherwise the account
+      // is active immediately — go to onboarding.
+      if (data?.requireEmailVerification) {
+        setStep("verify")
+        toast.success("Verification code sent to your email")
+      } else if (data?.accessToken) {
+        // No verification needed — session is established.
+        toast.success("Account created!")
+        router.push("/onboarding")
+        router.refresh()
+      } else {
+        // No token and no verification flag — treat as needing verification.
+        setStep("verify")
+      }
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create account")
     } finally {
       setLoading(false)
@@ -54,11 +70,12 @@ export default function SignupPage() {
     setLoading(true)
     try {
       const { error } = await verifyEmail(email, otp)
-      if (error) throw error
+      if (error) throw new Error(error.message)
       toast.success("Email verified successfully")
+      // verifyEmail() auto-saves the session for the code flow.
       router.push("/onboarding")
       router.refresh()
-    } catch (err: unknown) {
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid code")
     } finally {
       setLoading(false)
@@ -69,7 +86,7 @@ export default function SignupPage() {
     setResending(true)
     try {
       const { error } = await resendVerificationEmail(email)
-      if (error) throw error
+      if (error) throw new Error(error.message)
       toast.success("New code sent to your email")
     } catch {
       toast.error("Failed to resend code")
@@ -78,12 +95,7 @@ export default function SignupPage() {
     }
   }
 
-  const passwordChecks = [
-    { label: "At least 6 characters", ok: password.length >= 6 },
-    { label: "Has a number", ok: /\d/.test(password) },
-    { label: "Has a letter", ok: /[a-zA-Z]/.test(password) },
-  ]
-
+  // ─── Verification step ───────────────────────────────────────────────────
   if (step === "verify") {
     return (
       <div className="space-y-6">
@@ -123,6 +135,7 @@ export default function SignupPage() {
     )
   }
 
+  // ─── Sign-up form ────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -152,10 +165,11 @@ export default function SignupPage() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
+              placeholder="At least 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
               disabled={loading}
               autoComplete="new-password"
               className="pr-10"
