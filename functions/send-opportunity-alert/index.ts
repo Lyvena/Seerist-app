@@ -75,6 +75,20 @@ export default async function (req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
+  // Resolve the recipient email from auth.users (the edge function runs with
+  // the admin API key, not a user token, so the email must be looked up).
+  const { data: userRow } = await client.database
+    .from('users')
+    .select('email')
+    .eq('id', user_id)
+    .maybeSingle();
+  const recipientEmail = (userRow as { email?: string } | null)?.email;
+
+  if (!recipientEmail) {
+    // Still record the in-app notification, just skip the email.
+    console.warn('send-opportunity-alert: no email for user', user_id);
+  }
+
   const subject = `${score}-score match on ${platform_slug}: ${title.slice(0, 60)}`;
   const desc = (description ?? '').length > 150 ? (description ?? '').slice(0, 150) + '...' : (description ?? '');
   const kw = (keywords ?? []).join(', ');
@@ -103,12 +117,12 @@ ${kw ? `<p style="font-size:13px;color:#6B7280;margin:0 0 20px"><strong style="c
 <td style="padding-right:8px">
 <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block">
 <tr><td align="center" style="border-radius:8px;background:#7C3AED">
-<a href="https://seerist.xyz/proposals/generate?opportunity_external_id=${opportunity_external_id}" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:8px">Generate Proposal →</a>
+<a href="https://seerist.xyz/opportunities" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:8px">Generate Proposal →</a>
 </td></tr></table></td>
 <td>
 <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block">
 <tr><td align="center" style="border-radius:8px;border:1.5px solid #7C3AED">
-<a href="https://seerist.xyz/opportunities?id=${opportunity_external_id}" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#7C3AED;text-decoration:none;border-radius:8px">View Opportunity →</a>
+<a href="https://seerist.xyz/opportunities" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#7C3AED;text-decoration:none;border-radius:8px">View Opportunity →</a>
 </td></tr></table></td>
 </tr></table>
 </td></tr>
@@ -118,33 +132,35 @@ ${kw ? `<p style="font-size:13px;color:#6B7280;margin:0 0 20px"><strong style="c
 </td></tr>
 </table></td></tr></table></body></html>`;
 
-  try {
-    const sendResp = await fetch(`${OSS_HOST}/api/emails/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-      body: JSON.stringify({
-        to: [], // resolved from user token
-        subject,
-        html,
-        from_name: 'Seerist',
-        reply_to: 'support@seerist.xyz',
-      }),
-    });
+  if (recipientEmail) {
+    try {
+      const sendResp = await fetch(`${OSS_HOST}/api/emails/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
+        body: JSON.stringify({
+          to: [recipientEmail],
+          subject,
+          html,
+          from_name: 'Seerist',
+          reply_to: 'support@seerist.xyz',
+        }),
+      });
 
-    if (!sendResp.ok) {
-      const errText = await sendResp.text();
-      console.error('Email send failed:', errText);
+      if (!sendResp.ok) {
+        const errText = await sendResp.text();
+        console.error('Email send failed:', errText);
+      }
+    } catch (err) {
+      console.error('Email send error:', err);
     }
-  } catch (err) {
-    console.error('Email send error:', err);
   }
 
   await client.database.from('notifications').insert([{
     user_id,
-    type: 'new_opportunity',
+    type: 'opportunity',
     title: `New ${score}-score match on ${platform_slug}`,
     body: title.slice(0, 120),
-    link: `/opportunities?id=${opportunity_external_id}`,
+    link: '/opportunities',
   }]);
 
   return new Response(JSON.stringify({ sent: true }), {

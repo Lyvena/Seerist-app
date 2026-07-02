@@ -11,17 +11,15 @@ export default async function AISettingsPage() {
 
   const { data: profile } = await insforge.database
     .from("profiles")
-    .select("plan, ai_api_key, ai_model, ai_tone, ai_max_proposal_words, ai_include_pricing, ai_include_product_url, ai_prioritize_relevance, ai_keyword_penalty, ai_boost_repeat_posters")
+    .select("plan, ai_model, ai_tone, ai_max_proposal_words, ai_include_pricing, ai_include_product_url, ai_prioritize_relevance, ai_keyword_penalty, ai_boost_repeat_posters")
     .eq("id", userId)
     .maybeSingle()
 
   const p = (profile ?? {}) as Record<string, unknown>
   const plan = (p.plan as string) ?? "free"
-  const isPro = plan === "pro" || plan === "agency"
-  const hasKey = !!(p.ai_api_key as string)
 
   const prefs = {
-    model: (p.ai_model as string) ?? "gpt-4o-mini",
+    model: (p.ai_model as string) ?? "openai/gpt-4o-mini",
     tone: (p.ai_tone as string) ?? "professional",
     maxWords: (p.ai_max_proposal_words as number) ?? 250,
     includePricing: (p.ai_include_pricing as boolean) ?? false,
@@ -31,11 +29,5 @@ export default async function AISettingsPage() {
     boostRepeatPosters: (p.ai_boost_repeat_posters as boolean) ?? false,
   }
 
-  return (
-    <AISettingsClient
-      plan={plan}
-      hasKey={hasKey}
-      initialPrefs={prefs}
-    />
-  )
+  return <AISettingsClient plan={plan} initialPrefs={prefs} />
 }

@@ -25,7 +25,7 @@ export function getErrorMessage(error: unknown): string {
 // Check if user has access to a feature based on plan
 export async function checkFeatureAccess(
   userId: string,
-  feature: "autoPropose" | "analytics" | "byokAi" | "whiteLabel" | "apiAccess"
+  feature: "autoPropose" | "analytics" | "whiteLabel" | "apiAccess"
 ): Promise<boolean> {
   const { data: profile } = await insforgeAdmin.database
     .from("profiles")
@@ -38,7 +38,6 @@ export async function checkFeatureAccess(
   switch (feature) {
     case "autoPropose":
     case "analytics":
-    case "byokAi":
       return plan === "pro" || plan === "agency"
     case "whiteLabel":
     case "apiAccess":

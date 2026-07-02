@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { createServerClient } from "@insforge/sdk/ssr"
+import { createServerClient, getAccessTokenCookieName } from "@insforge/sdk/ssr"
 import { cookies } from "next/headers"
 
 const OSS_HOST = process.env.INSFORGE_URL
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Server is not configured" }, { status: 500 })
     }
 
-    const accessToken = (await cookies()).get("insforge_access_token")?.value
+    const accessToken = (await cookies()).get(getAccessTokenCookieName())?.value
     const edgeResponse = await fetch(`${OSS_HOST}/functions/score-opportunity`, {
       method: "POST",
       headers: {
@@ -146,7 +146,7 @@ export async function PUT(request: NextRequest) {
       .limit(1)
       .maybeSingle()
 
-    const accessToken = (await cookies()).get("insforge_access_token")?.value
+    const accessToken = (await cookies()).get(getAccessTokenCookieName())?.value
     const results = await Promise.allSettled(
       ((opportunities ?? []) as Array<Record<string, unknown>>).map((opp) =>
         fetch(`${OSS_HOST}/functions/score-opportunity`, {

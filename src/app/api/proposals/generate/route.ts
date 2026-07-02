@@ -1,6 +1,7 @@
-import { NextRequest } from "next/server"
-import { createServerClient } from "@insforge/sdk/ssr"
+import { NextRequest, NextResponse } from "next/server"
+import { createServerClient, getAccessTokenCookieName } from "@insforge/sdk/ssr"
 import { cookies } from "next/headers"
+import { checkOrigin } from "@/lib/csrf"
 
 const RATE_LIMIT_WINDOW = 60_000
 const RATE_LIMIT_MAX = 10
@@ -8,7 +9,6 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(userId: string): { allowed: boolean; remaining: number } {
   const now = Date.now()
-  // Evict expired entries occasionally to keep the map bounded.
   if (rateLimitMap.size > 1000) {
     for (const [key, entry] of rateLimitMap) {
       if (now > entry.resetAt) rateLimitMap.delete(key)
@@ -28,34 +28,50 @@ function checkRateLimit(userId: string): { allowed: boolean; remaining: number }
 }
 
 // Streams an AI-generated proposal from the generate-proposal edge function.
-// Authenticated via the user's session cookie; forwards the access token.
 export async function POST(request: NextRequest) {
+  const originError = checkOrigin(request)
+  if (originError) return originError
+
   try {
     const body = await request.json().catch(() => null)
-    if (!body) {
-      return Response.json({ error: "Invalid request body" }, { status: 400 })
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
     }
+
+    // Validate + allow-list the forwarded body. Only known fields reach the AI.
+    const opportunityId = typeof body.opportunity_id === "string" ? body.opportunity_id : null
+    const productId = typeof body.product_id === "string" ? body.product_id : undefined
+    const tone = typeof body.tone === "string" ? body.tone : undefined
+    const maxWords = typeof body.max_words === "number" ? body.max_words : undefined
+    if (!opportunityId) {
+      return NextResponse.json({ error: "opportunity_id is required" }, { status: 400 })
+    }
+
+    const edgeBody: Record<string, unknown> = { opportunity_id: opportunityId }
+    if (productId) edgeBody.product_id = productId
+    if (tone) edgeBody.tone = tone
+    if (maxWords) edgeBody.max_words = maxWords
 
     const insforge = createServerClient({ cookies: await cookies() })
     const { data: userData, error: authError } = await insforge.auth.getCurrentUser()
     const userId = userData?.user?.id
 
     if (authError || !userId) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const rateCheck = checkRateLimit(userId)
     if (!rateCheck.allowed) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Rate limit exceeded. Maximum 10 proposals per minute." },
         { status: 429 }
       )
     }
 
-    const accessToken = (await cookies()).get("insforge_access_token")?.value
+    const accessToken = (await cookies()).get(getAccessTokenCookieName())?.value
     const ossHost = process.env.INSFORGE_URL
     if (!ossHost) {
-      return Response.json({ error: "Server is not configured" }, { status: 500 })
+      return NextResponse.json({ error: "Server is not configured" }, { status: 500 })
     }
 
     const edgeResponse = await fetch(`${ossHost}/functions/generate-proposal`, {
@@ -64,12 +80,12 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(edgeBody),
     })
 
     if (!edgeResponse.ok) {
       const errorText = await edgeResponse.text()
-      return Response.json(
+      return NextResponse.json(
         { error: "Edge function failed", detail: errorText },
         { status: edgeResponse.status }
       )
@@ -77,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     const reader = edgeResponse.body?.getReader()
     if (!reader) {
-      return Response.json({ error: "No response stream" }, { status: 502 })
+      return NextResponse.json({ error: "No response stream" }, { status: 502 })
     }
 
     const encoder = new TextEncoder()
@@ -113,6 +129,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error("proposals/generate error:", err)
-    return Response.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -48,12 +48,11 @@ export function canGenerateProposal(plan: string | null | undefined, currentMont
   return { allowed: true }
 }
 
-export function canUseFeature(plan: string | null | undefined, feature: "autoPropose" | "analytics" | "byokAi" | "whiteLabel" | "apiAccess"): boolean {
+export function canUseFeature(plan: string | null | undefined, feature: "autoPropose" | "analytics" | "whiteLabel" | "apiAccess"): boolean {
   const tier = safePlan(plan)
   switch (feature) {
     case "autoPropose": return tier === "pro" || tier === "agency"
     case "analytics": return tier === "pro" || tier === "agency"
-    case "byokAi": return tier === "pro" || tier === "agency"
     case "whiteLabel": return tier === "agency"
     case "apiAccess": return tier === "agency"
   }

@@ -1,8 +1,22 @@
 import { createAdminClient } from "@insforge/sdk"
 
-const admin = createAdminClient({
-  baseUrl: process.env.INSFORGE_URL ?? "https://x69u73wi.eu-central.insforge.app",
-  apiKey: process.env.INSFORGE_API_KEY ?? "ik_bcb691209aa697be33ceb6c9bce0f5e6",
-})
+function getConfig() {
+  const baseUrl = process.env.INSFORGE_URL ?? process.env.NEXT_PUBLIC_INSFORGE_URL
+  const apiKey = process.env.INSFORGE_API_KEY
+  if (!baseUrl || !apiKey) {
+    throw new Error(
+      "Missing InsForge admin config. Set INSFORGE_URL and INSFORGE_API_KEY environment variables."
+    )
+  }
+  return { baseUrl, apiKey }
+}
 
-export { admin }
+// Lazily-created admin client (bypasses RLS). Never hardcode the key — it must
+// come from the environment so it can be rotated without a code change.
+let _admin: ReturnType<typeof createAdminClient> | null = null
+export const admin = new Proxy({} as ReturnType<typeof createAdminClient>, {
+  get(_target, prop) {
+    if (!_admin) _admin = createAdminClient(getConfig())
+    return Reflect.get(_admin, prop)
+  },
+})

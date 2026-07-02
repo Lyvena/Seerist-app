@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@insforge/sdk/ssr"
 import { cookies } from "next/headers"
-import { admin } from "@/lib/insforge"
-import { PLAN_LIMITS, PLAN_PRICES, type PlanTier } from "@/lib/plan-limits"
+import { createSubscriptionCheckout } from "@/lib/suby"
+import { safePlan, type PlanTier } from "@/lib/plan-limits"
+import { checkOrigin } from "@/lib/csrf"
 
-// Creates (or reactivates) a subscription for the logged-in user and activates
-// the plan. Authenticated via the user's session cookie.
-//
-// NOTE: This activates the plan directly. To require a real Stripe payment,
-// wire `admin.payments.stripe.createCheckoutSession(...)` here and gate plan
-// activation behind the Stripe webhook (payment-webhook edge function).
+// Creates a Suby.fi subscription checkout session for the logged-in user and
+// returns the hosted checkout URL. The plan is NOT activated here — that
+// happens in the /api/payments/webhook route after Suby confirms payment
+// (CHECKOUT_SUCCESS / PAYMENT_SUCCESS). This prevents free upgrades.
 export async function POST(request: NextRequest) {
+  // CSRF: reject cross-origin form posts.
+  const originError = checkOrigin(request)
+  if (originError) return originError
+
   try {
     const insforge = createServerClient({ cookies: await cookies() })
     const { data: userData, error: authError } = await insforge.auth.getCurrentUser()
@@ -26,64 +29,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
-    const tier = plan as PlanTier
-    const limits = PLAN_LIMITS[tier]
-    const now = new Date()
-    const periodEnd = new Date(now)
-    if (annual) {
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1)
-    } else {
-      periodEnd.setMonth(periodEnd.getMonth() + 1)
-    }
-
-    const { data: existingSub } = await admin.database
-      .from("subscriptions")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle()
-
-    if (existingSub) {
-      await admin.database
-        .from("subscriptions")
-        .update({
-          plan,
-          status: "active",
-          current_period_start: now.toISOString(),
-          current_period_end: periodEnd.toISOString(),
-          cancel_at_period_end: false,
-          monthly_opportunity_quota: limits.opportunities,
-          monthly_proposal_quota: limits.proposals,
-          updated_at: now.toISOString(),
-        })
-        .eq("id", (existingSub as { id: string }).id)
-        .eq("user_id", userId)
-    } else {
-      await admin.database.from("subscriptions").insert([{
-        user_id: userId,
-        plan,
-        status: "active",
-        current_period_start: now.toISOString(),
-        current_period_end: periodEnd.toISOString(),
-        cancel_at_period_end: false,
-        monthly_opportunity_quota: limits.opportunities,
-        monthly_proposal_quota: limits.proposals,
-      }])
-    }
-
-    await admin.database
-      .from("profiles")
-      .update({ plan, updated_at: now.toISOString() })
-      .eq("id", userId)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://seerist.xyz"
+    const result = await createSubscriptionCheckout({
+      plan: plan as "pro" | "agency",
+      annual: Boolean(annual),
+      userId,
+      customerEmail: userData.user?.email ?? undefined,
+      successUrl: `${appUrl}/settings/billing?upgrade=success`,
+      cancelUrl: `${appUrl}/settings/billing?upgrade=cancelled`,
+    })
 
     return NextResponse.json({
       success: true,
-      plan,
-      annual: Boolean(annual),
-      amount: annual ? PLAN_PRICES[tier].annual : PLAN_PRICES[tier].monthly,
-      redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://seerist.xyz"}/settings/billing?success=true`,
+      redirectUrl: result.data.paymentUrl,
+      paymentId: result.data.paymentId,
     })
   } catch (err) {
     console.error("Checkout error:", err)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const message = err instanceof Error ? err.message : "Internal server error"
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
+
+// Reference safePlan to keep tree-shaking from dropping the export; the tier
+// type is used by callers.
+export const _planTier = (p: string): PlanTier => safePlan(p)

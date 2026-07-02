@@ -3,13 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
-  Cpu, Lock, Eye, EyeOff, CheckCircle2, XCircle,
-  TestTube, Save, Trash2, ShieldAlert, Sparkles,
-  Sliders, Gauge, AlertTriangle, Info,
+  Cpu, Lock, CheckCircle2, Sparkles, Sliders, Gauge, ShieldAlert, Server,
 } from "lucide-react"
 import { PageHeader } from "@/components/common/PageHeader"
 import { Button } from "@/components/ui/button"
-import { updateAIPreferences, saveAIKey, removeAIKey, testAIKey } from "@/app/actions/ai-settings"
+import { updateAIPreferences } from "@/app/actions/ai-settings"
 import { toast } from "sonner"
 
 const MODELS = [
@@ -58,7 +56,6 @@ const KEYWORD_PENALTIES = [
 
 interface Props {
   plan: string
-  hasKey: boolean
   initialPrefs: {
     model: string
     tone: string
@@ -71,7 +68,7 @@ interface Props {
   }
 }
 
-export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) {
+export default function AISettingsClient({ plan, initialPrefs }: Props) {
   const router = useRouter()
   const isPro = plan === "pro" || plan === "agency"
 
@@ -83,48 +80,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
   const [prioritizeRelevance, setPrioritizeRelevance] = useState(initialPrefs.prioritizeRelevance)
   const [keywordPenalty, setKeywordPenalty] = useState(initialPrefs.keywordPenalty)
   const [boostRepeatPosters, setBoostRepeatPosters] = useState(initialPrefs.boostRepeatPosters)
-
-  const [keyInput, setKeyInput] = useState("")
-  const [showKey, setShowKey] = useState(false)
-  const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<{ valid: boolean; model?: string; error?: string } | null>(null)
   const [saving, setSaving] = useState(false)
-
-  async function handleTestKey() {
-    if (!keyInput.trim()) {
-      toast.error("Enter an API key first")
-      return
-    }
-    setTesting(true)
-    setTestResult(null)
-    const result = await testAIKey(keyInput)
-    setTestResult(result)
-    setTesting(false)
-  }
-
-  async function handleSaveKey() {
-    if (!keyInput.trim()) return
-    setSaving(true)
-    const result = await saveAIKey(keyInput)
-    if (result.success) {
-      toast.success("API key saved and verified")
-      router.refresh()
-    } else {
-      toast.error(result.error ?? "Failed to save key")
-    }
-    setSaving(false)
-  }
-
-  async function handleRemoveKey() {
-    if (!confirm("Remove your API key? The default Seerist key will be used instead.")) return
-    const result = await removeAIKey()
-    if (result.success) {
-      toast.success("API key removed")
-      router.refresh()
-    } else {
-      toast.error(result.error ?? "Failed to remove key")
-    }
-  }
 
   async function handleSavePrefs() {
     setSaving(true)
@@ -138,7 +94,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
       ai_keyword_penalty: keywordPenalty,
       ai_boost_repeat_posters: boostRepeatPosters,
     })
-    if (result.success) {
+    if ("success" in result && result.success) {
       toast.success("Preferences saved")
     } else {
       toast.error(result.error ?? "Failed to save")
@@ -148,19 +104,20 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
 
   return (
     <div className="space-y-8">
-      <PageHeader title="AI Settings" subtitle="Configure the AI models used for opportunity scoring and proposal generation. Pro and Agency plans can use their own API keys." />
+      <PageHeader title="AI Settings" subtitle="Configure the AI models used for opportunity scoring and proposal generation." />
 
       {!isPro && (
         <div className="flex items-center gap-3 rounded-xl border border-[var(--status-info)]/20 bg-[var(--status-info)]/5 p-4">
           <ShieldAlert className="h-5 w-5 shrink-0 text-[var(--status-info)]" />
           <div className="flex-1">
             <p className="text-sm font-medium text-[var(--text-primary)]">Free plan limitations</p>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">Free plan is locked to GPT-4o Mini. Upgrade to Pro for custom models and BYOK.</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Free plan is locked to GPT-4o Mini. Upgrade to Pro to choose from premium models.</p>
           </div>
-          <Button variant="default" size="sm" onClick={() => router.push("/settings/billing?upgrade=pro")}>Upgrade</Button>
+          <Button variant="default" size="sm" onClick={() => router.push("/settings/billing")}>Upgrade</Button>
         </div>
       )}
 
+      {/* Model selection */}
       <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
           <Cpu className="h-4 w-4" />
@@ -183,7 +140,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
                       onClick={() => !isLocked && setModel(m.id)}
                       className={`w-full rounded-lg border p-3 text-left transition-colors ${
                         isSelected
-                          ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5"
+                          ? "border-[var(--brand-primary)] bg-[var(--brand-primary-light)]"
                           : isLocked
                             ? "border-[var(--border-primary)] bg-[var(--surface-secondary)]/50 cursor-not-allowed opacity-50"
                             : "border-[var(--border-primary)] hover:border-[var(--brand-primary-border)] hover:bg-[var(--surface-secondary)]"
@@ -212,92 +169,10 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
         </div>
       </div>
 
+      {/* Proposal generation defaults */}
       <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
           <Sparkles className="h-4 w-4" />
-          Bring Your Own Key (BYOK)
-          {!isPro && <span className="rounded-full bg-[var(--status-warning)]/10 px-2 py-0.5 text-[10px] font-medium text-[var(--status-warning)]">Pro+</span>}
-        </h3>
-
-        {!isPro ? (
-          <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4">
-            <p className="text-sm text-[var(--text-muted)]">BYOK is a Pro feature. <button onClick={() => router.push("/settings/billing?upgrade=pro")} className="text-[var(--brand-primary)] hover:underline">Upgrade to Pro</button> to use your own API key and leverage your own AI credits.</p>
-          </div>
-        ) : hasKey ? (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border border-[var(--status-success)]/20 bg-[var(--status-success)]/5 p-4">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-success)]" />
-              <div>
-                <p className="text-sm font-medium text-[var(--status-success)]">Using your key</p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Your API key is active. All AI operations will use your credits.</p>
-              </div>
-              <Button variant="ghost" size="sm" className="ml-auto shrink-0 text-[var(--status-error)]" onClick={handleRemoveKey}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove
-              </Button>
-            </div>
-            <div className="rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4">
-              <p className="text-xs text-[var(--text-muted)]">
-                <Info className="inline h-3 w-3 mr-1" />
-                Cost estimate: ~$0.01–0.05 per proposal at current model ({model.split("/").pop()})
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-xs text-[var(--text-muted)]">
-              Add your own OpenRouter or OpenAI API key to use your own credits. Your key is encrypted at rest and never logged.
-            </p>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
-                OpenRouter API Key
-                <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="ml-1 text-[var(--brand-primary)] hover:underline">(get one)</a>
-              </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type={showKey ? "text" : "password"}
-                    value={keyInput}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="sk-or-v1-..."
-                    className="w-full rounded-lg border border-[var(--border-primary)] bg-[var(--surface-secondary)] px-3 py-2 pr-10 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:outline-none"
-                  />
-                  <button
-                    onClick={() => setShowKey(!showKey)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  >
-                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleTestKey} disabled={testing || !keyInput.trim()}>
-                  {testing ? <span className="animate-spin">⟳</span> : <TestTube className="h-3.5 w-3.5 mr-1" />}
-                  Test
-                </Button>
-                <Button variant="default" size="sm" onClick={handleSaveKey} disabled={saving || !keyInput.trim()}>
-                  <Save className="h-3.5 w-3.5 mr-1" />
-                  Save
-                </Button>
-              </div>
-
-              {testResult && (
-                <div className={`mt-2 flex items-center gap-2 text-xs ${
-                  testResult.valid ? "text-[var(--status-success)]" : "text-[var(--status-error)]"
-                }`}>
-                  {testResult.valid ? (
-                    <><CheckCircle2 className="h-3.5 w-3.5" /> Connected{testResult.model ? ` (${testResult.model})` : ""}</>
-                  ) : (
-                    <><XCircle className="h-3.5 w-3.5" /> {testResult.error ?? "Invalid key"}</>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
-        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
-          <Sliders className="h-4 w-4" />
           Proposal Generation Defaults
         </h3>
 
@@ -311,7 +186,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
                   onClick={() => setTone(t.value)}
                   className={`rounded-lg border p-3 text-left transition-colors ${
                     tone === t.value
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5"
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary-light)]"
                       : "border-[var(--border-primary)] hover:border-[var(--brand-primary-border)]"
                   }`}
                 >
@@ -348,6 +223,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
         </div>
       </div>
 
+      {/* Scoring sensitivity */}
       <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]">
           <Gauge className="h-4 w-4" />
@@ -372,7 +248,7 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
                   onClick={() => setKeywordPenalty(kp.value)}
                   className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
                     keywordPenalty === kp.value
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/5 text-[var(--brand-primary)]"
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary-light)] text-[var(--brand-primary)]"
                       : "border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--brand-primary-border)]"
                   }`}
                 >
@@ -392,9 +268,21 @@ export default function AISettingsClient({ plan, hasKey, initialPrefs }: Props) 
         </div>
       </div>
 
+      {/* Info banner explaining no BYOK */}
+      <div className="flex items-start gap-3 rounded-xl border border-[var(--border-primary)] bg-[var(--surface-secondary)] p-4">
+        <Server className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand-primary)]" />
+        <div>
+          <p className="text-sm font-medium text-[var(--text-primary)]">Powered by the InsForge Model Gateway</p>
+          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+            All AI features run on Seerist&apos;s managed infrastructure — you don&apos;t need your own API key.
+            Costs are covered by your subscription&apos;s proposal quota.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-end">
-        <Button variant="default" onClick={handleSavePrefs} disabled={saving}>
-          {saving ? "Saving..." : "Save Preferences"}
+        <Button onClick={handleSavePrefs} loading={saving}>
+          Save Preferences
         </Button>
       </div>
     </div>
@@ -413,6 +301,7 @@ function ToggleOption({ label, desc, value, onChange }: { label: string; desc: s
         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
           value ? "bg-[var(--brand-primary)]" : "bg-[var(--surface-tertiary)]"
         }`}
+        aria-pressed={value}
       >
         <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
           value ? "translate-x-5" : "translate-x-0"

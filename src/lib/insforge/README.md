@@ -11,7 +11,7 @@ NEXT_PUBLIC_INSFORGE_ANON_KEY=your-anon-key
 
 # Private (server-side only)
 INSFORGE_URL=https://x69u73wi.eu-central.insforge.app
-INSFORGE_API_KEY=ik_bcb691209aa697be33ceb6c9bce0f5e6
+INSFORGE_API_KEY=your-project-api-key
 ```
 
 ## Client Types

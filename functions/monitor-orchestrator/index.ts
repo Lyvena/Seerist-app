@@ -107,7 +107,7 @@ export default async function (req: Request): Promise<Response> {
       const config = userConfigs.find((c) => c.platform_id === platform.id);
       if (!config) continue;
 
-      const scrapeUrl = `${OSS_HOST}/functions/scrape-platform-internal`;
+      const scrapeUrl = `${OSS_HOST}/functions/scrape-platform`;
       const payload = {
         user_id: user.id,
         platform_slug: platform.slug,
