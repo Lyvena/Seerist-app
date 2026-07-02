@@ -22,22 +22,36 @@ interface Props {
   usage: { opportunities: number; proposals: number; products: number; platforms: number }
   limits: { opportunities: number; proposals: number; products: number; platforms: number }
   invoices: Array<{ id: string; date: string; amount: number; status: string; url: string | null }>
+  isOwner?: boolean
 }
 
 export default function BillingClient({
   plan, planName, status, currentPeriodEnd, cancelAtPeriodEnd,
-  paymentProviderId, usage, limits, invoices,
+  paymentProviderId, usage, limits, invoices, isOwner,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [upgrading, setUpgrading] = useState<"pro" | "agency" | null>(null)
   const [cancelling, setCancelling] = useState(false)
 
-  const isFree = plan === "free"
+  const isFree = plan === "free" && !isOwner
   // Keep plan as a loose string so the plan-card comparisons below don't get
   // narrowed by the isFree conditional block.
   const currentPlan: string = plan
   const isActive = status === "active"
+
+  // Owner banner
+  const OwnerBadge = isOwner ? (
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--brand-primary-border)] bg-[var(--brand-primary-light)] p-4">
+      <ShieldAlert className="h-5 w-5 shrink-0 text-[var(--brand-primary)]" />
+      <div className="flex-1">
+        <p className="text-sm font-medium text-[var(--text-primary)]">Project Owner — Full Access</p>
+        <p className="text-xs text-[var(--text-muted)] mt-0.5">
+          You have unlimited access to all Seerist features, forever. No subscription required.
+        </p>
+      </div>
+    </div>
+  ) : null
 
   function formatDate(date: string | null) {
     if (!date) return "N/A"
@@ -93,13 +107,17 @@ export default function BillingClient({
     <div className="space-y-8">
       <PageHeader title="Billing" subtitle="Manage your subscription and payment details" />
 
+      {OwnerBadge}
+
       <div className="rounded-xl border border-[var(--border-primary)] bg-[var(--surface-primary)] p-6">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Current Plan</p>
             <h2 className="mt-1 font-cal text-2xl font-semibold text-[var(--text-primary)]">{planName}</h2>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              {isFree ? (
+              {isOwner ? (
+                "Unlimited access — complimentary, never expires"
+              ) : isFree ? (
                 "Free forever — no payment needed"
               ) : cancelAtPeriodEnd ? (
                 <>Cancels on {formatDate(currentPeriodEnd)}</>
@@ -115,33 +133,35 @@ export default function BillingClient({
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          {isFree ? (
-            <>
-              <Button onClick={() => handleUpgrade("pro")} disabled={!!upgrading}>
-                {upgrading === "pro" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                Upgrade to Pro — ${PLAN_PRICES.pro.monthly}/mo
-              </Button>
-              <Button variant="outline" onClick={() => handleUpgrade("agency")} disabled={!!upgrading}>
-                {upgrading === "agency" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                Upgrade to Agency — ${PLAN_PRICES.agency.monthly}/mo
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => handleCancel} disabled={cancelling}>
-                {cancelling ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
-                {cancelling ? "Cancelling…" : "Cancel Subscription"}
-              </Button>
-              <a href="https://customer.suby.fi" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost">
-                  <ExternalLink className="mr-1.5 h-4 w-4" />
-                  Manage billing on Suby
+        {!isOwner && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            {isFree ? (
+              <>
+                <Button onClick={() => handleUpgrade("pro")} disabled={!!upgrading}>
+                  {upgrading === "pro" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
+                  Upgrade to Pro — ${PLAN_PRICES.pro.monthly}/mo
                 </Button>
-              </a>
-            </>
-          )}
-        </div>
+                <Button variant="outline" onClick={() => handleUpgrade("agency")} disabled={!!upgrading}>
+                  {upgrading === "agency" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
+                  Upgrade to Agency — ${PLAN_PRICES.agency.monthly}/mo
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => handleCancel} disabled={cancelling}>
+                  {cancelling ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : null}
+                  {cancelling ? "Cancelling…" : "Cancel Subscription"}
+                </Button>
+                <a href="https://customer.suby.fi" target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost">
+                    <ExternalLink className="mr-1.5 h-4 w-4" />
+                    Manage billing on Suby
+                  </Button>
+                </a>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {isFree && (

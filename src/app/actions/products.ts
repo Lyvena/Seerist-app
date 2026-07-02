@@ -3,7 +3,7 @@
 import { requireUser } from "@/lib/auth"
 import { admin } from "@/lib/insforge"
 import { revalidatePath } from "next/cache"
-import { canAddProduct, safePlan } from "@/lib/plan-limits"
+import { canAddProduct, safePlan, isOwnerEmail } from "@/lib/plan-limits"
 
 const insforge = admin
 
@@ -45,14 +45,23 @@ export async function upsertProduct(
     .maybeSingle()
   const plan = safePlan((profile as { plan: string | null } | null)?.plan)
 
-  if (!data.id) {
+  // Email lives on auth.users, not profiles — fetch for owner check.
+  const { data: userRow } = await insforge.database
+    .from("users")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle()
+  const email = (userRow as { email?: string } | null)?.email
+  const isOwner = isOwnerEmail(email)
+
+  if (!data.id && !isOwner) {
     const { data: existing } = await insforge.database
       .from("products")
       .select("id")
       .eq("user_id", userId)
       .eq("is_active", true)
     const count = (existing ?? []).length
-    const access = canAddProduct(plan, count)
+    const access = canAddProduct(plan, count, email)
     if (!access.allowed) {
       return { error: access.reason ?? "Product limit reached." }
     }
