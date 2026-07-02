@@ -41,18 +41,16 @@ export default function SignupPage() {
 
       // Branch on the actual InsForge response. If verification is required,
       // stay on the same page and show the OTP input. Otherwise the account
-      // is active immediately — go to onboarding.
+      // is active immediately (the session cookie is set by the server action)
+      // — go to onboarding.
       if (data?.requireEmailVerification) {
         setStep("verify")
         toast.success("Verification code sent to your email")
-      } else if (data?.accessToken) {
-        // No verification needed — session is established.
+      } else {
+        // No verification needed — session cookie is set, proceed.
         toast.success("Account created!")
         router.push("/onboarding")
         router.refresh()
-      } else {
-        // No token and no verification flag — treat as needing verification.
-        setStep("verify")
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create account")

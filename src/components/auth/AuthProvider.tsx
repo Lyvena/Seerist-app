@@ -7,7 +7,7 @@ import type { Profile } from "@/lib/db/schemas"
 interface User {
   id: string
   email: string
-  emailConfirmed?: boolean
+  emailVerified: boolean
 }
 
 interface AuthContextValue {
@@ -25,46 +25,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     async function initAuth() {
-      const { insforgeBrowser } = await import("@/lib/insforge/client")
-      const client = insforgeBrowser()
-      
-      client.auth.getCurrentUser().then(({ data }) => {
-        const userData = data?.user as { id: string; email?: string; email_confirmed_at?: string } | undefined
-        if (userData) {
+      try {
+        const { insforgeBrowser } = await import("@/lib/insforge/client")
+        const client = insforgeBrowser()
+        const { data, error } = await client.auth.getCurrentUser()
+        if (cancelled) return
+
+        const u = data?.user
+        if (!error && u) {
           setUser({
-            id: userData.id,
-            email: userData.email ?? "",
-            emailConfirmed: userData.email_confirmed_at != null,
+            id: u.id,
+            email: u.email ?? "",
+            // InsForge user schema uses camelCase `emailVerified`.
+            emailVerified: Boolean(u.emailVerified),
           })
         }
-        setLoading(false)
-      })
+      } catch {
+        // No session / refresh failed — user is logged out.
+        if (!cancelled) setUser(null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
     initAuth()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id) {
+      setProfile(null)
+      return
+    }
+    let cancelled = false
+
     async function fetchProfile() {
-      const { insforgeBrowser } = await import("@/lib/insforge/client")
-      const client = insforgeBrowser()
-      
-      if (!user) return
-      const uid = user.id
-      client.database
-        .from("profiles")
-        .select("*")
-        .eq("id", uid)
-        .maybeSingle()
-        .then(({ data }) => setProfile(data as Profile | null))
+      try {
+        const { insforgeBrowser } = await import("@/lib/insforge/client")
+        const client = insforgeBrowser()
+        const { data } = await client.database
+          .from("profiles")
+          .select("*")
+          .eq("id", user!.id)
+          .maybeSingle()
+        if (!cancelled) setProfile(data as Profile | null)
+      } catch {
+        if (!cancelled) setProfile(null)
+      }
     }
     fetchProfile()
-  }, [user])
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   async function signOut() {
-    await signOutAction()
+    try {
+      await signOutAction()
+    } catch {
+      // Even if the server sign-out fails, clear local state.
+    }
     setUser(null)
+    setProfile(null)
   }
 
   return (
