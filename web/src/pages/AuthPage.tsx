@@ -95,9 +95,7 @@ export default function AuthPage() {
     <div className="auth-wrap">
       <div className="auth-story">
         <div className="row" style={{ marginBottom: 26 }}>
-          <div className="logo-mark" style={{ width: 40, height: 40 }}>
-            <svg width="20" height="20" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="#fff" strokeWidth="3" /><circle cx="16" cy="16" r="4" fill="#fff" /></svg>
-          </div>
+          <img src="/logo.svg" alt="Seerist" width={42} height={42} style={{ borderRadius: 11, display: 'block' }} />
           <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 20, color: '#fff' }}>Seerist</span>
         </div>
         <h2>Every bid should win you something.</h2>

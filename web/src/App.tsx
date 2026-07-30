@@ -15,12 +15,7 @@ import ExtensionPage from './pages/ExtensionPage';
 function Logo() {
   return (
     <div className="logo">
-      <div className="logo-mark">
-        <svg width="18" height="18" viewBox="0 0 32 32">
-          <circle cx="16" cy="16" r="10" fill="none" stroke="#ffffff" strokeWidth="3" />
-          <circle cx="16" cy="16" r="4" fill="#ffffff" />
-        </svg>
-      </div>
+      <img src="/logo.svg" alt="Seerist" width={36} height={36} style={{ borderRadius: 9, display: 'block' }} />
       <div>
         <div className="logo-name">Seerist</div>
         <div className="logo-tag">Win the work. Grow the product.</div>
