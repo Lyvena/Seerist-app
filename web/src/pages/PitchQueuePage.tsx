@@ -189,6 +189,8 @@ function CaptureModal({ onClose, onDone }: { onClose: () => void; onDone: () => 
 
 // ---------------------------------------------------------------------------
 
+interface HistoryRow { id: string; from_status: string | null; to_status: string; note: string | null; created_at: string }
+
 function ProposalDrawer({ proposal, onClose, onChanged }: {
   proposal: Proposal;
   onClose: () => void;
@@ -198,9 +200,16 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState(proposal.draft_content || '');
   const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState<HistoryRow[]>([]);
   const job = proposal.job_postings;
 
   useEffect(() => { setDraft(proposal.draft_content || ''); }, [proposal.id, proposal.draft_content]);
+
+  useEffect(() => {
+    void db().from('proposal_status_history').select('*')
+      .eq('proposal_id', proposal.id).order('created_at', { ascending: false }).limit(30)
+      .then(({ data }) => setHistory((data as HistoryRow[]) || []));
+  }, [proposal.id, proposal.status, proposal.outcome]);
 
   async function run(label: string, fn: () => Promise<any>) {
     setBusy(label); setError(null);
@@ -342,6 +351,22 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
             </div>
           )}
         </div>
+
+        {history.length > 0 && (
+          <div className="card mt">
+            <h3>History</h3>
+            <div className="timeline mt">
+              {history.map((h) => (
+                <div className="timeline-item" key={h.id}>
+                  <div className="t-title">
+                    {h.from_status ? `${h.from_status.replace('_', ' ')} → ` : ''}{h.to_status.replace('_', ' ').replace('outcome:', 'outcome: ')}
+                  </div>
+                  <div className="t-meta">{new Date(h.created_at).toLocaleString()}{h.note ? ` — ${h.note}` : ''}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

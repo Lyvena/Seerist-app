@@ -47,6 +47,28 @@ export default function AnalyticsPage() {
             <div className="card stat"><div className="label">Won</div><div className="value">{data.funnel.won}</div><div className="hint">{data.funnel.winRate ?? '—'}% win rate</div></div>
           </div>
 
+          <div className="card mt">
+            <h3>Funnel</h3>
+            <div className="mt">
+              {([
+                ['Captured', data.totalCaptured],
+                ['Sent', data.funnel.sent],
+                ['Viewed', data.funnel.viewed],
+                ['Replied', data.funnel.replied],
+                ['Won', data.funnel.won],
+              ] as Array<[string, number]>).map(([label, count]) => {
+                const max = Math.max(data.totalCaptured, 1);
+                return (
+                  <div className="funnel-row" key={label}>
+                    <span className="flabel">{label}</span>
+                    <div className="funnel-track"><div className="funnel-fill" style={{ width: `${Math.max((count / max) * 100, count > 0 ? 3 : 0)}%` }} /></div>
+                    <span className="fcount">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid cols-2 mt">
             <div className="card">
               <h3>Pipeline</h3>

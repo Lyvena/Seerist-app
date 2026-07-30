@@ -13,6 +13,7 @@ const TASK_BADGE: Record<string, string> = {
 export default function DeliveryPage() {
   const { activeWs } = useApp();
   const [runs, setRuns] = useState<DeliveryRun[]>([]);
+  const [jobTitles, setJobTitles] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<DeliveryRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,19 @@ export default function DeliveryPage() {
       const { data, error } = await db().from('delivery_runs').select('*')
         .eq('workspace_id', activeWs.id).order('created_at', { ascending: false }).limit(100);
       if (error) throw new Error(error.message);
-      setRuns((data as DeliveryRun[]) || []);
+      const list = (data as DeliveryRun[]) || [];
+      setRuns(list);
+      // Resolve the contract (job title) behind each run.
+      if (list.length) {
+        const { data: props } = await db().from('proposals')
+          .select('id, job_postings(title)')
+          .in('id', list.map((r) => r.proposal_id));
+        const titles: Record<string, string> = {};
+        for (const p of (props as any[]) || []) {
+          titles[p.id] = p.job_postings?.title || 'Untitled contract';
+        }
+        setJobTitles(titles);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load runs');
     } finally {
@@ -56,14 +69,14 @@ export default function DeliveryPage() {
       ) : (
         <div className="card">
           <table className="data">
-            <thead><tr><th>Run</th><th>Status</th><th>Stack</th><th>OpenHands</th><th>Created</th><th></th></tr></thead>
+            <thead><tr><th>Contract</th><th>Status</th><th>Stack</th><th>Execution</th><th>Created</th><th></th></tr></thead>
             <tbody>
               {runs.map((r) => (
                 <tr key={r.id}>
-                  <td><code>{r.id.slice(0, 8)}</code></td>
+                  <td style={{ fontWeight: 600, maxWidth: 320 }}>{jobTitles[r.proposal_id] || <code>{r.id.slice(0, 8)}</code>}</td>
                   <td><span className={`badge ${RUN_BADGE[r.status]}`}>{r.status}</span></td>
                   <td><span className="badge violet">{r.target_stack}</span></td>
-                  <td>{r.openhands_conversation_id ? <span className="badge green">connected</span> : <span className="badge gray">gateway mode</span>}</td>
+                  <td>{r.openhands_conversation_id ? <span className="badge green">OpenHands</span> : <span className="badge gray">gateway mode</span>}</td>
                   <td className="faint">{new Date(r.created_at).toLocaleString()}</td>
                   <td><button className="btn sm" onClick={() => setSelected(r)}>Open</button></td>
                 </tr>

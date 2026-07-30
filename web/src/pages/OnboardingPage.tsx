@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { WorkspaceType } from '../lib/types';
@@ -12,7 +12,8 @@ import type { WorkspaceType } from '../lib/types';
 export default function OnboardingPage() {
   const { user, activeOrg, orgs, refresh, setActiveOrg, setActiveWs } = useApp();
   const nav = useNavigate();
-  const creatingFirstOrg = orgs.length === 0;
+  const [params] = useSearchParams();
+  const creatingFirstOrg = orgs.length === 0 || params.get('new') === 'org';
 
   const [step, setStep] = useState(creatingFirstOrg ? 0 : 1);
   const [busy, setBusy] = useState(false);
@@ -118,8 +119,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card" style={{ width: 'min(640px, 94vw)' }}>
+    <div className="onboard-wrap">
+      <div className="onboard-card">
         {error && <div className="error-box mb">{error}</div>}
 
         {step === 0 && (
