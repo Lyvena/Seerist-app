@@ -1,0 +1,148 @@
+{
+  "businessPlan": "## Business Overview\nSeerist\n\n## Customer Profile\nTarget customers identified from business context\n\n### Pain Points\n- Seerist users are SaaS founders, agency owners, and growth leads who want to win more clients without burning hours on Upwork and similar platforms — or sinking budget into ads that don't convert. They're trying to turn their product expertise and service capabilities into a steady pipeline of qualified conversations, while keeping outreach compliant, on-brand, and scalable. Ultimately, they want Seerist to feel like a strategic teammate that finds the right opportunities, applies intelligently, and helps them show up as the obvious choice before a prospect ever hits a traditional sales funnel.\n\n## Key Problems\n- **Seerist users are SaaS founders, agency owners, an**: Seerist users are SaaS founders, agency owners, and growth leads who want to win more clients without burning hours on Upwork and similar platforms — or sinking budget into ads that don't convert. They're trying to turn their product expertise and service capabilities into a steady pipeline of qualified conversations, while keeping outreach compliant, on-brand, and scalable. Ultimately, they want Seerist to feel like a strategic teammate that finds the right opportunities, applies intelligently, and helps them show up as the obvious choice before a prospect ever hits a traditional sales funnel.\n\n## Customer Journey\n# Seerist Journey Guide\n\n## 1. USER GOALS\n\nSeerist users are SaaS founders, agency owners, and growth leads who want to win more clients without burning hours on Upwork and similar platforms — or sinking budget into ads that don't convert. They're trying to turn their product expertise and service capabilities into a steady pipeline of qualified conversations, while keeping outreach compliant, on-brand, and scalable. Ultimately, they want Seerist to feel like a strategic teammate that finds the right opportunities, applies intelligently, and helps them show up as the obvious choice before a prospect ever hits a traditional sales funnel.\n\n---\n\n## 2. QUALIFYING QUESTIONS\n\n**What best describes your business today?**\n\n1. SaaS company looking to land clients through project-based work  \n2. Agency offering services and wanting more aligned inbound leads  \n3. Hybrid — we sell both a product and professional services  \n\n**What's your biggest bottleneck right now?**\n\na. Finding relevant projects worth applying to  \nb. Writing strong, compliant proposals fast enough to compete  \nc. Turning wins into repeatable growth — branding, docs, and follow-through  \n\n---\n\n## 3. JOURNEY NARRATIVE\n\nMost users arrive frustrated: they've seen promising gigs slip away because they spotted them too late, wrote a generic proposal, or weren't sure how to position their SaaS alongside their services. The agent's job is to meet them there — curious, not salesy — and quickly learn who they are, what they sell, and how they want to show up in the market.\n\nThe journey typically unfolds in three natural phases. First, **setup and alignment**: the agent helps users connect platforms, define their ideal project profile, and brief the AI team (CEO, Product Manager, Growth Hacker, Sales Agent) on voice, compliance rules, and positioning. Second, **active outreach**: Seerist surfaces matching opportunities, drafts tailored applications, and adapts to each platform's policies — the user reviews, approves, and learns what messaging actually gets responses. Third, **optimization**: as wins and near-misses accumulate, the agent refines targeting, updates product documentation dynamically, and sharpens the pitch.\n\nThroughout, the agent stays conversational — celebrating a reply, nudging when applications stall, suggesting a positioning tweak after a rejection pattern emerges. Each interaction teaches Seerist something: which keywords convert, which industries respond, which proposal angles feel authentic. That feedback loop is what transforms Seerist from a automation tool into a growth partner that gets smarter every week.\n\n---\n\n## 4. APP SUPPORT MAP\n\n**Creation tools** (proposal drafting, dynamic doc updates, brand voice tuning) matter most early — when users need to prove Seerist understands their business and can write like them, not like a template bot. **Tracking tools** (pipeline views, application status, response rates, A/B proposal performance) become essential once outreach is live; they help users see what's working and give the agent concrete data for recommendations. **Automation tools** (auto-matching, scheduled applications, policy-adaptive submission, AI agent orchestration) are the right push once trust is established — when users say \"I know this works, I just need it to run while I build the product.\"\n\nRecommend creation-first for users who chose option **b** above; tracking-first for users drowning in manual follow-up; automation-first for users who already know their ICP but can't keep up with volume.\n\n---\n\n## 5. COMMUNITY OPPORTUNITIES\n\nUsers benefit enormously from shared intelligence on what proposal structures, pricing framings, and niche keywords actually win on platforms like Upwork — patterns no single team discovers fast enough alone. A lightweight community layer — anonymized win stories, industry-specific playbooks, and \"what worked this month\" benchmarks — lets agencies and SaaS founders learn from each other's outcomes without sharing client-confidential details. The entrepreneur can harness this collective signal to continuously train smarter defaults, surface trending opportunity types, and help every customer ramp faster than the last.\n\n---\n\n## 6. MONETIZATION HOOK\n\nThe first payment moment almost always arrives when a user sees a **real, high-fit project** — one they would have missed or applied to too late — with a **proposal draft that sounds like them**, ready to send in minutes. That's the \"aha\": *this isn't another AI writing toy; this is revenue sitting in my queue.* The credit card comes out when they realize the free tier got them to the doorstep, but speed, volume, and the full AI team are what win the race on platforms where the first strong proposal often takes the gig.\n\nThat first purchase trigger is different from why they stay subscribed. Month one is about **winning the next deal**; month six is about **compounding advantage** — better targeting, higher response rates, always-current documentation, and an outreach engine that runs without constant babysitting. Retention is driven by the quiet math: more qualified applications, more conversations, less time spent hunting.\n\nThe free→paid boundary should sit right after **proof of fit**: free users get platform connection, limited matching, and a handful of AI-drafted proposals so they can validate quality and relevance. Behind the paywall: unlimited applications, full AI agent suite, automation, analytics, compliance adaptation, and dynamic doc sync — the infrastructure of a real outbound motion, not a demo.\n\nDesign backward from payment: immediately before checkout, the user must have (1) seen at least one opportunity they genuinely wanted, (2) trusted the proposal enough to edit rather than rewrite, and (3) hit a clear limit — applications, matches, or automation — at the exact moment they're thinking, *if I don't upgrade, I'm leaving money on the table.* That's when paying feels obvious, not forced.\n\n## AI Tool Suite\n### Pitch Queue\n**Purpose**: Track matched Upwork projects and manage AI-drafted, policy-compliant proposal applications from first match to client reply.\n**User Story**: I want one place to see every matched gig, its AI Sales Agent draft, and whether I've applied — without juggling Upwork tabs and spreadsheets.\n\n---\n*Generated on 7/29/2026*\n",
+  "workspaceId": "819f9fea-6ddb-498c-a5b0-ce79417adcd6",
+  "configId": 727070,
+  "name": "Seerist",
+  "tagline": "See the opportunity. Win the client.",
+  "logoUrl": "https://storage.googleapis.com/audos-images/brand-icons/fcc66f65-8b68-4024-9d5b-e6e982289448.mono.png",
+  "iconUrl": "https://storage.googleapis.com/audos-images/brand-icons/fcc66f65-8b68-4024-9d5b-e6e982289448.mono.png",
+  "logoOnDarkUrl": "https://storage.googleapis.com/audos-images/brand-icons/fcc66f65-8b68-4024-9d5b-e6e982289448.mono.png",
+  "colors": {
+    "primary": "#0891b2",
+    "highlight": "#0393fe",
+    "contrast": "#000000",
+    "secondary": "#0393fe",
+    "accent": "#000000",
+    "primaryScale": {
+      "50": "#ebf6f9",
+      "100": "#d7edf3",
+      "200": "#bae0e9",
+      "500": "#0785a4",
+      "600": "#0891b2",
+      "700": "#077a96",
+      "900": "#056075"
+    },
+    "highlightScale": {
+      "50": "#ebf6ff",
+      "100": "#d7eeff",
+      "200": "#b8e1ff",
+      "500": "#0387ea",
+      "600": "#0393fe",
+      "700": "#037bd5",
+      "900": "#0261a8"
+    },
+    "surfaces": {
+      "page": "#f3fafb",
+      "pageAlt": "#e6e6e6",
+      "gradientFrom": "#f3fafb",
+      "gradientVia": "#e6e6e6",
+      "gradientTo": "#edf7ff",
+      "card": "#ffffff",
+      "cardHover": "#f5fbfc",
+      "panel": "#ffffff",
+      "panelStrong": "#ffffff",
+      "muted": "#fafdfd",
+      "accentSoft": "#e6f4ff",
+      "border": "#c9e7ee",
+      "borderStrong": "#abdae5"
+    },
+    "text": {
+      "primary": "#022932",
+      "secondary": "#044e60",
+      "brand": "#022932",
+      "accent": "#012947",
+      "muted": "#06667d",
+      "onPrimary": "#000000",
+      "onHighlight": "#000000",
+      "onContrast": "#0891b2"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "warning": "#d97706",
+      "danger": "#dc2626"
+    },
+    "shell": {
+      "buttonText": "#000000",
+      "accentButtonText": "#000000",
+      "dockText": "#000000",
+      "icon": "#012947",
+      "shadow": "#b5dee8",
+      "shadowStrong": "#92cfdd"
+    }
+  },
+  "palette": {
+    "primary": "#0891b2",
+    "highlight": "#0393fe",
+    "contrast": "#000000",
+    "secondary": "#0393fe",
+    "accent": "#000000",
+    "primaryScale": {
+      "50": "#ebf6f9",
+      "100": "#d7edf3",
+      "200": "#bae0e9",
+      "500": "#0785a4",
+      "600": "#0891b2",
+      "700": "#077a96",
+      "900": "#056075"
+    },
+    "highlightScale": {
+      "50": "#ebf6ff",
+      "100": "#d7eeff",
+      "200": "#b8e1ff",
+      "500": "#0387ea",
+      "600": "#0393fe",
+      "700": "#037bd5",
+      "900": "#0261a8"
+    },
+    "surfaces": {
+      "page": "#f3fafb",
+      "pageAlt": "#e6e6e6",
+      "gradientFrom": "#f3fafb",
+      "gradientVia": "#e6e6e6",
+      "gradientTo": "#edf7ff",
+      "card": "#ffffff",
+      "cardHover": "#f5fbfc",
+      "panel": "#ffffff",
+      "panelStrong": "#ffffff",
+      "muted": "#fafdfd",
+      "accentSoft": "#e6f4ff",
+      "border": "#c9e7ee",
+      "borderStrong": "#abdae5"
+    },
+    "text": {
+      "primary": "#022932",
+      "secondary": "#044e60",
+      "brand": "#022932",
+      "accent": "#012947",
+      "muted": "#06667d",
+      "onPrimary": "#000000",
+      "onHighlight": "#000000",
+      "onContrast": "#0891b2"
+    },
+    "semantic": {
+      "success": "#16a34a",
+      "warning": "#d97706",
+      "danger": "#dc2626"
+    },
+    "shell": {
+      "buttonText": "#000000",
+      "accentButtonText": "#000000",
+      "dockText": "#000000",
+      "icon": "#012947",
+      "shadow": "#b5dee8",
+      "shadowStrong": "#92cfdd"
+    }
+  },
+  "pickedBrandColor": "#0891b2",
+  "typography": {
+    "font": "Space Grotesk",
+    "category": "sans-serif",
+    "weights": [
+      400,
+      700
+    ],
+    "headingFont": "Space Grotesk",
+    "bodyFont": "Space Grotesk"
+  },
+  "heroVideoUrl": "https://storage.googleapis.com/audos-images/videos/scene_group_1785338537338_stitched.mp4"
+}
