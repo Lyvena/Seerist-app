@@ -435,9 +435,11 @@ create policy profiles_update on profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 
 -- organizations
+-- Creator visibility is needed for the INSERT ... RETURNING bootstrap step
+-- (membership doesn't exist yet in that instant).
 drop policy if exists orgs_select on organizations;
 create policy orgs_select on organizations for select to authenticated
-  using (seerist_is_org_member(id));
+  using (seerist_is_org_member(id) or created_by = auth.uid());
 drop policy if exists orgs_insert on organizations;
 create policy orgs_insert on organizations for insert to authenticated
   with check (created_by = auth.uid());
@@ -449,9 +451,12 @@ create policy orgs_delete on organizations for delete to authenticated
   using (seerist_is_org_owner(id));
 
 -- organization_memberships: bootstrap = creator adds self as owner.
+-- Self-visibility (user_id = auth.uid()) is required for INSERT ... RETURNING:
+-- SELECT policies evaluate with the statement snapshot, which does not yet
+-- contain the row being inserted, so membership-based checks alone would fail.
 drop policy if exists om_select on organization_memberships;
 create policy om_select on organization_memberships for select to authenticated
-  using (seerist_is_org_member(organization_id));
+  using (user_id = auth.uid() or seerist_is_org_member(organization_id));
 drop policy if exists om_insert on organization_memberships;
 create policy om_insert on organization_memberships for insert to authenticated
   with check (
@@ -486,7 +491,7 @@ create policy ws_delete on workspaces for delete to authenticated
 -- workspace_memberships
 drop policy if exists wm_select on workspace_memberships;
 create policy wm_select on workspace_memberships for select to authenticated
-  using (seerist_is_org_member(seerist_org_of_ws(workspace_id)));
+  using (user_id = auth.uid() or seerist_is_org_member(seerist_org_of_ws(workspace_id)));
 drop policy if exists wm_insert on workspace_memberships;
 create policy wm_insert on workspace_memberships for insert to authenticated
   with check (seerist_is_org_admin(seerist_org_of_ws(workspace_id)));
