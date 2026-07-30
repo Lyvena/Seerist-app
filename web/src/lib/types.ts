@@ -1,0 +1,196 @@
+export type WorkspaceType = 'agency' | 'saas';
+export type ProposalStatus = 'new' | 'scored' | 'drafted' | 'needs_edits' | 'approved' | 'submitted';
+export type Outcome = 'pending' | 'viewed' | 'replied' | 'won' | 'lost';
+
+export interface Profile {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  billing_status: 'trial' | 'active' | 'past_due' | 'canceled';
+  plan: string;
+  creem_customer_id: string | null;
+  ceo_enabled: boolean;
+  ceo_kill_switch: boolean;
+  created_by: string;
+}
+
+export interface OrgMembership {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  organizations?: Organization;
+}
+
+export interface Workspace {
+  id: string;
+  organization_id: string;
+  type: WorkspaceType;
+  name: string;
+  description: string | null;
+  ideal_client_profile: string | null;
+  portfolio: string | null;
+  tone_style: string | null;
+  product_name: string | null;
+  product_description: string | null;
+  product_url: string | null;
+  target_customer: string | null;
+  bidding_enabled: boolean;
+  risk_acknowledged_at: string | null;
+}
+
+export interface PlatformConnection {
+  id: string;
+  workspace_id: string;
+  platform: string;
+  status: string;
+  kill_switch: boolean;
+  credentials: unknown;
+}
+
+export interface JobPosting {
+  id: string;
+  workspace_id: string;
+  source: string;
+  platform: string;
+  title: string;
+  description: string | null;
+  budget: string | null;
+  client_stats: Record<string, unknown> | null;
+  url: string | null;
+  captured_at: string;
+}
+
+export interface Proposal {
+  id: string;
+  workspace_id: string;
+  job_posting_id: string;
+  status: ProposalStatus;
+  mode: WorkspaceType;
+  draft_content: string | null;
+  fit_score: number | null;
+  fit_reasoning: string | null;
+  product_mentioned: boolean;
+  mention_policy_applied: string | null;
+  outcome: Outcome;
+  submitted_at: string | null;
+  viewed_at: string | null;
+  replied_at: string | null;
+  won_at: string | null;
+  lost_at: string | null;
+  created_at: string;
+  job_postings?: JobPosting;
+}
+
+export interface DeliveryRun {
+  id: string;
+  proposal_id: string;
+  workspace_id: string;
+  status: 'planning' | 'running' | 'qa' | 'delivered' | 'failed' | 'cancelled';
+  target_stack: 'instantdb' | 'insforge' | 'client_specified';
+  stack_reasoning: string | null;
+  openhands_conversation_id: string | null;
+  openhands_trace: Array<Record<string, unknown>>;
+  packaging_channel: string | null;
+  created_at: string;
+}
+
+export interface DeliveryTask {
+  id: string;
+  delivery_run_id: string;
+  position: number;
+  description: string;
+  status: 'todo' | 'running' | 'qa_pending' | 'qa_approved' | 'qa_rejected' | 'done' | 'failed';
+  agent_output: string | null;
+  qa_note: string | null;
+  qa_approved_at: string | null;
+}
+
+export interface Ploybook {
+  id: string;
+  workspace_id: string;
+  name: string;
+  description: string | null;
+  strategy_config: Record<string, unknown>;
+  active: boolean;
+}
+
+export interface SiteIngestionJob {
+  id: string;
+  workspace_id: string;
+  url: string;
+  status: 'pending' | 'running' | 'complete' | 'failed';
+  summary: string | null;
+  positioning: string | null;
+  error: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+}
+
+export interface DeploySyncDraft {
+  id: string;
+  workspace_id: string;
+  trigger_source: string | null;
+  deploy_ref: string | null;
+  change_summary: string | null;
+  docs_draft: string | null;
+  site_draft: string | null;
+  status: 'draft' | 'in_review' | 'published' | 'dismissed';
+  created_at: string;
+}
+
+export interface PersonaAction {
+  id: string;
+  organization_id: string | null;
+  workspace_id: string | null;
+  persona: string;
+  action: string;
+  params: Record<string, unknown>;
+  result: string | null;
+  requires_approval: boolean;
+  approval_status: 'auto_approved' | 'pending' | 'approved' | 'rejected';
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+}
+
+export interface WorkspaceMemory {
+  id: string;
+  workspace_id: string;
+  key: string;
+  kind: 'note' | 'preference' | 'decision_rule' | 'skill';
+  content: string;
+  source: string | null;
+  updated_at: string;
+}
+
+export interface AnalyticsSummary {
+  workspace: { id: string; name: string; type: WorkspaceType };
+  pipeline: Record<string, number>;
+  totalCaptured: number;
+  averageFitScore: number | null;
+  funnel: {
+    sent: number; viewed: number; replied: number; won: number; lost: number;
+    viewRate: number | null; replyRate: number | null; winRate: number | null;
+  };
+  productMention: {
+    draftedWithMention: number; sentWithMention: number; wonWithMention: number;
+    mentionShareOfSent: number | null;
+  } | null;
+  growth: { touchpoints: number; attributedSignups: number; totalSignups: number };
+}
+
+export const PERSONAS = [
+  { name: 'The Scout', owns: 'Job capture assist & fit scoring', module: 'Module A', icon: '🔭' },
+  { name: 'The Drafter', owns: 'Proposal writing & product-mention logic', module: 'Module A', icon: '✍️' },
+  { name: 'The Builder', owns: 'Delivery execution incl. InstantDB/InsForge stack choice', module: 'Module B (OpenHands)', icon: '🔨' },
+  { name: 'The Closer', owns: 'Post-win client comms & scheduling', module: 'Composio (Gmail, Calendar)', icon: '🤝' },
+  { name: 'The Grower', owns: 'Site, content & attribution (SaaS workspaces)', module: 'Module C', icon: '🌱' },
+  { name: 'The PM', owns: 'Win/loss, QA & attribution → roadmap suggestions', module: 'Existing data only', icon: '🧭' },
+  { name: 'The CEO', owns: 'Org-level orchestration — bounded autonomy', module: 'All modules, org scope', icon: '👁️' },
+] as const;

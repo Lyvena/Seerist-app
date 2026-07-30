@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Seerist Capture",
+  "version": "1.0.0",
+  "description": "Capture Upwork jobs you're already browsing into Seerist, and autofill approved proposals. You always click Submit yourself — Seerist never automates platform actions.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://www.upwork.com/*"],
+  "background": { "service_worker": "service-worker.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Seerist Capture"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.upwork.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

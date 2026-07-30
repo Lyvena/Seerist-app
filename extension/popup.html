@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { width: 320px; margin: 0; background: #0b1220; color: #e6edf7; font: 13px/1.5 system-ui, sans-serif; }
+    .wrap { padding: 16px; }
+    h1 { font-size: 15px; margin: 0 0 2px; display: flex; align-items: center; gap: 8px; }
+    .tag { color: #5d6f8d; font-size: 11px; margin-bottom: 14px; }
+    label { display: block; font-size: 11.5px; color: #93a4bf; margin: 10px 0 4px; font-weight: 600; }
+    input, select { width: 100%; box-sizing: border-box; background: #070b14; color: #e6edf7; border: 1px solid #1c2941; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    button { width: 100%; margin-top: 12px; background: #0ea5e9; color: #04121e; border: none; border-radius: 8px; padding: 9px; font-weight: 700; font-size: 13px; cursor: pointer; }
+    button.secondary { background: #121c30; color: #93a4bf; border: 1px solid #1c2941; }
+    .err { color: #f87171; font-size: 12px; margin-top: 8px; }
+    .ok { color: #34d399; font-size: 12px; margin-top: 8px; }
+    .row { display: flex; gap: 8px; }
+    .row button { margin-top: 8px; }
+    .stat { color: #5d6f8d; font-size: 11.5px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>◎ Seerist Capture</h1>
+    <div class="tag">Capture while you browse. You always click Submit.</div>
+    <div id="app"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
