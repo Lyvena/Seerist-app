@@ -566,3 +566,57 @@ values ('upwork', 'description_only', 1,
 on conflict (platform) do nothing;
 
 notify pgrst, 'reload schema';
+
+-- ---------------------------------------------------------------------------
+-- Founder grants — emails listed here get lifetime free access. Every org
+-- they create is forced to plan 'lifetime_founder' / billing_status 'active',
+-- and NO update (including Creem webhooks or admin writes) can downgrade it.
+-- ---------------------------------------------------------------------------
+
+create table if not exists founder_grants (
+  email text primary key,
+  plan text not null default 'lifetime_founder',
+  note text,
+  created_at timestamptz not null default now()
+);
+alter table founder_grants enable row level security;
+-- No client policies on purpose: invisible/immutable from the app.
+
+insert into founder_grants (email, note)
+values ('akshay@lyvena.xyz', 'Owner — full free access forever (granted 2026-07-30)')
+on conflict (email) do nothing;
+
+create or replace function seerist_apply_founder_grant()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  creator_email text;
+begin
+  if tg_op = 'UPDATE' then
+    if old.plan = 'lifetime_founder' then
+      new.plan := 'lifetime_founder';
+      new.billing_status := 'active';
+    end if;
+    return new;
+  end if;
+  select email into creator_email from profiles where id = new.created_by;
+  if creator_email is not null and exists (
+    select 1 from founder_grants g where lower(g.email) = lower(creator_email)
+  ) then
+    new.plan := 'lifetime_founder';
+    new.billing_status := 'active';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists organizations_founder_grant_ins on organizations;
+create trigger organizations_founder_grant_ins
+  before insert on organizations
+  for each row execute function seerist_apply_founder_grant();
+
+drop trigger if exists organizations_founder_grant_upd on organizations;
+create trigger organizations_founder_grant_upd
+  before update on organizations
+  for each row execute function seerist_apply_founder_grant();
+
+notify pgrst, 'reload schema';

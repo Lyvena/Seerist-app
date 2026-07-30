@@ -50,6 +50,13 @@ export default async function (req: Request): Promise<Response> {
   if (!orgId) return json({ received: true, note: 'No organization_id in event metadata — ignored.' });
 
   try {
+    // Lifetime founder orgs are never touched by billing events (a DB trigger
+    // enforces this too — this check just avoids pointless writes/logs).
+    const org = (await dbSelect('organizations', `id=eq.${orgId}&select=plan&limit=1`, SERVICE_KEY))[0];
+    if (org?.plan === 'lifetime_founder') {
+      return json({ received: true, note: 'Organization has a lifetime founder grant — billing events are ignored.' });
+    }
+
     const patch: Record<string, unknown> = {};
     if (type.includes('checkout.completed') || type.includes('subscription.active') || type.includes('subscription.paid')) {
       patch.billing_status = 'active';
