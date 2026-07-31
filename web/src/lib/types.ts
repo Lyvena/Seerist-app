@@ -111,13 +111,81 @@ export interface DeliveryTask {
   qa_approved_at: string | null;
 }
 
+export type PloybookStepKind = 'query' | 'llm' | 'stage_draft' | 'function';
+
+export interface PloybookStep {
+  key: string;
+  title: string;
+  kind: PloybookStepKind;
+  prompt?: string;
+  source?: string;
+  fn?: string;
+  note?: string;
+  [extra: string]: unknown;
+}
+
 export interface Ploybook {
   id: string;
   workspace_id: string;
   name: string;
   description: string | null;
   strategy_config: Record<string, unknown>;
+  steps: PloybookStep[] | null;
   active: boolean;
+  created_at?: string;
+}
+
+export interface PloybookTemplate {
+  id: string;
+  name: string;
+  description: string;
+  steps: PloybookStep[];
+}
+
+export interface PloybookStepResult {
+  step: number;
+  key: string;
+  title: string;
+  kind: PloybookStepKind;
+  status: 'completed' | 'failed';
+  output: string;
+  data?: unknown;
+  started_at?: string;
+  completed_at?: string;
+}
+
+export interface PloybookRun {
+  id: string;
+  ploybook_id: string;
+  workspace_id: string;
+  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  current_step: number;
+  results: PloybookStepResult[];
+  error: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface GrowthRecommendation {
+  id: string;
+  workspace_id: string;
+  recommendation: string;
+  priority: number;
+  evidence: {
+    dimension?: string;
+    value?: string;
+    bids?: number;
+    wins?: number;
+    attributed_signups?: number;
+    win_rate?: number | null;
+    signup_rate?: number | null;
+    win_lift?: number | null;
+    signup_lift?: number | null;
+    summary?: string;
+    reason?: string;
+    [extra: string]: unknown;
+  } | null;
+  created_at: string;
 }
 
 export interface SiteIngestionJob {
@@ -156,6 +224,50 @@ export interface PersonaAction {
   approval_status: 'auto_approved' | 'pending' | 'approved' | 'rejected';
   approved_by: string | null;
   approved_at: string | null;
+  created_at: string;
+}
+
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface CeoApprovalItem {
+  id: string;
+  org_id: string;
+  action_type: string;
+  action_payload: {
+    instruction?: string;
+    plan?: string;
+    description?: string;
+    target_workspace_ids?: string[];
+    [extra: string]: unknown;
+  } | null;
+  requested_by_persona: string;
+  status: ApprovalStatus;
+  approved_by_user_id: string | null;
+  approved_by_at: string | null;
+  result: string | null;
+  created_at: string;
+}
+
+export interface HermesMemory {
+  id: string;
+  workspace_id: string;
+  key: string;
+  value: unknown;
+  updated_at: string;
+}
+
+export interface HermesSkill {
+  id: string;
+  workspace_id: string;
+  skill_name: string;
+  skill_data: {
+    summary?: string;
+    applies_when?: string;
+    steps?: string[];
+    pitfalls?: string[];
+    [extra: string]: unknown;
+  };
+  source_delivery_run_id: string | null;
   created_at: string;
 }
 

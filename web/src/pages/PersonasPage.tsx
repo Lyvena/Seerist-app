@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
+import CEOApprovalQueue from '../components/CEOApprovalQueue';
 import { PERSONAS, type PersonaAction } from '../lib/types';
 
 export default function PersonasPage() {
-  const { activeOrg, activeWs, refresh } = useApp();
+  const { activeOrg, activeWs, user, refresh } = useApp();
   const [log, setLog] = useState<PersonaAction[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [instruction, setInstruction] = useState('');
-  const [ceoResult, setCeoResult] = useState<{ executed: boolean; actionType: string; plan: string; result?: string; message?: string } | null>(null);
+  const [ceoResult, setCeoResult] = useState<{ executed: boolean; actionType: string; plan: string; result?: string; message?: string; status?: string; queue_id?: string } | null>(null);
   const [pmInsights, setPmInsights] = useState<string | null>(null);
+  const [orgRole, setOrgRole] = useState<string | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [queueRefresh, setQueueRefresh] = useState(0);
 
   const load = useCallback(async () => {
     if (!activeOrg) return;
@@ -26,6 +30,18 @@ export default function PersonasPage() {
     setLog(merged.slice(0, 80));
   }, [activeOrg?.id, activeWs?.id]);
 
+  // Only owners and admins may approve what the CEO queues.
+  useEffect(() => {
+    if (!activeOrg || !user) { setOrgRole(null); return; }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await db().from('organization_memberships').select('role')
+        .eq('organization_id', activeOrg.id).eq('user_id', user.id).maybeSingle();
+      if (!cancelled) setOrgRole(((data as { role?: string } | null)?.role) ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [activeOrg?.id, user?.id]);
+
   useEffect(() => { void load(); }, [load]);
 
   async function act(label: string, fn: () => Promise<any>) {
@@ -36,7 +52,9 @@ export default function PersonasPage() {
   }
 
   if (!activeOrg) return <div className="info-box">Select an organization first.</div>;
-  const pending = log.filter((l) => l.approval_status === 'pending');
+  const isOrgAdmin = orgRole === 'owner' || orgRole === 'admin' || activeOrg.created_by === user?.id;
+  // Entries created before the approval queue existed still approve in place.
+  const legacyPending = log.filter((l) => l.approval_status === 'pending' && !(l.params as Record<string, unknown>)?.queue_id);
 
   return (
     <>
@@ -56,7 +74,14 @@ export default function PersonasPage() {
             <div className="persona-emoji">{p.icon}</div>
             <div style={{ flex: 1 }}>
               <div className="spread">
-                <h3 style={{ marginBottom: 0 }}>{p.name}</h3>
+                <div className="row">
+                  <h3 style={{ marginBottom: 0 }}>{p.name}</h3>
+                  {p.name === 'The CEO' && pendingApprovals > 0 && (
+                    <span className="badge amber" title="Actions waiting for your approval">
+                      {pendingApprovals} awaiting approval
+                    </span>
+                  )}
+                </div>
                 {p.name === 'The PM' && (
                   <button className="btn sm" disabled={!!busy || !activeWs}
                     onClick={() => act('pm', async () => setPmInsights((await callFn<{ insights: string }>('pm-insights', { workspace_id: activeWs!.id })).insights))}>
@@ -114,6 +139,7 @@ export default function PersonasPage() {
             onClick={() => act('ceo', async () => {
               setCeoResult(await callFn('ceo-command', { organization_id: activeOrg.id, instruction }));
               setInstruction('');
+              setQueueRefresh((n) => n + 1);
             })}>
             {busy === 'ceo' ? <span className="spinner" /> : 'Direct the CEO'}
           </button>
@@ -122,7 +148,7 @@ export default function PersonasPage() {
         {ceoResult && (
           <div className={`card mt`} style={{ background: 'var(--bg-raise)' }}>
             <div className="row">
-              <span className={`badge ${ceoResult.executed ? 'green' : 'amber'}`}>{ceoResult.executed ? 'executed autonomously' : 'pending your approval'}</span>
+              <span className={`badge ${ceoResult.executed ? 'green' : 'amber'}`}>{ceoResult.executed ? 'executed autonomously' : 'queued for your approval'}</span>
               <span className="badge gray">{ceoResult.actionType}</span>
             </div>
             <p className="muted mt"><strong>Plan:</strong> {ceoResult.plan}</p>
@@ -131,10 +157,18 @@ export default function PersonasPage() {
           </div>
         )}
 
-        {pending.length > 0 && (
+        {isOrgAdmin ? (
+          <CEOApprovalQueue orgId={activeOrg.id} canApprove onPendingCountChange={setPendingApprovals} refreshToken={queueRefresh} />
+        ) : (
+          <div className="info-box mt">
+            Actions the CEO cannot take on its own authority go to the approval queue. Only organization owners and admins can see and decide them.
+          </div>
+        )}
+
+        {legacyPending.length > 0 && (
           <div className="card mt" style={{ borderColor: 'var(--amber)' }}>
-            <h3>⏳ Awaiting your approval</h3>
-            {pending.map((l) => (
+            <h3>⏳ Awaiting your approval (logged before the approval queue)</h3>
+            {legacyPending.map((l) => (
               <div key={l.id} className="card mt" style={{ background: 'var(--bg-raise)' }}>
                 <div className="row"><span className="badge amber">{l.action}</span><span className="faint">{new Date(l.created_at).toLocaleString()}</span></div>
                 <p className="muted mt">{String((l.params as any)?.plan || (l.params as any)?.instruction || '')}</p>

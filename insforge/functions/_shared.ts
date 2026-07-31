@@ -89,6 +89,36 @@ async function dbPatch(
   return await res.json();
 }
 
+async function dbDelete(table: string, query: string, token: string): Promise<void> {
+  const res = await fetch(`${IF_BASE}/api/database/records/${table}?${query}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`delete ${table} failed (${res.status}): ${await res.text()}`);
+}
+
+/**
+ * Call another Seerist edge function. Failures are returned, never thrown, so a
+ * best-effort side call can never fail the caller's primary work.
+ */
+async function invokeFunction(
+  slug: string,
+  body: unknown,
+  token: string,
+): Promise<{ ok: boolean; data: any }> {
+  try {
+    const res = await fetch(`${IF_BASE}/functions/${slug}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (e) {
+    return { ok: false, data: { error: e instanceof Error ? e.message : String(e) } };
+  }
+}
+
 // --- InsForge Model Gateway (all Seerist LLM calls go through this) ---------
 
 async function aiChat(

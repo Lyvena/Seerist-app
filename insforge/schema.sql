@@ -620,3 +620,177 @@ create trigger organizations_founder_grant_upd
   for each row execute function seerist_apply_founder_grant();
 
 notify pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Hermes memory, Builder DAG orchestration, Grower feedback loop, Ploybooks
+-- execution and the CEO approval queue. Appended as a self-contained,
+-- idempotent block so re-applying schema.sql never disturbs the tables above.
+-- ===========================================================================
+
+-- Task → owning workspace, for task_dependencies RLS.
+create or replace function public.seerist_ws_of_task(t uuid)
+returns uuid language sql stable security definer set search_path = public as $$
+  select r.workspace_id
+  from delivery_tasks dt
+  join delivery_runs r on r.id = dt.delivery_run_id
+  where dt.id = t;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Hermes memory layer — structured (jsonb) per-workspace memory and the skill
+-- library extracted from completed delivery runs. `workspace_memories` above
+-- stays as the free-text notes store; these two are the structured layer the
+-- Builder and the Drafter consult.
+-- ---------------------------------------------------------------------------
+
+create table if not exists hermes_memories (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  key text not null,
+  value jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (workspace_id, key)
+);
+
+create table if not exists hermes_skills (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  skill_name text not null,
+  skill_data jsonb not null default '{}'::jsonb,
+  source_delivery_run_id uuid references delivery_runs(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Builder DAG orchestration — the task graph for a delivery run.
+-- ---------------------------------------------------------------------------
+
+create table if not exists task_dependencies (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid not null references delivery_tasks(id) on delete cascade,
+  depends_on_task_id uuid not null references delivery_tasks(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (task_id, depends_on_task_id),
+  check (task_id <> depends_on_task_id)
+);
+
+-- ---------------------------------------------------------------------------
+-- Grower feedback loop — plain-language recommendations derived from which
+-- bid segments actually converted into attributed signups.
+-- ---------------------------------------------------------------------------
+
+create table if not exists growth_recommendations (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  recommendation text not null,
+  priority integer not null default 3,
+  evidence jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Ploybooks execution engine. `ploybooks` already exists as a named-strategy
+-- record; `steps` makes it executable without disturbing `strategy_config`.
+-- ---------------------------------------------------------------------------
+
+alter table ploybooks add column if not exists steps jsonb not null default '[]'::jsonb;
+
+create table if not exists ploybook_runs (
+  id uuid primary key default gen_random_uuid(),
+  ploybook_id uuid not null references ploybooks(id) on delete cascade,
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  status text not null default 'running'
+    check (status in ('running','completed','failed','cancelled')),
+  current_step integer not null default 0,
+  results jsonb not null default '[]'::jsonb,
+  error text,
+  started_at timestamptz not null default now(),
+  completed_at timestamptz,
+  created_by uuid
+);
+
+-- ---------------------------------------------------------------------------
+-- CEO approval queue — every requires_approval CEO action parks here until a
+-- human approves it. Nothing in this table executes on its own.
+-- ---------------------------------------------------------------------------
+
+create table if not exists ceo_approval_queue (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references organizations(id) on delete cascade,
+  action_type text not null,
+  action_payload jsonb not null default '{}'::jsonb,
+  requested_by_persona text not null default 'The CEO',
+  status text not null default 'pending'
+    check (status in ('pending','approved','rejected')),
+  approved_by_user_id uuid,
+  approved_by_at timestamptz,
+  result text,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Indexes
+-- ---------------------------------------------------------------------------
+
+create index if not exists idx_hermes_memories_ws on hermes_memories(workspace_id);
+create index if not exists idx_hermes_skills_ws on hermes_skills(workspace_id);
+create index if not exists idx_hermes_skills_run on hermes_skills(source_delivery_run_id);
+create index if not exists idx_task_deps_task on task_dependencies(task_id);
+create index if not exists idx_task_deps_depends on task_dependencies(depends_on_task_id);
+create index if not exists idx_growth_recs_ws on growth_recommendations(workspace_id, priority);
+create index if not exists idx_ploybook_runs_pb on ploybook_runs(ploybook_id);
+create index if not exists idx_ploybook_runs_ws on ploybook_runs(workspace_id);
+create index if not exists idx_ceo_queue_org on ceo_approval_queue(org_id, status);
+
+-- ---------------------------------------------------------------------------
+-- updated_at trigger (hermes_memories is the only new table that mutates)
+-- ---------------------------------------------------------------------------
+
+drop trigger if exists hermes_memories_touch on hermes_memories;
+create trigger hermes_memories_touch before update on hermes_memories
+  for each row execute function system.update_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security
+-- ---------------------------------------------------------------------------
+
+alter table hermes_memories enable row level security;
+alter table hermes_skills enable row level security;
+alter table task_dependencies enable row level security;
+alter table growth_recommendations enable row level security;
+alter table ploybook_runs enable row level security;
+alter table ceo_approval_queue enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'hermes_memories','hermes_skills','growth_recommendations','ploybook_runs'
+  ] loop
+    execute format('drop policy if exists %I on %I', t || '_all', t);
+    execute format(
+      'create policy %I on %I for all to authenticated using (seerist_is_ws_member(workspace_id)) with check (seerist_is_ws_member(workspace_id))',
+      t || '_all', t
+    );
+  end loop;
+end $$;
+
+-- task_dependencies: scoped through the task's run's workspace
+drop policy if exists td_all on task_dependencies;
+create policy td_all on task_dependencies for all to authenticated
+  using (seerist_is_ws_member(seerist_ws_of_task(task_id)))
+  with check (seerist_is_ws_member(seerist_ws_of_task(task_id)));
+
+-- ceo_approval_queue: org members read; only org admins approve/reject.
+drop policy if exists ceoq_select on ceo_approval_queue;
+create policy ceoq_select on ceo_approval_queue for select to authenticated
+  using (seerist_is_org_member(org_id));
+drop policy if exists ceoq_insert on ceo_approval_queue;
+create policy ceoq_insert on ceo_approval_queue for insert to authenticated
+  with check (seerist_is_org_member(org_id));
+drop policy if exists ceoq_update on ceo_approval_queue;
+create policy ceoq_update on ceo_approval_queue for update to authenticated
+  using (seerist_is_org_admin(org_id)) with check (seerist_is_org_admin(org_id));
+
+notify pgrst, 'reload schema';

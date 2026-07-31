@@ -50,6 +50,15 @@ export default async function (req: Request): Promise<Response> {
         attributed_signup_id: signup.id,
         attributed_at: new Date().toISOString(),
       }, SERVICE_KEY);
+
+      // A fresh attribution changes what the segment data says, so the Grower
+      // re-reads it immediately. Best-effort: the signup is already recorded
+      // and must never fail because the analysis did.
+      await invokeFunction(
+        'growth-feedback',
+        { workspace_id, op: 'analyze', automatic: true },
+        SERVICE_KEY,
+      );
     }
 
     return json({ ok: true, attributed: Boolean(touchpoint) }, 201);
