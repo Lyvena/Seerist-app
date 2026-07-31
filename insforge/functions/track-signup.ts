@@ -6,6 +6,10 @@
 // attributed back to the specific bid that generated them.
 // ============================================================================
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 export default async function (req: Request): Promise<Response> {
   const pf = preflight(req);
   if (pf) return pf;
@@ -27,14 +31,25 @@ export default async function (req: Request): Promise<Response> {
 
     let touchpoint: any = null;
     let proposalId: string | null = null;
-    if (ref) {
-      const tps = await dbSelect(
+    // `ref` is a proposal id for bid touchpoints and a touchpoint id for ad /
+    // site touchpoints — one attribution model, two ways of naming the entry
+    // point. A malformed ref is ignored rather than failing the signup.
+    if (ref && isUuid(String(ref))) {
+      const byProposal = await dbSelect(
         'growth_touchpoints',
-        `proposal_id=eq.${encodeURIComponent(ref)}&workspace_id=eq.${workspace_id}&limit=1`,
+        `proposal_id=eq.${ref}&workspace_id=eq.${workspace_id}&limit=1`,
         SERVICE_KEY,
       );
-      touchpoint = tps[0] || null;
-      if (touchpoint) proposalId = touchpoint.proposal_id;
+      touchpoint = byProposal[0] || null;
+      if (!touchpoint) {
+        const byId = await dbSelect(
+          'growth_touchpoints',
+          `id=eq.${ref}&workspace_id=eq.${workspace_id}&limit=1`,
+          SERVICE_KEY,
+        );
+        touchpoint = byId[0] || null;
+      }
+      if (touchpoint) proposalId = touchpoint.proposal_id ?? null;
     }
 
     const [signup] = await dbInsert('product_signups', [{

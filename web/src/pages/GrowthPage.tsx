@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callFn, db, INSFORGE_URL } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
+import SiteStudioTab from '../components/SiteStudioTab';
+import AdsTab from '../components/AdsTab';
+import VisitorsTab from '../components/VisitorsTab';
 import type {
   DeploySyncDraft,
   GrowthRecommendation,
@@ -10,10 +13,13 @@ import type {
   SiteIngestionJob,
 } from '../lib/types';
 
-type Tab = 'overview' | 'recommendations' | 'ploybooks';
+type Tab = 'overview' | 'site' | 'ads' | 'visitors' | 'recommendations' | 'ploybooks';
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
+  { id: 'site', label: 'Site Studio' },
+  { id: 'ads', label: 'Ads' },
+  { id: 'visitors', label: 'Visitors' },
   { id: 'recommendations', label: 'Recommendations' },
   { id: 'ploybooks', label: 'Ploybooks' },
 ];
@@ -190,6 +196,10 @@ function GrowthInner({ wsId }: { wsId: string }) {
           </div>
         </>
       )}
+
+      {tab === 'site' && <SiteStudioTab wsId={wsId} />}
+      {tab === 'ads' && <AdsTab wsId={wsId} />}
+      {tab === 'visitors' && <VisitorsTab wsId={wsId} />}
 
       {tab === 'recommendations' && (
         <RecommendationsTab

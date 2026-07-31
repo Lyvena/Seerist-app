@@ -232,7 +232,7 @@ export default function SettingsPage() {
         {composio && (
           <>
             <div className="row mt">
-              {['slack', 'gmail', 'googlecalendar', 'notion', 'googledrive', 'hubspot', 'telegram', 'discord'].map((tk) => {
+              {['slack', 'gmail', 'googlecalendar', 'notion', 'googledrive', 'hubspot', 'telegram', 'discord', 'linkedin'].map((tk) => {
                 const connected = composio.connectedAccounts.some((a) => (a.toolkit || '').toLowerCase() === tk && (a.status || '').toUpperCase() === 'ACTIVE');
                 return (
                   <button key={tk} className={`btn sm ${connected ? 'success' : ''}`} disabled={!!busy} onClick={() => act(`connect-${tk}`, async () => {

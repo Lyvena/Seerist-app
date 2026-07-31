@@ -57,7 +57,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="nav-section">Bid engine</div>
         <NavLink to="/queue"><span className="icon">📋</span> Pitch Queue</NavLink>
         <NavLink to="/analytics"><span className="icon">📈</span> Analytics</NavLink>
-        <NavLink to="/extension"><span className="icon">🧩</span> Chrome Extension</NavLink>
+        <NavLink to="/extension"><span className="icon">🧩</span> Capture & sources</NavLink>
         <div className="nav-section">Delivery & growth</div>
         <NavLink to="/delivery"><span className="icon">🚚</span> Delivery Engine</NavLink>
         <NavLink to="/growth"><span className="icon">🌱</span> Growth Engine</NavLink>

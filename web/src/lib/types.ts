@@ -42,6 +42,10 @@ export interface Workspace {
   target_customer: string | null;
   bidding_enabled: boolean;
   risk_acknowledged_at: string | null;
+  visitor_intent_enabled?: boolean;
+  visitor_intent_jurisdiction?: string | null;
+  visitor_intent_policy_url?: string | null;
+  visitor_intent_consent_at?: string | null;
 }
 
 export interface PlatformConnection {
@@ -225,6 +229,108 @@ export interface PersonaAction {
   approved_by: string | null;
   approved_at: string | null;
   created_at: string;
+}
+
+// --- Module C: full Growth Engine -------------------------------------------
+
+export type GrowthDraftKind = 'page' | 'ad_creative' | 'fix' | 'metadata';
+export type GrowthDraftStatus = 'draft' | 'in_review' | 'approved' | 'published' | 'dismissed';
+
+export interface GrowthContentDraft {
+  id: string;
+  workspace_id: string;
+  kind: GrowthDraftKind;
+  title: string;
+  body: string | null;
+  meta: {
+    page_type?: string;
+    slug?: string;
+    meta_title?: string;
+    meta_description?: string;
+    target_keywords?: string[];
+    faq?: Array<{ q?: string; a?: string }>;
+    json_ld?: Record<string, unknown>;
+    angle?: string;
+    cta?: string;
+    description?: string;
+    platform?: string;
+    priority?: number;
+    monitor_kind?: string;
+    [extra: string]: unknown;
+  } | null;
+  evidence: Record<string, unknown> | null;
+  source: string | null;
+  status: GrowthDraftStatus;
+  created_at: string;
+}
+
+export interface SiteDesignProfile {
+  id: string;
+  workspace_id: string;
+  source_url: string;
+  palette: Record<string, unknown>;
+  typography: Record<string, unknown>;
+  components: Record<string, unknown>;
+  voice: string | null;
+  updated_at: string;
+}
+
+export interface SiteMonitorRun {
+  id: string;
+  workspace_id: string;
+  kind: 'performance' | 'competitor';
+  findings: Array<{ id: string; ok: boolean; severity: string; detail: string }>;
+  drafts_created: number;
+  created_at: string;
+}
+
+export interface AdCampaign {
+  id: string;
+  workspace_id: string;
+  name: string;
+  platform: string;
+  objective: string | null;
+  status: 'draft' | 'active' | 'paused' | 'ended';
+  daily_budget: number | null;
+  targeting: Record<string, unknown>;
+  created_at: string;
+  attribution_ref?: string | null;
+  attributed_signups?: number;
+}
+
+export interface VisitorIntentRecord {
+  id: string;
+  workspace_id: string;
+  visitor_key: string;
+  company: string | null;
+  intent_score: number | null;
+  intent_reasoning: string | null;
+  signals: {
+    pages?: string[];
+    referrer?: string | null;
+    utm?: Record<string, unknown>;
+    duration_seconds?: number | null;
+    [extra: string]: unknown;
+  };
+  consent_status: 'granted' | 'denied' | 'unknown';
+  jurisdiction: string | null;
+  last_seen_at: string;
+}
+
+export interface VisitorIntentSettings {
+  enabled: boolean;
+  jurisdiction: string | null;
+  policy_url: string | null;
+  consent_configured_at: string | null;
+  records: number;
+  disclosure: string;
+}
+
+export interface JobSourceStatus {
+  platform: string;
+  kind: 'extension_capture' | 'api_poll';
+  active: boolean;
+  reason: string;
 }
 
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';

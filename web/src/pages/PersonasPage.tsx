@@ -4,6 +4,15 @@ import { useApp } from '../state/AppContext';
 import CEOApprovalQueue from '../components/CEOApprovalQueue';
 import { PERSONAS, type PersonaAction } from '../lib/types';
 
+/** The one piece of work each persona picks up when you press its button. */
+const PERSONA_ACTIONS: Record<string, { label: string; hint: string }> = {
+  'The Scout': { label: 'Score next job', hint: 'Scores the oldest job sitting in New.' },
+  'The Drafter': { label: 'Draft best-fit', hint: 'Writes the proposal for the highest-scoring job in Scored.' },
+  'The Builder': { label: 'Run delivery', hint: 'Executes every unblocked task on the newest active delivery run.' },
+  'The Closer': { label: 'Draft kickoff', hint: 'Drafts post-win client comms for your most recent win. Never sends.' },
+  'The Grower': { label: 'Analyze growth', hint: 'Re-reads bid→signup attribution and refreshes recommendations.' },
+};
+
 export default function PersonasPage() {
   const { activeOrg, activeWs, user, refresh } = useApp();
   const [log, setLog] = useState<PersonaAction[]>([]);
@@ -15,6 +24,81 @@ export default function PersonasPage() {
   const [orgRole, setOrgRole] = useState<string | null>(null);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [queueRefresh, setQueueRefresh] = useState(0);
+  const [personaOutput, setPersonaOutput] = useState<{ persona: string; text: string } | null>(null);
+
+  /**
+   * Spec §4 Module D: "Modules A–C are exposed through named, persistent
+   * personas rather than raw feature menus." Each persona picks up the next
+   * piece of work it owns, so the roster is a real entry point and not just a
+   * description of what lives on another page.
+   */
+  async function runPersona(persona: string) {
+    if (!activeWs) throw new Error('Select a workspace first');
+    const wsId = activeWs.id;
+
+    if (persona === 'The Scout') {
+      const { data } = await db().from('proposals').select('id, job_postings(title)')
+        .eq('workspace_id', wsId).eq('status', 'new').order('created_at', { ascending: true }).limit(1);
+      const next = (data as any[])?.[0];
+      if (!next) throw new Error('Nothing to score — no proposals are sitting in "New".');
+      const res = await callFn<{ proposal: { fit_score: number; fit_reasoning: string } }>('score-job', { proposal_id: next.id });
+      setPersonaOutput({ persona, text: `Scored "${next.job_postings?.title || 'job'}" at ${res.proposal.fit_score}/100.\n\n${res.proposal.fit_reasoning}` });
+      return;
+    }
+
+    if (persona === 'The Drafter') {
+      const { data } = await db().from('proposals').select('id, fit_score, job_postings(title)')
+        .eq('workspace_id', wsId).eq('status', 'scored').order('fit_score', { ascending: false }).limit(1);
+      const next = (data as any[])?.[0];
+      if (!next) throw new Error('Nothing to draft — no proposals are sitting in "Scored".');
+      const res = await callFn<{ proposal: { draft_content: string } }>('draft-proposal', { proposal_id: next.id });
+      setPersonaOutput({ persona, text: `Drafted the best-scoring open job ("${next.job_postings?.title || 'job'}", fit ${next.fit_score ?? '—'}).\n\n${res.proposal.draft_content}` });
+      return;
+    }
+
+    if (persona === 'The Builder') {
+      const { data } = await db().from('delivery_runs').select('id, status')
+        .eq('workspace_id', wsId).in('status', ['planning', 'running', 'qa'])
+        .order('created_at', { ascending: false }).limit(1);
+      const run = (data as any[])?.[0];
+      if (!run) throw new Error('No delivery run is in flight. Mark a proposal Won and trigger its run first.');
+      const res = await callFn<{ executed: unknown[]; blocked: unknown[]; run_status: string }>(
+        'execute-delivery-task', { delivery_run_id: run.id },
+      );
+      setPersonaOutput({
+        persona,
+        text: `Orchestrated run ${run.id.slice(0, 8)}: executed ${res.executed?.length ?? 0} task(s), ${res.blocked?.length ?? 0} still blocked by dependencies. Run is now "${res.run_status}". Every executed task is waiting on your QA in Delivery.`,
+      });
+      return;
+    }
+
+    if (persona === 'The Closer') {
+      const { data } = await db().from('proposals').select('id, job_postings(title)')
+        .eq('workspace_id', wsId).eq('outcome', 'won').order('won_at', { ascending: false }).limit(1);
+      const won = (data as any[])?.[0];
+      if (!won) throw new Error('No won contracts yet — The Closer works after a win.');
+      const res = await callFn<{ draft: string }>('closer-draft', { proposal_id: won.id, purpose: 'kickoff', send: false });
+      setPersonaOutput({ persona, text: `Kickoff message drafted for "${won.job_postings?.title || 'the contract'}" (not sent — review and send it yourself).\n\n${res.draft}` });
+      return;
+    }
+
+    if (persona === 'The Grower') {
+      if (activeWs.type !== 'saas') throw new Error('The Grower works on SaaS workspaces — switch to one first.');
+      const res = await callFn<{ recommendations: Array<{ priority: number; recommendation: string }>; message?: string }>(
+        'growth-feedback', { workspace_id: wsId, op: 'analyze' },
+      );
+      const recs = res.recommendations || [];
+      setPersonaOutput({
+        persona,
+        text: recs.length
+          ? recs.map((r) => `[P${r.priority}] ${r.recommendation}`).join('\n\n')
+          : (res.message || 'Not enough attributed bid data yet to call a pattern.'),
+      });
+      return;
+    }
+
+    throw new Error(`${persona} has no direct action.`);
+  }
 
   const load = useCallback(async () => {
     if (!activeOrg) return;
@@ -88,6 +172,12 @@ export default function PersonasPage() {
                     {busy === 'pm' ? <span className="spinner" /> : 'Run roadmap review'}
                   </button>
                 )}
+                {PERSONA_ACTIONS[p.name] && (
+                  <button className="btn sm" disabled={!!busy || !activeWs} title={PERSONA_ACTIONS[p.name].hint}
+                    onClick={() => act(`persona-${p.name}`, () => runPersona(p.name))}>
+                    {busy === `persona-${p.name}` ? <span className="spinner" /> : PERSONA_ACTIONS[p.name].label}
+                  </button>
+                )}
               </div>
               <div className="owns">{p.owns}</div>
               <div className="module"><span className="badge gray">{p.module}</span></div>
@@ -100,6 +190,16 @@ export default function PersonasPage() {
         <div className="card mt">
           <div className="spread"><h3>🧭 The PM — roadmap suggestions</h3><button className="btn ghost sm" onClick={() => setPmInsights(null)}>✕</button></div>
           <pre className="mt">{pmInsights}</pre>
+        </div>
+      )}
+
+      {personaOutput && (
+        <div className="card mt">
+          <div className="spread">
+            <h3>{personaOutput.persona} — result</h3>
+            <button className="btn ghost sm" onClick={() => setPersonaOutput(null)}>✕</button>
+          </div>
+          <pre className="mt">{personaOutput.text}</pre>
         </div>
       )}
 

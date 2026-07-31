@@ -794,3 +794,216 @@ create policy ceoq_update on ceo_approval_queue for update to authenticated
   using (seerist_is_org_admin(org_id)) with check (seerist_is_org_admin(org_id));
 
 notify pgrst, 'reload schema';
+
+-- ===========================================================================
+-- Full Growth Engine (site generation, ads, visitor intent) + multi-platform
+-- Module A (JobSource activation flags, authorized submission, source_type).
+-- Appended as a self-contained, idempotent block.
+-- ===========================================================================
+
+-- ---------------------------------------------------------------------------
+-- Spec §7: `growth_content_drafts` — site/ad drafts pending approval.
+-- Everything the Growth Engine produces lands here as a DRAFT. Per spec §6
+-- nothing is ever auto-published; `published` only records that a human shipped it.
+-- ---------------------------------------------------------------------------
+
+create table if not exists growth_content_drafts (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  kind text not null default 'page'
+    check (kind in ('page','ad_creative','fix','metadata')),
+  title text not null,
+  body text,
+  meta jsonb not null default '{}'::jsonb,
+  evidence jsonb not null default '{}'::jsonb,
+  source text,
+  status text not null default 'draft'
+    check (status in ('draft','in_review','approved','published','dismissed')),
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- The reconstructed design system a site's generated pages must match.
+-- ---------------------------------------------------------------------------
+
+create table if not exists site_design_profiles (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  source_url text not null,
+  palette jsonb not null default '{}'::jsonb,
+  typography jsonb not null default '{}'::jsonb,
+  components jsonb not null default '{}'::jsonb,
+  voice text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (workspace_id, source_url)
+);
+
+-- Continuous performance / competitor monitoring runs.
+create table if not exists site_monitor_runs (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  kind text not null default 'performance' check (kind in ('performance','competitor')),
+  findings jsonb not null default '[]'::jsonb,
+  drafts_created integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Ad creative + campaign management. Attribution deliberately reuses
+-- growth_touchpoints so ad-driven and bid-driven signups share ONE model
+-- (spec §4 Module C).
+-- ---------------------------------------------------------------------------
+
+create table if not exists ad_campaigns (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  name text not null,
+  platform text not null default 'meta',
+  objective text,
+  status text not null default 'draft'
+    check (status in ('draft','active','paused','ended')),
+  daily_budget numeric(12,2),
+  targeting jsonb not null default '{}'::jsonb,
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- A touchpoint can now come from a bid, an ad, or the site. Bids keep their
+-- proposal_id; ad/site touchpoints carry a campaign_id instead.
+alter table growth_touchpoints alter column proposal_id drop not null;
+alter table growth_touchpoints add column if not exists source text not null default 'bid';
+alter table growth_touchpoints add column if not exists campaign_id uuid references ad_campaigns(id) on delete set null;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'growth_touchpoints_source_check') then
+    alter table growth_touchpoints
+      add constraint growth_touchpoints_source_check check (source in ('bid','ad','site'));
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- Spec §7: `visitor_intent_records` (with consent/jurisdiction metadata).
+-- Spec §4/§6/§11: this category carries GDPR/CCPA obligations, so it is OFF by
+-- default per workspace and records are only accepted once consent has been
+-- recorded for that workspace's jurisdiction.
+-- ---------------------------------------------------------------------------
+
+alter table workspaces add column if not exists visitor_intent_enabled boolean not null default false;
+alter table workspaces add column if not exists visitor_intent_jurisdiction text;
+alter table workspaces add column if not exists visitor_intent_consent_at timestamptz;
+alter table workspaces add column if not exists visitor_intent_policy_url text;
+
+create table if not exists visitor_intent_records (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  visitor_key text not null,
+  company text,
+  intent_score integer check (intent_score between 0 and 100),
+  intent_reasoning text,
+  signals jsonb not null default '{}'::jsonb,
+  consent_status text not null default 'unknown'
+    check (consent_status in ('granted','denied','unknown')),
+  jurisdiction text,
+  consent_recorded_at timestamptz,
+  synced_to_crm_at timestamptz,
+  first_seen_at timestamptz not null default now(),
+  last_seen_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (workspace_id, visitor_key)
+);
+
+-- ---------------------------------------------------------------------------
+-- Module A: per-platform activation flags. Both default FALSE and are only
+-- writable by the service role — policy_configs has no client write policy.
+-- `api_polling_enabled` activates that platform's ApiPollSource once its
+-- developer key is approved; `authorized_submission` activates the
+-- authorized-partnership submission path (spec §4, §12) and stays false until
+-- Seerist has that explicit relationship with the platform.
+-- ---------------------------------------------------------------------------
+
+alter table policy_configs add column if not exists api_polling_enabled boolean not null default false;
+alter table policy_configs add column if not exists authorized_submission boolean not null default false;
+
+-- Spec §7: platform_connections.source_type (extension | api).
+alter table platform_connections add column if not exists source_type text not null default 'extension';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'platform_connections_source_type_check') then
+    alter table platform_connections
+      add constraint platform_connections_source_type_check check (source_type in ('extension','api'));
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- Indexes
+-- ---------------------------------------------------------------------------
+
+create index if not exists idx_gcd_ws on growth_content_drafts(workspace_id, status);
+create index if not exists idx_sdp_ws on site_design_profiles(workspace_id);
+create index if not exists idx_smr_ws on site_monitor_runs(workspace_id);
+create index if not exists idx_ad_campaigns_ws on ad_campaigns(workspace_id);
+create index if not exists idx_touchpoints_campaign on growth_touchpoints(campaign_id);
+create index if not exists idx_vir_ws on visitor_intent_records(workspace_id, intent_score);
+
+-- ---------------------------------------------------------------------------
+-- updated_at triggers
+-- ---------------------------------------------------------------------------
+
+do $$
+declare t text;
+begin
+  foreach t in array array['growth_content_drafts','site_design_profiles','ad_campaigns'] loop
+    execute format(
+      'drop trigger if exists %I on %I; create trigger %I before update on %I for each row execute function system.update_updated_at();',
+      t || '_touch', t, t || '_touch', t
+    );
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security
+-- ---------------------------------------------------------------------------
+
+alter table growth_content_drafts enable row level security;
+alter table site_design_profiles enable row level security;
+alter table site_monitor_runs enable row level security;
+alter table ad_campaigns enable row level security;
+alter table visitor_intent_records enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'growth_content_drafts','site_design_profiles','site_monitor_runs',
+    'ad_campaigns','visitor_intent_records'
+  ] loop
+    execute format('drop policy if exists %I on %I', t || '_all', t);
+    execute format(
+      'create policy %I on %I for all to authenticated using (seerist_is_ws_member(workspace_id)) with check (seerist_is_ws_member(workspace_id))',
+      t || '_all', t
+    );
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
+-- Seed: per-platform mention policy for the remaining three platforms.
+-- Spec §4/§11 — these are MANUALLY curated and never auto-detected. Any
+-- platform whose current policy has not been read and confirmed by a human
+-- stays at the safe default 'no_mention', which the drafting code already
+-- honours. Update these rows after reading each platform's live ToS.
+-- ---------------------------------------------------------------------------
+
+insert into policy_configs (platform, mention_policy, version, notes) values
+  ('fiverr', 'no_mention', 1,
+   'PLACEHOLDER — safe default. Fiverr''s off-platform contact/solicitation rules are strict; read the current ToS and update this row before allowing any product mention.'),
+  ('freelancer', 'no_mention', 1,
+   'PLACEHOLDER — safe default. Read Freelancer.com''s current external-link and solicitation policy and update this row before allowing any product mention.'),
+  ('toptal', 'no_mention', 1,
+   'PLACEHOLDER — safe default. Read Toptal''s current engagement policy and update this row before allowing any product mention.')
+on conflict (platform) do nothing;
+
+notify pgrst, 'reload schema';

@@ -5,9 +5,9 @@
 ```
 ┌─────────────────┐     ┌──────────────────────────────────────────────┐
 │ Chrome extension │────▶│ InsForge project (si9f4zab.eu-central)       │
-│ capture/autofill │     │  · Postgres + RLS (26 tables)                │
+│ capture/autofill │     │  · Postgres + RLS (31 tables)                │
 └─────────────────┘     │  · Auth (email+code verification, GitHub)    │
-┌─────────────────┐     │  · 22 edge functions (/functions/<slug>)     │
+┌─────────────────┐     │  · 27 edge functions (/functions/<slug>)     │
 │ Web app (React)  │────▶│  · Model Gateway (/api/ai/chat/completion)  │
 │ si9f4zab         │     │  · Sites hosting (web/dist)                 │
 │  .insforge.site  │     └───────────────┬──────────────────────────────┘
@@ -33,11 +33,13 @@
 - `policy_configs` is read-only reference data for clients; curation happens via the service role only.
 - Webhook-facing functions (`creem-webhook`, `track-signup`, `deploy-sync` in CI mode) use the `SERVICE_API_KEY` secret; every user-facing function forwards the caller's JWT so RLS applies end-to-end.
 
-## Edge functions (22)
+## Edge functions (27)
 
 | Function | Module | Purpose |
 |---|---|---|
 | `capture-job` | A | Extension/manual capture → `job_postings` + `proposals(new)`; enforces bidding-enabled + kill switch |
+| `job-sources` | A | The JobSource registry: ExtensionCaptureSource (always live) + an ApiPollSource per platform, code-complete and failing closed with `NOT_ENABLED` until that platform's developer access is approved |
+| `submit-proposal` | A | The authorized-partnership submission path. Refuses with 423 and hands back to the human click unless `policy_configs.authorized_submission` is true for that platform (it is false everywhere) |
 | `score-job` | A | Fit score 0–100 **with plain-language reasoning** via model gateway |
 | `draft-proposal` | A | Agency/SaaS drafting; product-mention per curated `policy_configs` (absent ⇒ no_mention); creates growth touchpoints |
 | `update-proposal-status` | A | Validated Kanban transitions + `proposal_status_history` |
@@ -53,6 +55,9 @@
 | `track-signup` | C | Public endpoint attributing signups back to bids (`?seerist_ref=`); fires `growth-feedback` on each attribution |
 | `growth-feedback` | C | Segments bids by platform/mention policy/product link/job type, computes win + signup lift vs baseline → `growth_recommendations` |
 | `ploybooks-execute` | C | Runs a Ploybook's steps in order (query → llm → stage_draft → function), recording each step's result |
+| `site-studio` | C | Design-system reconstruction, page generation with JSON-LD + metadata, and performance/competitor monitoring that drafts fixes |
+| `ads-studio` | C | Ad creative generation, campaign records, and full-funnel attribution through the shared touchpoint model |
+| `visitor-intent` | C | Consent-gated visitor identification and behavioural intent scoring; public ingest refuses until the workspace opts in |
 | `pm-insights` | D | The PM: win/loss + QA + attribution → roadmap suggestions |
 | `closer-draft` | D | The Closer: post-win comms; optional real Gmail send via Composio |
 | `ceo-command` | D | The CEO: bounded autonomy, allow-list enforced server-side, approval queue for everything else, full audit |
@@ -64,9 +69,17 @@
 
 All LLM calls go through `POST /api/ai/chat/completion` on the project backend — the caller's JWT (or the service key) authorizes them; no separate provider account exists anywhere in the codebase. Default model `openai/gpt-4o-mini`, overridable with the `SEERIST_MODEL` env/secret.
 
+## Multi-platform ingestion (Module A)
+
+The Chrome extension carries a **per-platform adapter** (page selectors for title, description, budget, client stats, plus the proposal-editor field) for Upwork, Fiverr, Freelancer.com and Toptal, each falling back to shared generic heuristics so a layout change degrades to a usable capture rather than a dead button. `policy_configs` has a row per platform; the three added alongside Upwork ship at the safe `no_mention` default and must be manually curated from each platform's live ToS before any product mention is allowed (spec §4/§11 — never auto-detected).
+
 ## JobSource abstraction
 
-`capture-job` accepts `source: extension_capture | api_poll | manual`. Extension capture is the primary, always-available path. When Upwork developer-API access is approved, an API-polling worker inserts through the same function with `source: 'api_poll'` — additive, zero architectural change (spec §4/§9 v1.x track).
+`job-sources` implements the interface. `ExtensionCaptureSource` is always live and is never removed. `ApiPollSource` exists per platform with real response normalisation and the same insert pipeline as `capture-job` (`job_postings` + a `new` proposal, `source: 'api_poll'`), and fails closed with `NOT_ENABLED` until **both** `policy_configs.api_polling_enabled` is true for the platform **and** the workspace's `platform_connections` row is active with credentials. No platform endpoint is hard-coded — base URL and paths come from those stored credentials when access is granted.
+
+## Submission boundary (permanent)
+
+`submit-proposal` has three outcomes: `check` reports which mode applies, `mark_submitted` records a submission the human made themselves, and `submit` either goes through an authorized partner API or returns 423 pointing back at the human click. The authorized path is gated on `policy_configs.authorized_submission`, false for every platform and writable only server-side (`policy_configs` has no client write policy). There is no scripted click on a user's own session anywhere in the codebase — spec §1, §6 and §12.
 
 ## Delivery stack decision (Module B)
 
@@ -93,6 +106,18 @@ InstantDB for client-heavy/real-time deliverables; InsForge for fuller server-si
 ## Grower feedback loop (Module C)
 
 `growth-feedback` reads `growth_touchpoints` joined to proposals and job postings, groups bids by platform / mention policy / product-link flag / job type / workspace mode, and computes each segment's win and attributed-signup rate against the workspace baseline. A segment needs at least 3 bids before it can claim a pattern. Numbers are computed in code; the model only phrases them. Output replaces `growth_recommendations` wholesale so stale advice never competes with the current read, and the analysis re-runs automatically after each new signup attribution.
+
+## Site generation and maintenance (Module C)
+
+`site-studio` reconstructs the design system from the live site by extracting the real colour, font-stack, radius and CSS-variable values deterministically first, then having the model name and organise them — it cannot invent a palette. Generated pages produce copy, meta title/description, slug, keywords and an FAQ, and the JSON-LD is assembled **in code** from the model's structured fields so the markup is always valid. Monitoring runs ten checkable technical signals against a live URL (title, meta description, H1, JSON-LD, Open Graph, canonical, viewport, image alt text, page weight, response time) or reads competitor pages; anything failing becomes a drafted fix in `growth_content_drafts`. Nothing is ever published — `published` only records that a human shipped it.
+
+## Ads and unified attribution (Module C)
+
+`ads-studio` manages `ad_campaigns` and drafts creative. Attribution deliberately reuses `growth_touchpoints`: a campaign gets a touchpoint row with `source='ad'` and `campaign_id` set (`proposal_id` is now nullable), and that row's id is the `?seerist_ref` value on the ad's landing URL. `track-signup` resolves a ref as either a proposal id (bids) or a touchpoint id (ads/site), so both funnels land in one model and `analytics-summary` and `growth-feedback` see them without special-casing. Campaign state is recorded locally; pushing to an external ad network is reported as not-connected rather than faked.
+
+## Visitor intent (Module C) — built closed
+
+`workspaces.visitor_intent_enabled` defaults to false. `enable_tracking` requires a named jurisdiction **and** a live privacy-policy URL and records when consent was configured. The public `record_visit` endpoint returns 423 while tracking is off, stores nothing at all when a visitor's consent is `denied`, and skips identity enrichment when it is `unknown`. Scoring reasons only over behavioural signals (which pages, how long, referrer, campaign) and is explicitly instructed never to infer identity or demographics. Spec §4/§6/§11 treat the legal review as a prerequisite, not an engineering task.
 
 ## Ploybooks (Module C)
 

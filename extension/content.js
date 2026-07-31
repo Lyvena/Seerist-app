@@ -1,12 +1,16 @@
 // ============================================================================
-// Seerist Capture — content script for upwork.com.
+// Seerist Capture — content script.
+//
+// Multi-platform by adapter (spec §4: Upwork, Fiverr, Freelancer.com, Toptal
+// all get an extension adapter with platform-specific page selectors).
+//
 // 1) On job pages: injects "Capture to Seerist" and reads the ALREADY-RENDERED
 //    DOM (title, description, budget, client stats). Nothing is fetched from
-//    Upwork by Seerist servers — ever.
+//    any platform by Seerist servers — ever.
 // 2) On proposal editors: injects "Autofill from Seerist" which fills the
-//    cover-letter textarea with an APPROVED draft. The human clicks Upwork's
+//    proposal field with an APPROVED draft. The human clicks the platform's
 //    own Submit button. No scripted or automated click exists — hard
-//    architectural constraint.
+//    architectural constraint (spec §1, §6, §12).
 // ============================================================================
 
 const BTN_ID = 'seerist-capture-btn';
@@ -42,63 +46,234 @@ function injectStyles() {
   document.head.appendChild(el);
 }
 
+// --- Shared DOM helpers -----------------------------------------------------
+
 function text(sel) {
   const el = document.querySelector(sel);
   return el ? el.textContent.trim() : '';
 }
 
-function isJobPage() {
-  return /\/jobs\/|\/nx\/jobs\//.test(location.pathname) && !isProposalPage();
-}
-function isProposalPage() {
-  return /proposals\/job|\/apply\/|proposals\/new/.test(location.pathname) || !!coverLetterField();
-}
-function coverLetterField() {
-  return (
-    document.querySelector('textarea[aria-labelledby*="cover" i]') ||
-    document.querySelector('textarea[name*="cover" i]') ||
-    document.querySelector('textarea#cover_letter') ||
-    document.querySelector('.cover-letter textarea') ||
-    document.querySelector('textarea[placeholder*="cover" i]')
-  );
-}
-
-function scrapeJob() {
-  const title =
-    text('h1') ||
-    text('[data-test="job-title"]') ||
-    text('.job-details-card h4') ||
-    document.title.replace(/ - Upwork.*$/i, '');
-
-  const descEl =
-    document.querySelector('[data-test="Description"]') ||
-    document.querySelector('[data-test="job-description-text"]') ||
-    document.querySelector('section .break') ||
-    document.querySelector('.job-description');
-  const description = descEl ? descEl.textContent.trim() : '';
-
-  let budget = '';
-  const budgetEl =
-    document.querySelector('[data-test="BudgetAmount"]') ||
-    document.querySelector('[data-cy="budget"]') ||
-    Array.from(document.querySelectorAll('strong, span')).find((el) => /^\$[\d,.]+(\s*-\s*\$[\d,.]+)?/.test(el.textContent.trim()));
-  if (budgetEl) budget = budgetEl.textContent.trim().slice(0, 100);
-
-  const clientStats = {};
-  const aboutClient = document.querySelector('[data-test="AboutClientVisitor"], [data-qa="client-activity"], .client-info');
-  if (aboutClient) {
-    const t = aboutClient.textContent.replace(/\s+/g, ' ');
-    if (/payment method verified/i.test(t)) clientStats.payment_verified = true;
-    const spend = t.match(/\$[\d,.]+[KkMm]?\s+total spent/);
-    if (spend) clientStats.total_spent = spend[0];
-    const hire = t.match(/(\d+)%\s*hire rate/i);
-    if (hire) clientStats.hire_rate = `${hire[1]}%`;
-    const rating = t.match(/([\d.]+)\s*(of|\/)\s*5/);
-    if (rating) clientStats.rating = rating[1];
+/** First non-empty text match from a list of selectors. */
+function firstText(selectors) {
+  for (const sel of selectors) {
+    const t = text(sel);
+    if (t) return t;
   }
-
-  return { title: title.slice(0, 400), description: description.slice(0, 18000), budget, client_stats: clientStats, url: location.href.split('?')[0], platform: 'upwork' };
+  return '';
 }
+
+function firstEl(selectors) {
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el && el.textContent.trim()) return el;
+  }
+  return null;
+}
+
+/** Fallback: the densest block of text on the page, which is the job body. */
+function densestTextBlock() {
+  let best = null;
+  let bestLen = 0;
+  for (const el of document.querySelectorAll('article, section, main div, [class*="description" i], [class*="details" i]')) {
+    if (el.querySelector('article, section')) continue;
+    const len = el.textContent.trim().length;
+    if (len > bestLen && len < 40000) { best = el; bestLen = len; }
+  }
+  return bestLen > 200 ? best.textContent.trim() : '';
+}
+
+/** Any visible "$1,234" / "$20 - $40" style amount on the page. */
+function anyCurrencyText() {
+  const el = Array.from(document.querySelectorAll('strong, span, div, b, p'))
+    .find((n) => n.children.length === 0 && /^[$€£₹]\s?[\d,.]+(\s*-\s*[$€£₹]?\s?[\d,.]+)?/.test(n.textContent.trim()));
+  return el ? el.textContent.trim().slice(0, 100) : '';
+}
+
+function textareaBySelectors(selectors) {
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el) return el;
+  }
+  return null;
+}
+
+// --- Platform adapters ------------------------------------------------------
+// Each adapter owns its platform's page selectors. Every adapter falls back to
+// the shared generic helpers above, so a layout change degrades to a usable
+// capture rather than a broken button.
+
+const ADAPTERS = [
+  {
+    platform: 'upwork',
+    hostPattern: /(^|\.)upwork\.com$/i,
+    isJobPage: () => /\/jobs\/|\/nx\/jobs\//.test(location.pathname),
+    scrape() {
+      const title = firstText(['h1', '[data-test="job-title"]', '.job-details-card h4'])
+        || document.title.replace(/ - Upwork.*$/i, '');
+      const descEl = firstEl([
+        '[data-test="Description"]',
+        '[data-test="job-description-text"]',
+        'section .break',
+        '.job-description',
+      ]);
+      const description = descEl ? descEl.textContent.trim() : densestTextBlock();
+
+      let budget = '';
+      const budgetEl = firstEl(['[data-test="BudgetAmount"]', '[data-cy="budget"]']);
+      budget = budgetEl ? budgetEl.textContent.trim().slice(0, 100) : anyCurrencyText();
+
+      const clientStats = {};
+      const aboutClient = document.querySelector('[data-test="AboutClientVisitor"], [data-qa="client-activity"], .client-info');
+      if (aboutClient) {
+        const t = aboutClient.textContent.replace(/\s+/g, ' ');
+        if (/payment method verified/i.test(t)) clientStats.payment_verified = true;
+        const spend = t.match(/\$[\d,.]+[KkMm]?\s+total spent/);
+        if (spend) clientStats.total_spent = spend[0];
+        const hire = t.match(/(\d+)%\s*hire rate/i);
+        if (hire) clientStats.hire_rate = `${hire[1]}%`;
+        const rating = t.match(/([\d.]+)\s*(of|\/)\s*5/);
+        if (rating) clientStats.rating = rating[1];
+      }
+      return { title, description, budget, client_stats: clientStats };
+    },
+    proposalField: () => textareaBySelectors([
+      'textarea[aria-labelledby*="cover" i]',
+      'textarea[name*="cover" i]',
+      'textarea#cover_letter',
+      '.cover-letter textarea',
+      'textarea[placeholder*="cover" i]',
+    ]),
+  },
+
+  {
+    platform: 'fiverr',
+    hostPattern: /(^|\.)fiverr\.com$/i,
+    isJobPage: () => /\/(briefs?|requests?|buyer-requests|manage_requests|opportunities)\b/i.test(location.pathname),
+    scrape() {
+      const title = firstText(['h1', '[class*="brief-title" i]', '[class*="request-title" i]'])
+        || document.title.replace(/ \| Fiverr.*$/i, '');
+      const descEl = firstEl([
+        '[class*="brief-description" i]',
+        '[class*="request-description" i]',
+        '[class*="description" i]',
+        'main article',
+      ]);
+      const description = descEl ? descEl.textContent.trim() : densestTextBlock();
+
+      const budgetEl = firstEl(['[class*="budget" i]', '[class*="price" i]']);
+      const budget = budgetEl ? budgetEl.textContent.trim().slice(0, 100) : anyCurrencyText();
+
+      const clientStats = {};
+      const body = document.body.textContent.replace(/\s+/g, ' ');
+      const country = body.match(/(?:From|Located in)\s+([A-Z][A-Za-z .]{2,30})/);
+      if (country) clientStats.country = country[1].trim();
+      const delivery = body.match(/(\d+)\s*day(?:s)?\s*delivery/i);
+      if (delivery) clientStats.delivery_days = Number(delivery[1]);
+      return { title, description, budget, client_stats: clientStats };
+    },
+    proposalField: () => textareaBySelectors([
+      'textarea[name*="offer" i]',
+      'textarea[placeholder*="offer" i]',
+      'textarea[placeholder*="describe" i]',
+      'textarea[class*="offer" i]',
+      'form textarea',
+    ]),
+  },
+
+  {
+    platform: 'freelancer',
+    hostPattern: /(^|\.)freelancer\.(com|[a-z]{2}|com\.[a-z]{2})$/i,
+    isJobPage: () => /\/projects\//i.test(location.pathname),
+    scrape() {
+      const title = firstText([
+        'h1',
+        '[class*="PageProjectViewLogout-header-title" i]',
+        '[class*="project-title" i]',
+      ]) || document.title.replace(/ \| Freelancer.*$/i, '');
+      const descEl = firstEl([
+        '[class*="PageProjectViewLogout-detail-description" i]',
+        '[class*="project-description" i]',
+        '[class*="description" i]',
+        'main article',
+      ]);
+      const description = descEl ? descEl.textContent.trim() : densestTextBlock();
+
+      const budgetEl = firstEl([
+        '[class*="PageProjectViewLogout-header-byLine" i]',
+        '[class*="budget" i]',
+      ]);
+      const budget = budgetEl ? budgetEl.textContent.trim().slice(0, 100) : anyCurrencyText();
+
+      const clientStats = {};
+      const body = document.body.textContent.replace(/\s+/g, ' ');
+      if (/payment (method )?verified/i.test(body)) clientStats.payment_verified = true;
+      const rating = body.match(/([\d.]+)\s*\/\s*5/);
+      if (rating) clientStats.rating = rating[1];
+      const bids = body.match(/(\d+)\s*bids?\b/i);
+      if (bids) clientStats.bids = Number(bids[1]);
+      return { title, description, budget, client_stats: clientStats };
+    },
+    proposalField: () => textareaBySelectors([
+      'textarea[name*="description" i]',
+      'textarea[formcontrolname*="description" i]',
+      'textarea[placeholder*="proposal" i]',
+      'textarea[placeholder*="describe" i]',
+      'form textarea',
+    ]),
+  },
+
+  {
+    platform: 'toptal',
+    hostPattern: /(^|\.)toptal\.com$/i,
+    isJobPage: () => /\/(jobs?|roles?|engagements?|talent\/opportunities)\b/i.test(location.pathname),
+    scrape() {
+      const title = firstText(['h1', '[class*="job-title" i]', '[class*="role-title" i]'])
+        || document.title.replace(/ \| Toptal.*$/i, '');
+      const descEl = firstEl([
+        '[class*="job-description" i]',
+        '[class*="role-description" i]',
+        '[class*="description" i]',
+        'main article',
+      ]);
+      const description = descEl ? descEl.textContent.trim() : densestTextBlock();
+
+      const budgetEl = firstEl(['[class*="rate" i]', '[class*="budget" i]', '[class*="compensation" i]']);
+      const budget = budgetEl ? budgetEl.textContent.trim().slice(0, 100) : anyCurrencyText();
+
+      const clientStats = {};
+      const body = document.body.textContent.replace(/\s+/g, ' ');
+      const commitment = body.match(/(full[- ]time|part[- ]time|\d+\s*hours?\/week)/i);
+      if (commitment) clientStats.commitment = commitment[1];
+      const duration = body.match(/(\d+\+?\s*(?:months?|weeks?))\b/i);
+      if (duration) clientStats.duration = duration[1];
+      return { title, description, budget, client_stats: clientStats };
+    },
+    proposalField: () => textareaBySelectors([
+      'textarea[name*="cover" i]',
+      'textarea[name*="note" i]',
+      'textarea[placeholder*="why" i]',
+      'form textarea',
+    ]),
+  },
+];
+
+function currentAdapter() {
+  return ADAPTERS.find((a) => a.hostPattern.test(location.hostname)) || null;
+}
+
+function scrapeJob(adapter) {
+  const raw = adapter.scrape();
+  return {
+    title: (raw.title || '').slice(0, 400),
+    description: (raw.description || '').slice(0, 18000),
+    budget: (raw.budget || '').slice(0, 100),
+    client_stats: raw.client_stats || {},
+    url: location.href.split('?')[0],
+    platform: adapter.platform,
+  };
+}
+
+// --- UI ---------------------------------------------------------------------
 
 function toast(msg, ok = true) {
   const el = document.createElement('div');
@@ -108,13 +283,13 @@ function toast(msg, ok = true) {
   setTimeout(() => el.remove(), 5000);
 }
 
-function mountCaptureButton() {
+function mountCaptureButton(adapter) {
   if (document.getElementById(BTN_ID)) return;
   const btn = document.createElement('button');
   btn.id = BTN_ID;
   btn.textContent = '◎ Capture to Seerist';
   btn.addEventListener('click', () => {
-    const job = scrapeJob();
+    const job = scrapeJob(adapter);
     if (!job.title) { toast('Could not read a job title on this page', false); return; }
     btn.disabled = true;
     chrome.runtime.sendMessage({ type: 'CAPTURE', job }, (res) => {
@@ -127,7 +302,7 @@ function mountCaptureButton() {
   document.body.appendChild(btn);
 }
 
-function mountAutofillButton() {
+function mountAutofillButton(adapter) {
   if (document.getElementById(FILL_ID)) return;
   const btn = document.createElement('button');
   btn.id = FILL_ID;
@@ -135,13 +310,13 @@ function mountAutofillButton() {
   btn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ type: 'APPROVED_PROPOSALS' }, (res) => {
       if (!res?.ok) { toast(res?.error || 'Could not load approved proposals', false); return; }
-      showPicker(res.proposals || []);
+      showPicker(res.proposals || [], adapter);
     });
   });
   document.body.appendChild(btn);
 }
 
-function showPicker(proposals) {
+function showPicker(proposals, adapter) {
   document.getElementById(PANEL_ID)?.remove();
   const panel = document.createElement('div');
   panel.id = PANEL_ID;
@@ -149,14 +324,15 @@ function showPicker(proposals) {
     ? proposals.map((p, i) => `<div class="item" data-i="${i}">${p.title.slice(0, 80)}</div>`).join('')
     : '<div class="note">No approved proposals yet. Approve one in the Pitch Queue first.</div>';
   panel.innerHTML = `<h4>Insert an approved draft</h4>${items}
-    <div class="note">Seerist fills the field — <strong>you</strong> review and click Upwork's Submit. Nothing is ever submitted automatically.</div>`;
+    <div class="note">Seerist fills the field — <strong>you</strong> review and click ${adapter.platform}'s Submit. Nothing is ever submitted automatically.</div>`;
   panel.addEventListener('click', (e) => {
     const item = e.target.closest('.item');
     if (!item) return;
     const p = proposals[Number(item.dataset.i)];
-    const field = coverLetterField();
-    if (!field) { toast('Could not find the cover letter field on this page', false); return; }
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+    const field = adapter.proposalField();
+    if (!field) { toast('Could not find the proposal field on this page', false); return; }
+    const proto = field instanceof HTMLTextAreaElement ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
     setter.call(field, p.draft);
     field.dispatchEvent(new Event('input', { bubbles: true }));
     field.dispatchEvent(new Event('change', { bubbles: true }));
@@ -171,13 +347,18 @@ function showPicker(proposals) {
 }
 
 function tick() {
+  const adapter = currentAdapter();
+  if (!adapter) return;
   injectStyles();
-  if (isJobPage()) mountCaptureButton();
+
+  const onProposalEditor = !!adapter.proposalField();
+  if (adapter.isJobPage() && !onProposalEditor) mountCaptureButton(adapter);
   else document.getElementById(BTN_ID)?.remove();
-  if (coverLetterField()) mountAutofillButton();
+
+  if (onProposalEditor) mountAutofillButton(adapter);
   else { document.getElementById(FILL_ID)?.remove(); document.getElementById(PANEL_ID)?.remove(); }
 }
 
 tick();
-// Upwork is a SPA — re-evaluate on navigation.
+// Every supported platform is a SPA — re-evaluate on navigation.
 new MutationObserver(() => tick()).observe(document.body, { childList: true, subtree: true });

@@ -16,6 +16,43 @@ const OUTCOME_BADGE: Record<string, string> = {
   pending: 'gray', viewed: 'blue', replied: 'violet', won: 'green', lost: 'red',
 };
 
+const PLATFORMS = ['upwork', 'fiverr', 'freelancer', 'toptal'];
+
+/** Same buckets the Grower uses, so filters and recommendations agree. */
+const JOB_TYPES: Array<{ type: string; terms: string[] }> = [
+  { type: 'web app', terms: ['web app', 'webapp', 'saas', 'dashboard', 'portal', 'frontend', 'react', 'next.js'] },
+  { type: 'automation', terms: ['automation', 'automate', 'zapier', 'workflow', 'integration', 'scraper', 'bot'] },
+  { type: 'ai/ml', terms: ['ai ', 'llm', 'gpt', 'machine learning', 'chatbot', 'rag', 'embedding'] },
+  { type: 'data', terms: ['data', 'etl', 'analytics', 'pipeline', 'sql', 'warehouse', 'report'] },
+  { type: 'mobile', terms: ['ios', 'android', 'mobile app', 'react native', 'flutter'] },
+  { type: 'design', terms: ['design', 'ui/ux', 'figma', 'branding', 'landing page'] },
+  { type: 'content', terms: ['content', 'copywriting', 'seo', 'blog', 'article'] },
+];
+
+function classifyJob(title: string | null | undefined): string {
+  const text = (title || '').toLowerCase();
+  if (!text) return 'unknown';
+  for (const { type, terms } of JOB_TYPES) {
+    if (terms.some((t) => text.includes(t))) return type;
+  }
+  return 'other';
+}
+
+/** Largest number in a free-text budget string ("$500 - $1,200" → 1200). */
+function budgetValue(budget: string | null | undefined): number | null {
+  const matches = (budget || '').match(/[\d,.]+/g);
+  if (!matches) return null;
+  const nums = matches.map((m) => Number(m.replace(/,/g, ''))).filter((n) => Number.isFinite(n));
+  return nums.length ? Math.max(...nums) : null;
+}
+
+function hireRateValue(stats: Record<string, unknown> | null | undefined): number | null {
+  const raw = stats?.hire_rate;
+  if (raw === undefined || raw === null) return null;
+  const n = Number(String(raw).replace('%', '').trim());
+  return Number.isFinite(n) ? n : null;
+}
+
 function ScorePill({ score }: { score: number | null }) {
   if (score === null || score === undefined) return null;
   const cls = score >= 70 ? 'score-high' : score >= 45 ? 'score-mid' : 'score-low';
@@ -29,6 +66,17 @@ export default function PitchQueuePage() {
   const [selected, setSelected] = useState<Proposal | null>(null);
   const [showCapture, setShowCapture] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Spec §4 filters: keywords, budget range, client payment-verification
+  // status, client hire rate, job type — plus platform, now that four are live.
+  const [fKeywords, setFKeywords] = useState('');
+  const [fPlatform, setFPlatform] = useState('');
+  const [fBudgetMin, setFBudgetMin] = useState('');
+  const [fBudgetMax, setFBudgetMax] = useState('');
+  const [fVerified, setFVerified] = useState(false);
+  const [fHireRate, setFHireRate] = useState('');
+  const [fJobType, setFJobType] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const load = useCallback(async () => {
     if (!activeWs) return;
@@ -51,12 +99,49 @@ export default function PitchQueuePage() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const filtered = useMemo(() => {
+    const words = fKeywords.toLowerCase().split(/\s+/).map((w) => w.trim()).filter(Boolean);
+    const min = fBudgetMin ? Number(fBudgetMin) : null;
+    const max = fBudgetMax ? Number(fBudgetMax) : null;
+    const minHire = fHireRate ? Number(fHireRate) : null;
+
+    return proposals.filter((p) => {
+      const job = p.job_postings;
+      if (fPlatform && (job?.platform || '') !== fPlatform) return false;
+      if (words.length) {
+        const haystack = `${job?.title || ''} ${job?.description || ''}`.toLowerCase();
+        if (!words.every((w) => haystack.includes(w))) return false;
+      }
+      if (min !== null || max !== null) {
+        const value = budgetValue(job?.budget);
+        if (value === null) return false;
+        if (min !== null && value < min) return false;
+        if (max !== null && value > max) return false;
+      }
+      if (fVerified && job?.client_stats?.payment_verified !== true) return false;
+      if (minHire !== null) {
+        const rate = hireRateValue(job?.client_stats);
+        if (rate === null || rate < minHire) return false;
+      }
+      if (fJobType && classifyJob(job?.title) !== fJobType) return false;
+      return true;
+    });
+  }, [proposals, fKeywords, fPlatform, fBudgetMin, fBudgetMax, fVerified, fHireRate, fJobType]);
+
+  const activeFilters = [fKeywords, fPlatform, fBudgetMin, fBudgetMax, fHireRate, fJobType]
+    .filter(Boolean).length + (fVerified ? 1 : 0);
+
+  function clearFilters() {
+    setFKeywords(''); setFPlatform(''); setFBudgetMin(''); setFBudgetMax('');
+    setFVerified(false); setFHireRate(''); setFJobType('');
+  }
+
   const byStatus = useMemo(() => {
     const map: Record<string, Proposal[]> = {};
     for (const c of COLUMNS) map[c.key] = [];
-    for (const p of proposals) (map[p.status] ||= []).push(p);
+    for (const p of filtered) (map[p.status] ||= []).push(p);
     return map;
-  }, [proposals]);
+  }, [filtered]);
 
   if (!activeWs) {
     return <div className="info-box">Create a workspace first (Settings → Workspaces).</div>;
@@ -73,10 +158,67 @@ export default function PitchQueuePage() {
           </p>
         </div>
         <div className="row">
+          <button className={`btn ${activeFilters ? 'primary' : ''}`} onClick={() => setShowFilters((v) => !v)}>
+            ⛃ Filters{activeFilters ? ` (${activeFilters})` : ''}
+          </button>
           <button className="btn" onClick={() => void load()}>↻ Refresh</button>
           <button className="btn primary" onClick={() => setShowCapture(true)}>+ Capture a job</button>
         </div>
       </div>
+
+      {showFilters && (
+        <div className="card mb">
+          <div className="spread">
+            <h3 style={{ marginBottom: 0 }}>Filters</h3>
+            <span className="faint">{filtered.length} of {proposals.length} shown</span>
+          </div>
+          <div className="grid cols-3 mt">
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Keywords</label>
+              <input type="text" value={fKeywords} onChange={(e) => setFKeywords(e.target.value)} placeholder="react dashboard" />
+              <span className="help">Matches the job title and description.</span>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Platform</label>
+              <select value={fPlatform} onChange={(e) => setFPlatform(e.target.value)}>
+                <option value="">Any platform</option>
+                {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Job type</label>
+              <select value={fJobType} onChange={(e) => setFJobType(e.target.value)}>
+                <option value="">Any type</option>
+                {JOB_TYPES.map((t) => <option key={t.type} value={t.type}>{t.type}</option>)}
+                <option value="other">other</option>
+              </select>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Budget range</label>
+              <div className="row">
+                <input type="number" value={fBudgetMin} onChange={(e) => setFBudgetMin(e.target.value)} placeholder="Min" min="0" />
+                <input type="number" value={fBudgetMax} onChange={(e) => setFBudgetMax(e.target.value)} placeholder="Max" min="0" />
+              </div>
+              <span className="help">Reads the largest figure in the posted budget.</span>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Minimum client hire rate</label>
+              <input type="number" value={fHireRate} onChange={(e) => setFHireRate(e.target.value)} placeholder="e.g. 50" min="0" max="100" />
+              <span className="help">Percent, from the captured client stats.</span>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Client payment verification</label>
+              <label className="row" style={{ gap: 8, cursor: 'pointer', marginTop: 6 }}>
+                <input type="checkbox" checked={fVerified} onChange={(e) => setFVerified(e.target.checked)} style={{ width: 'auto' }} />
+                <span className="muted">Payment-verified clients only</span>
+              </label>
+            </div>
+          </div>
+          {activeFilters > 0 && (
+            <button className="btn ghost sm mt" onClick={clearFilters}>Clear all filters</button>
+          )}
+        </div>
+      )}
 
       {error && <div className="error-box mb">{error}</div>}
       {!activeWs.bidding_enabled && (
