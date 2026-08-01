@@ -6,11 +6,17 @@ export const INSFORGE_URL =
   import.meta.env.VITE_INSFORGE_URL || 'https://si9f4zab.eu-central.insforge.app';
 export const INSFORGE_ANON_KEY =
   import.meta.env.VITE_INSFORGE_ANON_KEY ||
-  'anon_7ce1c8516e22d8090c0d06f724319b00b352bd6357f783756ea8c1871d4993a1';
+  'anon_7ce1c8516e22d8090c0d06f724319b00b352bd6357f783756da8c1871d4993a1';
 
 export const insforge = createClient({
   baseUrl: INSFORGE_URL,
   anonKey: INSFORGE_ANON_KEY,
+  // Pinned deliberately. Left to itself the SDK derives
+  // https://<project>.functions.insforge.app, which no longer resolves — Deno
+  // Deploy Classic was retired — so every call from the browser failed CORS
+  // preflight. The SDK does have a fallback to this path, but only on a 404,
+  // and a blocked preflight is a network error rather than a 404.
+  functionsUrl: `${INSFORGE_URL}/functions`,
 });
 
 /** Invoke a Seerist edge function; throws with the server's error message. */

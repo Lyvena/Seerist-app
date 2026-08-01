@@ -151,6 +151,39 @@ The extension runs today via `chrome://extensions` → Load unpacked → `extens
 For public distribution: create a Chrome Web Store developer account ($5 one-time),
 zip `extension/`, and submit. No code changes needed.
 
+## Job intake by email (Module A discovery)
+
+Each workspace has an intake address, `jobs+<intake_token>@inbound.seerist.xyz`,
+shown in Settings → Automation. Point your mail provider's inbound webhook at:
+
+```
+POST https://si9f4zab.eu-central.insforge.app/functions/ingest-job-email?token=<INTAKE_WEBHOOK_TOKEN>
+Content-Type: application/json
+
+{ "to": "jobs+<token>@inbound.seerist.xyz", "from": "...", "subject": "...", "text": "...", "html": "..." }
+```
+
+Routing is by the address token only — a `From` header is trivially forged.
+The `INTAKE_WEBHOOK_TOKEN` project secret is already set; read it from the
+InsForge dashboard when configuring the provider. Until a provider is wired up,
+the same function accepts a signed-in paste from Settings → Automation, which
+is enough to try it.
+
+## Scheduled automation
+
+`node insforge/scripts/apply-schedules.mjs` registers five cron schedules and is
+safe to re-run (existing ones are updated, not duplicated). `--list` shows what
+is registered, `--delete` removes them. They authenticate with the
+`AUTOMATION_TOKEN` project secret, already set.
+
+| Schedule | Cron | Target |
+| --- | --- | --- |
+| `seerist-scan` | `*/15 * * * *` | `automation-tick?job=scan` |
+| `seerist-nudge` | `17 9 * * *` | `automation-tick?job=nudge` |
+| `seerist-stale` | `31 9 * * *` | `automation-tick?job=stale` |
+| `seerist-digest` | `23 8 * * 1` | `pm-insights` |
+| `seerist-grower` | `41 8 * * 1` | `growth-feedback` |
+
 ## CI deploy-sync webhook (Module C)
 
 `.github/workflows/deploy-sync.yml` fires this on every push to `main` that

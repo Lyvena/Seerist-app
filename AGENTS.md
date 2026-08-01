@@ -181,3 +181,40 @@ every time, so nothing may be destructive.
 
 **Review every diff** touching `platform_connections`, `extension/`,
 `submit-proposal.ts`, `ceo-command.ts`, billing, or `_shared.ts`.
+
+---
+
+## Two platform constraints that shape the code
+
+**A function cannot call another function.** Deno Deploy answers
+`508 Loop Detected` when a deployment fetches itself, and because the reply is
+an HTML error page rather than JSON the failure is silent unless the caller
+checks the status. There is deliberately no `invokeFunction` helper. Work that
+more than one function needs lives in `_shared.ts` (`scoreProposal`,
+`sendAlert`); per-workspace scheduled jobs iterate their own workspaces
+(`pm-insights`, `growth-feedback`) rather than being orchestrated from one
+place. `tests/automation.test.ts` fails if a self-fetch is reintroduced.
+
+**The SDK's default functions host does not exist.** `@insforge/sdk` derives
+`https://<project>.functions.insforge.app`, which was retired with Deno Deploy
+Classic. `web/src/lib/insforge.ts` pins `functionsUrl` to
+`<baseUrl>/functions`. Unpin it and every edge-function call from the browser
+fails CORS preflight — which is not a 404, so the SDK's own fallback never
+fires and the whole app silently loses its backend.
+
+---
+
+## Automation
+
+Five InsForge cron schedules, defined in `insforge/scripts/apply-schedules.mjs`
+and re-runnable at any time. `automation-tick` owns `scan`, `nudge` and
+`stale`; the weekly digest and Grower run are scheduled straight at
+`pm-insights` and `growth-feedback`. The scheduler authenticates with
+`AUTOMATION_TOKEN` in the `Authorization` header — InsForge substitutes
+`${{secrets.KEY}}` into headers, not URLs.
+
+Rules any new scheduled work must keep: skip a workspace with
+`automation_enabled = false`, bound the work per tick, pass `scope` to every
+model call so the plan's monthly cap still applies, write to
+`persona_action_log` and `automation_runs`, and never send anything to a
+client — an external communication on the org's behalf is a §12 human click.
