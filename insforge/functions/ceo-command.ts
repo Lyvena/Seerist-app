@@ -126,7 +126,7 @@ async function command(body: any, token: string, userId: string | null): Promise
 - "other": anything that doesn't clearly fit a category above
 Respond with STRICT JSON: {"action_type": "<one of the above>", "plan": "<2-4 sentences: exactly what you would do>", "target_workspace_ids": ["<uuid>", ...]}` },
     { role: 'user', content: `Organization: ${org.name}\nWorkspaces: ${workspaces.map((w: any) => `${w.name} (${w.type}, ${w.id})`).join('; ')}\n\nInstruction: ${String(instruction).slice(0, 2000)}` },
-  ], token, { maxTokens: 500, temperature: 0.2 });
+  ], token, { maxTokens: 500, temperature: 0.2, scope: { organization_id, function_slug: 'ceo-command' } });
   const parsed = parseJsonLoose(raw);
   const actionType = normalizeActionType(parsed.action_type);
   const plan = String(parsed.plan || '').slice(0, 1500);
@@ -354,7 +354,7 @@ async function executeAction(
     return await aiChat([
       { role: 'system', content: 'You are The CEO. Produce a crisp cross-workspace insight report in markdown: what stands out, where the risk is, and 3 concrete recommendations. Base it ONLY on the data provided.' },
       { role: 'user', content: `Instruction: ${instruction}\n\nWorkspace stats:\n${stats.join('\n')}` },
-    ], token, { maxTokens: 900, temperature: 0.4 });
+    ], token, { maxTokens: 900, temperature: 0.4, scope: { organization_id: org.id, function_slug: 'ceo-command' } });
   }
 
   if (actionType === 'reprioritize_backlog') {
@@ -367,7 +367,7 @@ async function executeAction(
         const rawOrder = await aiChat([
           { role: 'system', content: 'Reorder these delivery tasks by execution priority per the instruction. Respond with STRICT JSON: {"order": [<task ids in new priority order>]}' },
           { role: 'user', content: `Instruction: ${instruction}\nTasks:\n${tasks.map((t: any) => `${t.id}: ${t.description}`).join('\n')}` },
-        ], token, { maxTokens: 400, temperature: 0.2 });
+        ], token, { maxTokens: 400, temperature: 0.2, scope: { organization_id: org.id, function_slug: 'ceo-command' } });
         const order: string[] = parseJsonLoose(rawOrder).order || [];
         for (let i = 0; i < order.length; i++) {
           const t = tasks.find((x: any) => x.id === order[i]);
@@ -388,7 +388,7 @@ async function executeAction(
     return await aiChat([
       { role: 'system', content: `You are The CEO executing an approved-class action (${actionType}). Describe precisely what you are changing and why, as a short numbered list. Non-monetary settings only.` },
       { role: 'user', content: `Instruction: ${instruction}\nWorkspaces: ${workspaces.map((w: any) => `${w.name} (${w.type})`).join('; ')}` },
-    ], token, { maxTokens: 600, temperature: 0.3 });
+    ], token, { maxTokens: 600, temperature: 0.3, scope: { organization_id: org.id, function_slug: 'ceo-command' } });
   }
 
   // Human-approved, approval-required class. Seerist still does not move money,
@@ -404,7 +404,7 @@ async function executeAction(
       role: 'user',
       content: `Organization: ${org.name}\nWorkspaces: ${workspaces.map((w: any) => `${w.name} (${w.type})`).join('; ') || '(none)'}\n\nRequested: ${instruction}\n\nThe CEO's plan:\n${plan || '(no plan recorded)'}`,
     },
-  ], token, { maxTokens: 900, temperature: 0.3 });
+  ], token, { maxTokens: 900, temperature: 0.3, scope: { organization_id: org.id, function_slug: 'ceo-command' } });
 
   return `Approved by a human on ${new Date().toISOString()}.\n\n${record}`;
 }

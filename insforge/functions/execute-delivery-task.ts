@@ -320,7 +320,7 @@ Respond with STRICT JSON: {"dependencies": [{"task": <task number>, "depends_on"
       role: 'user',
       content: `Contract: ${context.jobTitle}\nStack: ${run.target_stack}\n\nWORKSPACE SKILL LIBRARY (Hermes):\n${hermes.skillBlock}\n\nWORKSPACE MEMORY:\n${hermes.memoryBlock}\n\nTASKS:\n${graph.tasks.map((t, i) => `${i + 1}. ${t.description}`).join('\n')}`,
     },
-  ], token, { maxTokens: 800, temperature: 0.2 });
+  ], token, { maxTokens: 800, temperature: 0.2, scope: { workspace_id: run.workspace_id, function_slug: 'execute-delivery-task' } });
 
   const parsed = parseJsonLoose(raw);
   const proposed: Array<{ task_id: string; depends_on_task_id: string }> = [];
@@ -539,7 +539,7 @@ async function executeTask(
       role: 'user',
       content: `CONTRACT: ${context.jobTitle}\nQA feedback from previous attempt: ${task.qa_note || '(first attempt)'}\n\nWORKSPACE SKILL LIBRARY (Hermes):\n${hermes.skillBlock}\n\nWORKSPACE MEMORY:\n${hermes.memoryBlock}\n\nUPSTREAM DEPENDENCIES:\n${upstream}\n\nTASK ${task.position + 1}: ${task.description}\n\nContext (job description):\n${context.jobDescription}`,
     },
-  ], token, { maxTokens: 3000, temperature: 0.4 });
+  ], token, { maxTokens: 3000, temperature: 0.4, scope: { workspace_id: run.workspace_id, function_slug: 'execute-delivery-task' } });
 
   const [updated] = await dbPatch('delivery_tasks', `id=eq.${task.id}`, {
     status: 'qa_pending',

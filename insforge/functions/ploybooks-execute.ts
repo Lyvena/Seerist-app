@@ -474,7 +474,7 @@ ${evidence}
 STEP: ${step.title}
 ${step.prompt || 'Complete this step.'}`,
     },
-  ], ctx.token, { maxTokens: step.max_tokens || 1800, temperature: 0.4 });
+  ], ctx.token, { maxTokens: step.max_tokens || 1800, temperature: 0.4, scope: { workspace_id: ctx.workspaceId, function_slug: 'ploybooks-execute' } });
 
   return { output };
 }

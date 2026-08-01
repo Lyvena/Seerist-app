@@ -997,6 +997,132 @@ end $$;
 -- honours. Update these rows after reading each platform's live ToS.
 -- ---------------------------------------------------------------------------
 
+-- ===========================================================================
+-- Billing (Creem MoR) + model-gateway tiering.
+--   free plans  → only ZERO-COST models from the gateway
+--   paid plans  → the best model overall by default, user-overridable
+-- Both are DATA-driven so "the best model" can change without a code deploy.
+-- ===========================================================================
+
+create table if not exists billing_plans (
+  code text primary key,
+  name text not null,
+  description text,
+  price_cents integer not null default 0,
+  currency text not null default 'USD',
+  interval text not null default 'month' check (interval in ('month','year','none')),
+  creem_product_id text,
+  rank integer not null default 0,
+  is_paid boolean not null default false,
+  features jsonb not null default '[]'::jsonb,
+  limits jsonb not null default '{}'::jsonb,
+  active boolean not null default true,
+  updated_at timestamptz not null default now()
+);
+
+-- Ordered preference list matched against the LIVE gateway catalog
+-- (GET /api/ai/models). Highest rank wins; within a matching family the
+-- newest/highest version is chosen automatically, so a future
+-- claude-opus-6 supersedes claude-opus-5 with no change here at all.
+create table if not exists model_preferences (
+  id uuid primary key default gen_random_uuid(),
+  tier text not null check (tier in ('free','paid')),
+  pattern text not null,
+  rank integer not null default 0,
+  note text,
+  active boolean not null default true,
+  unique (tier, pattern)
+);
+
+create table if not exists ai_usage_log (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid references organizations(id) on delete cascade,
+  workspace_id uuid references workspaces(id) on delete cascade,
+  model text not null,
+  tier text not null,
+  function_slug text,
+  created_at timestamptz not null default now()
+);
+
+alter table organizations add column if not exists preferred_model text;
+alter table organizations add column if not exists creem_subscription_id text;
+alter table organizations add column if not exists plan_interval text;
+alter table organizations add column if not exists current_period_end timestamptz;
+
+create index if not exists idx_ai_usage_org_month on ai_usage_log(organization_id, created_at);
+create index if not exists idx_ai_usage_ws on ai_usage_log(workspace_id);
+
+alter table billing_plans enable row level security;
+alter table model_preferences enable row level security;
+alter table ai_usage_log enable row level security;
+
+-- Reference data: readable by any signed-in user, written only by the service
+-- role (same pattern as policy_configs — no client write policy on purpose).
+drop policy if exists billing_plans_select on billing_plans;
+create policy billing_plans_select on billing_plans for select to authenticated using (true);
+drop policy if exists model_preferences_select on model_preferences;
+create policy model_preferences_select on model_preferences for select to authenticated using (true);
+
+drop policy if exists ai_usage_select on ai_usage_log;
+create policy ai_usage_select on ai_usage_log for select to authenticated
+  using (
+    (organization_id is not null and seerist_is_org_member(organization_id))
+    or (workspace_id is not null and seerist_is_ws_member(workspace_id))
+  );
+drop policy if exists ai_usage_insert on ai_usage_log;
+create policy ai_usage_insert on ai_usage_log for insert to authenticated
+  with check (
+    (organization_id is not null and seerist_is_org_member(organization_id))
+    or (workspace_id is not null and seerist_is_ws_member(workspace_id))
+  );
+
+-- Plan ladder. Creem product ids are live products in the Seerist store;
+-- the free tier has no product because nothing is charged.
+insert into billing_plans (code, name, description, price_cents, interval, creem_product_id, rank, is_paid, features, limits) values
+  ('free', 'Free', 'Try the whole bidding loop. Free models only.', 0, 'none', null, 0, false,
+   '["1 workspace","Chrome extension capture on all 4 platforms","AI fit scoring + proposal drafting","Pitch Queue, Analytics, full audit trail","Free models from the gateway"]'::jsonb,
+   '{"workspaces":1,"ai_actions_per_month":50,"delivery_engine":false,"growth_engine":false,"ceo_persona":false,"model_choice":false}'::jsonb),
+  ('starter', 'Starter', '1 workspace, Bid + Delivery engines, premium models.', 4900, 'month', 'prod_64FkTYg19BehXAxxZ3Rnvz', 1, true,
+   '["Everything in Free","Premium models (Opus-class by default)","Delivery Engine with human QA gate","Hermes memory + skill library","Choose your own model"]'::jsonb,
+   '{"workspaces":1,"ai_actions_per_month":750,"delivery_engine":true,"growth_engine":false,"ceo_persona":false,"model_choice":true}'::jsonb),
+  ('builder', 'Builder', '3 workspaces, all engines including the full Growth Engine.', 14900, 'month', 'prod_1KbeN1XPs0TcPckX3RySlZ', 2, true,
+   '["Everything in Starter","3 workspaces","Full Growth Engine — Site Studio, Ads, Visitor intent","Ploybooks execution engine","Composio integrations"]'::jsonb,
+   '{"workspaces":3,"ai_actions_per_month":3000,"delivery_engine":true,"growth_engine":true,"ceo_persona":false,"model_choice":true}'::jsonb),
+  ('scale', 'Scale', '10 workspaces, the CEO persona, and API polling when approved.', 39900, 'month', 'prod_5z8aZK2jL7iNxeYGdluJl9', 3, true,
+   '["Everything in Builder","10 workspaces","The CEO persona with its approval queue","API polling per platform as access is approved","Priority support"]'::jsonb,
+   '{"workspaces":10,"ai_actions_per_month":12000,"delivery_engine":true,"growth_engine":true,"ceo_persona":true,"model_choice":true}'::jsonb),
+  ('starter_annual', 'Starter (annual)', 'Starter billed yearly — 2 months free.', 49000, 'year', 'prod_42NNzZ5QMttfLm6owbUztY', 1, true,
+   '["Everything in Starter","2 months free vs monthly"]'::jsonb,
+   '{"workspaces":1,"ai_actions_per_month":750,"delivery_engine":true,"growth_engine":false,"ceo_persona":false,"model_choice":true}'::jsonb),
+  ('builder_annual', 'Builder (annual)', 'Builder billed yearly — 2 months free.', 149000, 'year', 'prod_3kIuVm748zlejuW4m4iltY', 2, true,
+   '["Everything in Builder","2 months free vs monthly"]'::jsonb,
+   '{"workspaces":3,"ai_actions_per_month":3000,"delivery_engine":true,"growth_engine":true,"ceo_persona":false,"model_choice":true}'::jsonb),
+  ('scale_annual', 'Scale (annual)', 'Scale billed yearly — 2 months free.', 399000, 'year', 'prod_6pgwtkJgYGEINzwWoODcG2', 3, true,
+   '["Everything in Scale","2 months free vs monthly"]'::jsonb,
+   '{"workspaces":10,"ai_actions_per_month":12000,"delivery_engine":true,"growth_engine":true,"ceo_persona":true,"model_choice":true}'::jsonb)
+on conflict (code) do update set
+  name = excluded.name, description = excluded.description, price_cents = excluded.price_cents,
+  interval = excluded.interval, creem_product_id = excluded.creem_product_id, rank = excluded.rank,
+  is_paid = excluded.is_paid, features = excluded.features, limits = excluded.limits, updated_at = now();
+
+-- FREE tier: only zero-cost gateway models are ever eligible (the resolver
+-- enforces price = 0 as a hard constraint; these patterns only order them).
+insert into model_preferences (tier, pattern, rank, note) values
+  ('free', 'nvidia/nemotron-3-ultra',  100, 'Largest zero-cost model on the gateway.'),
+  ('free', 'nvidia/nemotron-3-super',   90, 'Strong zero-cost mid-size.'),
+  ('free', 'openai/gpt-oss',            80, 'Reliable zero-cost general model.'),
+  ('free', 'google/gemma',              70, 'Zero-cost Gemma family.'),
+  ('free', 'inclusionai/ling',          60, 'Zero-cost fast model.'),
+  ('free', 'nvidia/nemotron-nano',      50, 'Small zero-cost fallback.'),
+-- PAID tier: best overall first. Version numbers are compared automatically,
+-- so a future claude-opus-6 wins over opus-5 without touching this table.
+  ('paid', 'anthropic/claude-opus',    100, 'Best overall. Default for paid plans.'),
+  ('paid', 'anthropic/claude-sonnet',   90, 'Faster, cheaper Anthropic fallback.'),
+  ('paid', 'openai/gpt-5',              80, 'OpenAI flagship fallback.'),
+  ('paid', 'google/gemini-3',           70, 'Google flagship fallback.'),
+  ('paid', 'deepseek/deepseek-v4',      60, 'High value-for-money fallback.')
+on conflict (tier, pattern) do update set rank = excluded.rank, note = excluded.note, active = true;
+
 insert into policy_configs (platform, mention_policy, version, notes) values
   ('fiverr', 'no_mention', 1,
    'PLACEHOLDER — safe default. Fiverr''s off-platform contact/solicitation rules are strict; read the current ToS and update this row before allowing any product mention.'),

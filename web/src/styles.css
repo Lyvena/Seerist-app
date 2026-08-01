@@ -129,6 +129,14 @@ pre code { background: none; padding: 0; }
 .page-head h1 { font-size: 24px; }
 .page-head .sub { color: var(--text-dim); margin-top: 5px; max-width: 660px; font-size: 13.5px; }
 
+/* Legal links (Merchant-of-Record requirement — reachable from anywhere) */
+.legal-links {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 12px 8px 2px;
+  font-size: 11px; line-height: 1.6;
+}
+.legal-links a { color: var(--text-faint); }
+.legal-links a:hover { color: var(--text-dim); }
+
 /* Tabs */
 .tabs {
   display: flex; gap: 4px; margin-bottom: 18px; flex-wrap: wrap;

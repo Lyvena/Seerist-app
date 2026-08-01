@@ -333,6 +333,69 @@ export interface JobSourceStatus {
   reason: string;
 }
 
+// --- Billing (Creem MoR) + model tiering ------------------------------------
+
+export interface BillingPlan {
+  code: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  currency: string;
+  interval: 'month' | 'year' | 'none';
+  creem_product_id: string | null;
+  rank: number;
+  is_paid: boolean;
+  features: string[];
+  limits: {
+    workspaces?: number;
+    ai_actions_per_month?: number;
+    delivery_engine?: boolean;
+    growth_engine?: boolean;
+    ceo_persona?: boolean;
+    model_choice?: boolean;
+    [extra: string]: unknown;
+  };
+}
+
+export interface LegalLinks {
+  terms: string;
+  privacy: string;
+  refunds: string;
+  cookies: string;
+  merchant_of_record: string;
+}
+
+export interface SubscriptionState {
+  plan: string;
+  billing_status: string;
+  plan_interval: string | null;
+  current_period_end: string | null;
+  creem_customer_id: string | null;
+  creem_subscription_id: string | null;
+  details: BillingPlan | null;
+  lifetime: boolean;
+}
+
+export interface ModelStatus {
+  plan: string;
+  tier: 'free' | 'paid';
+  limits: Record<string, unknown>;
+  can_choose_model: boolean;
+  preferred_model: string | null;
+  active_model: string;
+  reason: string;
+  usage: { used: number; cap: number | null; resets_on: string };
+  note: string;
+}
+
+export interface GatewayModelRow {
+  id: string;
+  input_price: number;
+  output_price: number;
+  free: boolean;
+  is_active: boolean;
+}
+
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface CeoApprovalItem {

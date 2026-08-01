@@ -26,6 +26,30 @@ function Logo() {
 
 const NEW_ORG = '__new_org__';
 
+/**
+ * Creem is our Merchant of Record, so its buyer terms apply to every purchase
+ * alongside ours. MoR platforms require these to be reachable from anywhere in
+ * the product, not just the checkout screen. All open in a new tab.
+ */
+function LegalLinks() {
+  const links: Array<[string, string]> = [
+    ['Terms', 'https://seerist.xyz/terms'],
+    ['Privacy', 'https://seerist.xyz/privacy'],
+    ['Refunds', 'https://seerist.xyz/refunds'],
+    ['Cookies', 'https://seerist.xyz/cookies'],
+  ];
+  return (
+    <div className="legal-links">
+      {links.map(([label, href]) => (
+        <a key={label} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+      ))}
+      <a href="https://creem.io/legal/buyer-terms" target="_blank" rel="noopener noreferrer">
+        Payments by Creem
+      </a>
+    </div>
+  );
+}
+
 function Shell({ children }: { children: React.ReactNode }) {
   const { user, profile, orgs, activeOrg, setActiveOrg, workspaces, activeWs, setActiveWs, signOut } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -76,6 +100,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <button className="btn ghost sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => void signOut()}>
           Sign out
         </button>
+        <LegalLinks />
       </div>
     </aside>
   );

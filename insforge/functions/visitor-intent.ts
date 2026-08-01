@@ -268,7 +268,7 @@ Target customer: ${ws.target_customer || 'unspecified'}
 VISITORS:
 ${pending.map((r: any) => `- ${r.visitor_key}: pages=${(r.signals?.pages || []).join(' > ') || 'none'}; referrer=${r.signals?.referrer || 'direct'}; duration=${r.signals?.duration_seconds ?? '?'}s; utm=${JSON.stringify(r.signals?.utm || {})}`).join('\n')}`,
     },
-  ], token, { maxTokens: 1200, temperature: 0.2 });
+  ], token, { maxTokens: 1200, temperature: 0.2, scope: { workspace_id, function_slug: 'visitor-intent' } });
 
   const parsed = parseJsonLoose(raw);
   const scores = Array.isArray(parsed.scores) ? parsed.scores : [];

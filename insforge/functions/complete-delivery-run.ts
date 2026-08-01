@@ -56,7 +56,7 @@ export default async function (req: Request): Promise<Response> {
       const skill = await aiChat([
         { role: 'system', content: 'Extract ONE reusable delivery skill/lesson from this completed contract, phrased as an instruction future delivery runs should follow. One or two sentences. Plain text only.' },
         { role: 'user', content: tasks.map((t: any) => `Task: ${t.description}\nQA note: ${t.qa_note || 'approved clean'}`).join('\n\n').slice(0, 4000) },
-      ], token, { maxTokens: 150, temperature: 0.3 });
+      ], token, { maxTokens: 150, temperature: 0.3, scope: { workspace_id: run.workspace_id, function_slug: 'complete-delivery-run' } });
       if (skill.trim()) {
         await dbInsert('workspace_memories', [{
           workspace_id: run.workspace_id,

@@ -109,7 +109,7 @@ BUTTON + LINK LABELS: ${buttons.join(' / ') || '(none)'}
 PAGE TEXT:
 ${text}`,
       },
-    ], token, { maxTokens: 900, temperature: 0.2 });
+    ], token, { maxTokens: 900, temperature: 0.2, scope: { workspace_id, function_slug: 'site-studio' } });
     parsed = parseJsonLoose(raw);
   } catch (e) {
     // Keep the raw extraction even if the model call fails — it is still the
@@ -204,7 +204,7 @@ DESIGN SYSTEM VOICE: ${design?.voice || '(no design profile yet — run extract_
 PAGE TOPIC: ${topic}
 PAGE TYPE: ${pageType}`,
     },
-  ], token, { maxTokens: 2600, temperature: 0.45 });
+  ], token, { maxTokens: 2600, temperature: 0.45, scope: { workspace_id, function_slug: 'site-studio' } });
 
   const parsed = parseJsonLoose(raw);
   const faq = Array.isArray(parsed.faq) ? parsed.faq.slice(0, 10) : [];
@@ -363,7 +363,7 @@ async function monitor(body: any, token: string, userId: string | null): Promise
       role: 'user',
       content: `WORKSPACE: ${ws.name} — ${ws.product_name || '(no product name)'}: ${ws.product_description || 'no description'}\n\nEVIDENCE:\n${evidenceBlock.slice(0, 12000)}`,
     },
-  ], token, { maxTokens: 1400, temperature: 0.3 });
+  ], token, { maxTokens: 1400, temperature: 0.3, scope: { workspace_id, function_slug: 'site-studio' } });
 
   const parsed = parseJsonLoose(raw);
   const fixes = Array.isArray(parsed.fixes) ? parsed.fixes.slice(0, 8) : [];

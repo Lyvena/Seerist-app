@@ -58,7 +58,7 @@ export default async function (req: Request): Promise<Response> {
     const raw = await aiChat([
       { role: 'system', content: 'You are The Grower, Seerist\'s growth analyst. From this website text, extract the product positioning a bidding copywriter needs. Respond with STRICT JSON: {"summary": "<4-6 sentence factual summary of what the product does>", "positioning": "<2-3 sentences: the sharpest way to describe this product to a prospective client, including who it is for and its key differentiator>"}' },
       { role: 'user', content: `URL: ${url}\n\nSITE TEXT:\n${text}` },
-    ], token, { maxTokens: 700, temperature: 0.3 });
+    ], token, { maxTokens: 700, temperature: 0.3, scope: { workspace_id, function_slug: 'site-ingest' } });
     const parsed = parseJsonLoose(raw);
 
     const [updated] = await dbPatch('site_ingestion_jobs', `id=eq.${jobId}`, {

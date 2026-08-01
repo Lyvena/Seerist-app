@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { callFn, db, INSFORGE_URL } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
+import BillingPanel from '../components/BillingPanel';
 import type { PlatformConnection, WorkspaceMemory } from '../lib/types';
 
 interface PolicyRow { id: string; platform: string; mention_policy: string; version: number; notes: string | null }
@@ -81,23 +82,10 @@ export default function SettingsPage() {
           <span className="badge gray">plan: {activeOrg.plan}</span>
           {activeOrg.creem_customer_id && <span className="badge gray">creem: {activeOrg.creem_customer_id.slice(0, 12)}…</span>}
         </div>
-        <div className="row mt">
-          {['starter', 'growth'].map((plan) => (
-            <button key={plan} className="btn sm" disabled={!!busy} onClick={() => act('checkout', async () => {
-              try {
-                const res = await callFn<{ checkoutUrl: string }>('creem-checkout', { organization_id: activeOrg.id, plan, success_url: window.location.origin + '/settings' });
-                if (res.checkoutUrl) window.open(res.checkoutUrl, '_blank');
-              } catch (e) {
-                setCheckoutMsg(e instanceof Error ? e.message : 'Checkout unavailable');
-              }
-            })}>
-              Upgrade to {plan} (Creem)
-            </button>
-          ))}
-        </div>
         {checkoutMsg && <div className="warn-box mt">{checkoutMsg}</div>}
-        <p className="faint mt">Payments run through Creem (Merchant of Record). Webhook endpoint for the Creem dashboard: <code>{INSFORGE_URL}/functions/creem-webhook</code></p>
       </div>
+
+      <BillingPanel orgId={activeOrg.id} />
 
       <div className="card mt">
         <h3>Members</h3>

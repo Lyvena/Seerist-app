@@ -218,7 +218,7 @@ ${positioning}
 
 BRIEF: ${brief}`,
     },
-  ], token, { maxTokens: 1600, temperature: 0.6 });
+  ], token, { maxTokens: 1600, temperature: 0.6, scope: { workspace_id, function_slug: 'ads-studio' } });
 
   const parsed = parseJsonLoose(raw);
   const variants = (Array.isArray(parsed.variants) ? parsed.variants : []).slice(0, count);

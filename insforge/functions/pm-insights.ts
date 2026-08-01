@@ -61,7 +61,7 @@ ATTRIBUTION: ${touchpoints.length} product-mention touchpoints, ${touchpoints.fi
     const insights = await aiChat([
       { role: 'system', content: `You are The PM, Seerist's product-manager persona for the "${ws.name}" ${ws.type} workspace. Synthesize win/loss, QA-rejection, and attribution data into concrete roadmap suggestions. Output markdown with three sections: "What's working", "What's costing us", and "Roadmap suggestions" (3-5 prioritized, specific items). If data is thin, say so plainly and suggest what to instrument.` },
       { role: 'user', content: dataBrief },
-    ], token, { maxTokens: 1200, temperature: 0.4 });
+    ], token, { maxTokens: 1200, temperature: 0.4, scope: { workspace_id, function_slug: 'pm-insights' } });
 
     await logPersona({
       workspace_id,

@@ -276,7 +276,7 @@ Baseline across ${ctx.baseline.bids} tracked bids: ${pct(ctx.baseWinRate)} win r
 Segments (same order as your output must be):
 ${segments.map((s, i) => `${i + 1}. ${s.dimension} = "${s.value}" — ${s.bids} bids, ${s.wins} wins (${pct(s.win_rate)}), ${s.signups} attributed signups (${pct(s.signup_rate)}), signup lift ${liftLabel(s.signup_lift)} vs baseline, win lift ${liftLabel(s.win_lift)}.`).join('\n')}`,
       },
-    ], token, { maxTokens: 900, temperature: 0.35 });
+    ], token, { maxTokens: 900, temperature: 0.35, scope: { workspace_id: ctx.ws.id, function_slug: 'growth-feedback' } });
     const parsed = parseJsonLoose(raw);
     const list = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
     return segments.map((_, i) => String(list[i] || '').trim().slice(0, 600));

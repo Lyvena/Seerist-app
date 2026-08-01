@@ -38,7 +38,7 @@ export default async function (req: Request): Promise<Response> {
     const raw = await aiChat([
       { role: 'system', content: `You are The Closer, Seerist's client-communications persona for "${ws.name}". Draft a ${kind.replace('_', ' ')} email to the client who just hired us. Warm, professional, concise (<180 words). Match the workspace tone: ${ws.tone_style || 'professional, direct, warm'}. Respond with STRICT JSON: {"subject": "<subject line>", "body": "<email body>"}` },
       { role: 'user', content: `Contract: ${job?.title}\nOur winning proposal:\n${(proposal.draft_content || '').slice(0, 2000)}` },
-    ], token, { maxTokens: 600, temperature: 0.5 });
+    ], token, { maxTokens: 600, temperature: 0.5, scope: { workspace_id: proposal.workspace_id, function_slug: 'closer-draft' } });
     const draft = parseJsonLoose(raw);
 
     let sent = false;

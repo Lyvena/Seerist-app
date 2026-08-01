@@ -197,7 +197,7 @@ async function extractSkill(body: any, token: string, userId: string | null): Pr
         role: 'user',
         content: `Contract: ${job?.title || '(untitled)'}\nStack: ${run.target_stack}\n\n${transcript}`,
       },
-    ], token, { maxTokens: 700, temperature: 0.3 });
+    ], token, { maxTokens: 700, temperature: 0.3, scope: { workspace_id: run.workspace_id, function_slug: 'hermes-memory' } });
     const parsed = parseJsonLoose(raw);
     if (parsed.skill_name) skillName = String(parsed.skill_name).slice(0, 120);
     skillData = {

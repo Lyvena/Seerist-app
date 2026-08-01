@@ -94,7 +94,7 @@ ${(job.description || '').slice(0, 6000)}`;
     const raw = await aiChat(
       [{ role: 'system', content: system }, { role: 'user', content: user }],
       token,
-      { maxTokens: 1100, temperature: 0.6 },
+      { maxTokens: 1100, temperature: 0.6, scope: { workspace_id: proposal.workspace_id, function_slug: 'draft-proposal' } },
     );
     const parsed = parseJsonLoose(raw);
     const draft = String(parsed.draft || '').trim();
