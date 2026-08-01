@@ -168,8 +168,14 @@ const log = (await rec.select('persona_action_log', `organization_id=eq.${org.id
 check('persona audit log populated (org level)', log.length >= 2);
 
 // --- 6. Billing + analytics ----------------------------------------------------
-const checkout = await fn('creem-checkout', { organization_id: org.id, plan: 'growth' }, token);
-check('creem-checkout responds with clear setup guidance (501 until key added)', checkout.status === 501 && Boolean(checkout.body.setupNeeded), `got ${checkout.status}`);
+// Billing is live, so an unknown plan code must be rejected on its own merits
+// rather than hidden behind a "Creem is not configured" response.
+const badPlan = await fn('creem-checkout', { organization_id: org.id, plan: 'growth' }, token);
+check('creem-checkout rejects an unknown plan code', badPlan.status === 400 && /unknown plan/i.test(badPlan.body.error || ''), `got ${badPlan.status} ${JSON.stringify(badPlan.body).slice(0, 120)}`);
+
+const plans = await fn('creem-checkout', { op: 'plans' }, token);
+const planCodes = (plans.body.plans || []).map((p) => p.code);
+check('creem-checkout lists the plan ladder', plans.status === 200 && ['free', 'starter', 'builder', 'scale'].every((c) => planCodes.includes(c)), `got ${JSON.stringify(planCodes).slice(0, 160)}`);
 
 const analytics = await fn('analytics-summary', { workspace_id: ws.id }, token);
 check('analytics: 1 sent / 1 won / mention stats present', analytics.status === 200 && analytics.body.funnel?.sent === 1 && analytics.body.funnel?.won === 1 && analytics.body.productMention !== null, JSON.stringify(analytics.body.funnel || {}).slice(0, 120));

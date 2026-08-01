@@ -9,7 +9,7 @@ import { loadFunctionScope, readRepoFile } from './helpers/load';
  */
 
 const shared = readRepoFile('insforge/functions/_shared.ts');
-const { aiJson } = loadFunctionScope('insforge/functions/_shared.ts', ['aiJson']);
+const { aiJson, aiChat } = loadFunctionScope('insforge/functions/_shared.ts', ['aiJson', 'aiChat']);
 
 const reply = (text: string) => ({ ok: true, json: async () => ({ text }) });
 const messages = [{ role: 'user', content: 'go' }];
@@ -73,6 +73,64 @@ describe('a truncated JSON reply is retried, not surfaced', () => {
 
     await expect(aiJson(messages, 'tok', {})).rejects.toThrow(/did not return valid JSON/);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('an empty completion moves to the next model', () => {
+  /** A gateway stub: real catalog + DB shapes, scripted chat replies. */
+  function stubGateway(chatReplies: string[]) {
+    const chatCalls: Array<{ model: string }> = [];
+    const ok = (body: unknown) => ({
+      ok: true,
+      status: 200,
+      json: async () => body,
+      headers: { get: () => '0-0/0' },
+      text: async () => JSON.stringify(body),
+    });
+    const fetchMock = vi.fn(async (url: string, init: any = {}) => {
+      if (url.includes('/api/ai/chat/completion')) {
+        const model = JSON.parse(init.body).model;
+        chatCalls.push({ model });
+        return ok({ text: chatReplies[chatCalls.length - 1] ?? '' });
+      }
+      if (url.includes('/api/ai/models')) {
+        return ok([
+          { id: 'fast/flaky:free', inputPrice: 0, outputPrice: 0, inputModality: ['text'], outputModality: ['text'] },
+          { id: 'slow/steady:free', inputPrice: 0, outputPrice: 0, inputModality: ['text'], outputModality: ['text'] },
+        ]);
+      }
+      if (url.includes('/records/workspaces')) return ok([{ organization_id: 'org1' }]);
+      if (url.includes('/records/organizations')) return ok([{ id: 'org1', plan: 'free', billing_status: 'none' }]);
+      if (url.includes('/records/billing_plans')) return ok([{ code: 'free', is_paid: false, limits: {} }]);
+      if (url.includes('/records/model_preferences')) {
+        return ok([{ tier: 'free', pattern: 'fast/flaky', rank: 100, active: true }]);
+      }
+      return ok([]);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    return chatCalls;
+  }
+
+  const scope = { workspace_id: 'ws1', function_slug: 'test' };
+
+  it('retries a blank reply on a different model and returns its answer', async () => {
+    const calls = stubGateway(['   ', 'a real answer']);
+    await expect(aiChat(messages, 'tok', { scope })).resolves.toBe('a real answer');
+    expect(calls.map((c) => c.model)).toEqual(['fast/flaky:free', 'slow/steady:free']);
+  });
+
+  it('does not retry when the first model answered', async () => {
+    const calls = stubGateway(['answered first time']);
+    await expect(aiChat(messages, 'tok', { scope })).resolves.toBe('answered first time');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('leaves a caller-pinned model alone', async () => {
+    // Pinning a model is an explicit instruction; silently answering from a
+    // different one would be worse than returning nothing.
+    const calls = stubGateway(['', 'never reached']);
+    await expect(aiChat(messages, 'tok', { scope, model: 'fast/flaky:free' })).resolves.toBe('');
+    expect(calls).toHaveLength(1);
   });
 });
 

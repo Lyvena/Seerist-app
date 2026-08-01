@@ -273,7 +273,7 @@ async function resolveEntitlement(
  * models; paid plans get their chosen model, or the highest-ranked family
  * available on the gateway right now.
  */
-async function resolveModel(scope: AiScope, token: string): Promise<ResolvedModel> {
+async function resolveModel(scope: AiScope, token: string, exclude: string[] = []): Promise<ResolvedModel> {
   let ent: Awaited<ReturnType<typeof resolveEntitlement>>;
   try {
     ent = await resolveEntitlement(scope, token);
@@ -293,7 +293,8 @@ async function resolveModel(scope: AiScope, token: string): Promise<ResolvedMode
   // Free tier: capped by cost. This is a hard constraint, not a preference —
   // a free plan can never be routed to a model above its ceiling.
   const ceiling = freeModelCeiling(ent.limits);
-  const eligible = tier === 'free' ? models.filter((m) => withinFreeCeiling(m, ceiling)) : models;
+  const eligible = (tier === 'free' ? models.filter((m) => withinFreeCeiling(m, ceiling)) : models)
+    .filter((m) => !exclude.includes(m.id));
   if (!eligible.length) {
     return { model: fallback, tier, plan: ent.plan, reason: 'no eligible models in catalog — using fallback', organizationId: ent.org?.id ?? null };
   }
@@ -388,10 +389,25 @@ async function aiChat(
   }
   if (!res.ok) throw new Error(`model gateway failed (${res.status}): ${await res.text()}`);
 
+  let text: string = (await res.json()).text ?? '';
+
+  // A model can answer one prompt happily and return an empty completion for
+  // the next, reporting success either way. An empty string is not something a
+  // caller can interpret, so treat it as that model failing and move to the
+  // next-best one rather than passing nothing back up.
+  if (!text.trim() && !opts.model && opts.scope) {
+    const next = await resolveModel(opts.scope, token, [model!]);
+    if (next.model !== model) {
+      console.warn(`empty completion from ${model} — retrying on ${next.model}`);
+      model = next.model;
+      res = await send(model);
+      if (res.ok) text = (await res.json()).text ?? '';
+    }
+  }
+
   if (resolved && opts.scope) void logAiUsage(opts.scope, model!, tier, token);
 
-  const data = await res.json();
-  return data.text ?? '';
+  return text;
 }
 
 /**
