@@ -63,6 +63,11 @@ export default async function (req: Request): Promise<Response> {
       seen.add(m.id);
       return true;
     });
+
+    // What has actually won here. Without this every draft is written as though
+    // it were the first one: the product would never get better with use, and
+    // there would be nothing a competitor with the same model could not match.
+    const evidence = await wonProposalEvidence(proposal, job, token);
     const memoryBlock = memories.length
       ? memories.map((m: any) => `- [${m.kind}] ${m.key}: ${m.content.slice(0, 400)}`).join('\n')
       : '(no stored memories yet)';
@@ -79,6 +84,7 @@ Write a winning, policy-compliant freelance proposal. Hard rules:
 - Match the workspace's tone/style. Reference relevant past work briefly when available.
 - Under 260 words. No AI/bot/automation mentions. No contact info outside the platform.
 - End with one clear next step (a question, a short call, or a first milestone).
+${evidence.rules}
 ${ws.type === 'saas' ? `- PRODUCT-MENTION POLICY for ${job.platform} (curated v${policyVersion || 'default'}): ${mentionRules[mentionPolicy]}` : ''}
 Respond with STRICT JSON only: {"draft": "<the proposal text>", "product_mentioned": <true|false>}`;
 
@@ -91,7 +97,7 @@ ${ws.type === 'saas' ? `Product: ${ws.product_name || ''} — ${ws.product_descr
 
 WORKSPACE MEMORY
 ${memoryBlock}
-
+${evidence.block}
 FIT ANALYSIS
 Score: ${proposal.fit_score ?? 'not scored'} — ${proposal.fit_reasoning || ''}
 
@@ -144,4 +150,98 @@ ${(job.description || '').slice(0, 6000)}`;
     console.error(e);
     return json({ error: e instanceof Error ? e.message : 'drafting failed' }, 500);
   }
+}
+
+/**
+ * The workspace's own winning proposals, as evidence of what works here.
+ *
+ * Chosen by how close the won job is to this one — same platform first, then
+ * overlapping title words — because "what won us a Webflow migration" is only
+ * useful advice on another Webflow migration. Recent losses come too: knowing
+ * a bid was lost on price is what stops the next one repeating it.
+ *
+ * Returns empty strings for a workspace with no history, so a first-time user
+ * gets exactly today's behaviour rather than a prompt full of apologies.
+ */
+async function wonProposalEvidence(
+  proposal: any,
+  job: any,
+  token: string,
+): Promise<{ block: string; rules: string }> {
+  const empty = { block: '', rules: '' };
+  try {
+    const resolved = await dbSelect(
+      'proposals',
+      `workspace_id=eq.${proposal.workspace_id}&outcome=in.(won,lost)&draft_content=not.is.null` +
+        `&id=neq.${proposal.id}&order=won_at.desc.nullslast,lost_at.desc&limit=40`,
+      token,
+    );
+    if (!resolved.length) return empty;
+
+    const jobIds = [...new Set(resolved.map((p: any) => p.job_posting_id))].filter(Boolean);
+    const jobs = jobIds.length
+      ? await dbSelect(
+        'job_postings',
+        `id=in.(${jobIds.join(',')})&select=id,title,platform,budget`,
+        token,
+      )
+      : [];
+    const byId = new Map(jobs.map((j: any) => [j.id, j]));
+
+    const words = keywords(job?.title || '');
+    const scoreOf = (p: any) => {
+      const j: any = byId.get(p.job_posting_id);
+      let s = 0;
+      if (j?.platform && j.platform === job?.platform) s += 3;
+      if (j?.title) for (const w of keywords(j.title)) if (words.has(w)) s += 2;
+      return s;
+    };
+
+    const wins = resolved.filter((p: any) => p.outcome === 'won')
+      .sort((a: any, b: any) => scoreOf(b) - scoreOf(a))
+      .slice(0, 3);
+    const losses = resolved.filter((p: any) => p.outcome === 'lost' && (p.outcome_category || p.outcome_reason))
+      .slice(0, 3);
+    if (!wins.length && !losses.length) return empty;
+
+    const parts: string[] = [];
+    if (wins.length) {
+      parts.push(`\nPROPOSALS THAT WON THIS WORKSPACE THE CONTRACT (evidence of what works here — study the angle and structure, never copy the wording):\n${
+        wins.map((p: any, i: number) => {
+          const j: any = byId.get(p.job_posting_id);
+          return `${i + 1}. "${j?.title ?? 'a past job'}" (${j?.platform ?? '?'}${j?.budget ? `, ${j.budget}` : ''}) — scored ${p.fit_score ?? '?'}\n${String(p.draft_content).slice(0, 900)}`;
+        }).join('\n\n')
+      }`);
+    }
+    if (losses.length) {
+      parts.push(`\nWHY RECENT BIDS WERE LOST (do not repeat these):\n${
+        losses.map((p: any) => {
+          const j: any = byId.get(p.job_posting_id);
+          return `- "${j?.title ?? 'a past job'}": ${[p.outcome_category, p.outcome_reason].filter(Boolean).join(' — ')}`;
+        }).join('\n')
+      }`);
+    }
+
+    return {
+      block: `${parts.join('\n')}\n`,
+      rules: wins.length
+        ? '- Past winners for this workspace are provided. Reuse the structure and angle that won, never the sentences.'
+        : '- Recent losses are provided with their reasons. Avoid repeating them.',
+    };
+  } catch {
+    // Evidence is an enhancement; a workspace with an unreadable history still
+    // gets a draft.
+    return empty;
+  }
+}
+
+/** Content words of a title, for judging how alike two jobs are. */
+function keywords(title: string): Set<string> {
+  const stop = new Set([
+    'the', 'and', 'for', 'with', 'our', 'need', 'needed', 'looking', 'want', 'wanted',
+    'a', 'an', 'to', 'of', 'in', 'on', 'we', 'is', 'are', 'you', 'your', 'help', 'new',
+  ]);
+  return new Set(
+    String(title).toLowerCase().match(/[a-z][a-z0-9+#.]{2,}/g)?.filter((w) => !stop.has(w)) ?? [],
+  );
 }

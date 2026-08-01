@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Seerist">
+  <title>Seerist</title>
   <defs>
-    <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="s-ring" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="0.55" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="s-core" x1="0.2" y1="0" x2="0.8" y2="1">
       <stop offset="0" stop-color="#4338ca"/>
       <stop offset="1" stop-color="#7c3aed"/>
     </linearGradient>
-    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#8b5cf6"/>
-    </linearGradient>
   </defs>
 
-  <!-- Transparent background; the seer lens carries the brand color -->
+  <!-- Aperture: an open ring, so the mark reads as scanning rather than closed.
+       The gap sits at the upper right, where the signal dot is found. -->
+  <path d="M 336.3 141.3 A 140 140 0 1 0 385.0 306.0"
+        fill="none" stroke="url(#s-ring)" stroke-width="54" stroke-linecap="round"/>
 
-  <!-- Seer lens: ring + iris -->
-  <circle cx="256" cy="256" r="108" fill="none" stroke="url(#lens)" stroke-width="34"/>
-  <circle cx="256" cy="256" r="46" fill="url(#lens)"/>
+  <!-- The signal: what the scan just picked up. -->
+  <circle cx="393" cy="119" r="42" fill="url(#s-core)"/>
 
-  <!-- Orbital scan arc with satellite dot (foresight / radar) -->
-  <g transform="rotate(-24 256 256)">
-    <path d="M 74 256 A 182 182 0 0 1 438 256"
-          fill="none" stroke="url(#orbit)" stroke-width="16" stroke-linecap="round"/>
-    <circle cx="438" cy="256" r="26" fill="url(#lens)"/>
-  </g>
+  <!-- Pupil -->
+  <circle cx="256" cy="256" r="52" fill="url(#s-core)"/>
 </svg>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callFn, db } from '../lib/insforge';
 import type { GrowthContentDraft, SiteDesignProfile, SiteMonitorRun } from '../lib/types';
+import { Icon } from './Icon';
 
 /**
  * Autonomous site generation and maintenance (spec §4, Module C).
@@ -62,7 +63,7 @@ export default function SiteStudioTab({ wsId }: { wsId: string }) {
             placeholder="https://yourproduct.com" style={{ flex: 1, minWidth: 260 }} />
           <button className="btn primary" disabled={!!busy || !siteUrl.trim()}
             onClick={() => act('design', () => callFn('site-studio', { op: 'extract_design_system', workspace_id: wsId, url: siteUrl }))}>
-            {busy === 'design' ? <span className="spinner" /> : '🎨 Reconstruct'}
+            {busy === 'design' ? <span className="spinner" /> : <><Icon name="sparkle" /> Reconstruct</>}
           </button>
         </div>
         {profile ? (
@@ -96,7 +97,7 @@ export default function SiteStudioTab({ wsId }: { wsId: string }) {
         </div>
         <button className="btn mt" disabled={!!busy || !topic.trim()}
           onClick={() => act('page', () => callFn('site-studio', { op: 'generate_page', workspace_id: wsId, topic, page_type: pageType }))}>
-          {busy === 'page' ? <span className="spinner" /> : '✎ Draft the page'}
+          {busy === 'page' ? <span className="spinner" /> : <><Icon name="pen" /> Draft the page</>}
         </button>
       </div>
 
@@ -109,7 +110,7 @@ export default function SiteStudioTab({ wsId }: { wsId: string }) {
               placeholder="https://yourproduct.com (defaults to product URL)" style={{ flex: 1 }} />
             <button className="btn" disabled={!!busy}
               onClick={() => act('perf', () => callFn('site-studio', { op: 'monitor', workspace_id: wsId, kind: 'performance', url: monitorUrl || undefined }))}>
-              {busy === 'perf' ? <span className="spinner" /> : '⚡ Performance'}
+              {busy === 'perf' ? <span className="spinner" /> : <><Icon name="bolt" /> Performance</>}
             </button>
           </div>
           <div className="row">
@@ -120,7 +121,7 @@ export default function SiteStudioTab({ wsId }: { wsId: string }) {
                 op: 'monitor', workspace_id: wsId, kind: 'competitor',
                 competitors: competitors.split(',').map((c) => c.trim()).filter(Boolean),
               }))}>
-              {busy === 'comp' ? <span className="spinner" /> : '🔍 Competitors'}
+              {busy === 'comp' ? <span className="spinner" /> : <><Icon name="search" /> Competitors</>}
             </button>
           </div>
         </div>
@@ -209,7 +210,7 @@ export function DraftDrawer({ draft, onClose, onChanged }: {
               {meta.priority ? <span className="badge amber">priority {String(meta.priority)}</span> : null}
             </div>
           </div>
-          <button className="btn ghost" onClick={onClose}>✕</button>
+          <button className="btn ghost" onClick={onClose}><Icon name="close" /></button>
         </div>
 
         {error && <div className="error-box mt">{error}</div>}

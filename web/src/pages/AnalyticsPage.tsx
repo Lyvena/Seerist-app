@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { callFn } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { AnalyticsSummary } from '../lib/types';
+import { Icon } from '../components/Icon';
+import { Meter } from '../components/UI';
 
 export default function AnalyticsPage() {
   const { activeWs } = useApp();
@@ -32,7 +34,7 @@ export default function AnalyticsPage() {
           <h1>Analytics</h1>
           <p className="sub">Sent → viewed → replied → won. {activeWs.type === 'saas' && 'Product-mention performance is tracked separately from win rate — a mention that doesn\'t win can still drive a signup.'}</p>
         </div>
-        <button className="btn" onClick={() => void load()}>↻ Refresh</button>
+        <button className="btn" onClick={() => void load()}><Icon name="refresh" /> Refresh</button>
       </div>
 
       {error && <div className="error-box mb">{error}</div>}
@@ -46,6 +48,83 @@ export default function AnalyticsPage() {
             <div className="card stat"><div className="label">Replied</div><div className="value">{data.funnel.replied}</div><div className="hint">{data.funnel.replyRate ?? '—'}% reply rate</div></div>
             <div className="card stat"><div className="label">Won</div><div className="value">{data.funnel.won}</div><div className="hint">{data.funnel.winRate ?? '—'}% win rate</div></div>
           </div>
+
+          {/* What the product has learned from these results — shown so the
+              user can see it getting smarter rather than take it on faith. */}
+          {data.learning && (
+            <div className="card accent mt">
+              <div className="spread mb">
+                <h3 className="row" style={{ gap: 8 }}><Icon name="brain" /> What Seerist has learned from you</h3>
+                {data.learning.ready
+                  ? <span className="badge blue">{data.learning.resolved} resolved bids</span>
+                  : <span className="badge gray">{data.learning.resolved}/{data.learning.needed} to go</span>}
+              </div>
+
+              {!data.learning.ready ? (
+                <p className="muted" style={{ fontSize: 13, margin: 0 }}>{data.learning.note}</p>
+              ) : (
+                <>
+                  <div className="grid cols-3">
+                    <div>
+                      <div className="faint mb">Win rate by fit score</div>
+                      {(data.learning.byScoreBand || []).map((b) => (
+                        <div key={b.band} style={{ marginBottom: 9 }}>
+                          <div className="spread" style={{ fontSize: 12.5 }}>
+                            <span>{b.band}</span>
+                            <span style={{ fontWeight: 700 }}>{b.winRate ?? '—'}% <span className="faint">of {b.n}</span></span>
+                          </div>
+                          <Meter value={b.winRate ?? 0} tone={(b.winRate ?? 0) >= 30 ? 'green' : undefined} />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="faint mb">Win rate by platform</div>
+                      {(data.learning.byPlatform || []).map((b) => (
+                        <div key={b.platform} style={{ marginBottom: 9 }}>
+                          <div className="spread" style={{ fontSize: 12.5 }}>
+                            <span style={{ textTransform: 'capitalize' }}>{b.platform}</span>
+                            <span style={{ fontWeight: 700 }}>{b.winRate ?? '—'}% <span className="faint">of {b.n}</span></span>
+                          </div>
+                          <Meter value={b.winRate ?? 0} tone={(b.winRate ?? 0) >= 30 ? 'green' : undefined} />
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <div className="faint mb">Why bids are lost</div>
+                      {(data.learning.lossReasons || []).length ? (
+                        (data.learning.lossReasons || []).map((r) => (
+                          <div key={r.reason} className="spread" style={{ fontSize: 12.5, padding: '3px 0' }}>
+                            <span style={{ textTransform: 'capitalize' }}>{r.reason.replace('_', ' ')}</span>
+                            <span className="badge gray">{r.count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="faint" style={{ margin: 0 }}>
+                          Nothing recorded yet. When you mark a bid lost, pick a reason — it is the
+                          only thing that teaches the next draft.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {data.learning.productMention && (
+                    <div className="info-box mt">
+                      <Icon name="info" />
+                      <span>
+                        Bids that mentioned your product won{' '}
+                        <strong>{data.learning.productMention.withWinRate}%</strong> of the time
+                        ({data.learning.productMention.withN} bids), against{' '}
+                        <strong>{data.learning.productMention.withoutWinRate}%</strong> without
+                        ({data.learning.productMention.withoutN}). That is the real cost — or
+                        benefit — of using a bid as a growth channel.
+                      </span>
+                    </div>
+                  )}
+                  <p className="faint mt" style={{ margin: '10px 0 0' }}>{data.learning.note}</p>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="card mt">
             <h3>Funnel</h3>

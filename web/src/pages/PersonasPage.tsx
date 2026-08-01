@@ -3,6 +3,7 @@ import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import CEOApprovalQueue from '../components/CEOApprovalQueue';
 import { PERSONAS, type PersonaAction } from '../lib/types';
+import { Icon, type IconName } from '../components/Icon';
 
 /**
  * Each persona's own slice of persona_action_log (spec §4 Module D: "Each gets
@@ -168,7 +169,7 @@ export default function PersonasPage() {
           <h1>AI Employees</h1>
           <p className="sub">Seven named personas over one shared reasoning layer (Hermes memory + InsForge model gateway + Composio tools). Every persona action is audited below — especially the CEO's.</p>
         </div>
-        <button className="btn" onClick={() => void load()}>↻ Refresh</button>
+        <button className="btn" onClick={() => void load()}><Icon name="refresh" /> Refresh</button>
       </div>
 
       {error && <div className="error-box mb">{error}</div>}
@@ -176,7 +177,7 @@ export default function PersonasPage() {
       <div className="grid cols-2">
         {PERSONAS.map((p) => (
           <div className="card persona-card" key={p.name}>
-            <div className="persona-emoji">{p.icon}</div>
+            <div className="persona-mark"><Icon name={p.icon as IconName} size={19} /></div>
             <div style={{ flex: 1 }}>
               <div className="spread">
                 <div className="row">
@@ -210,7 +211,7 @@ export default function PersonasPage() {
 
       {pmInsights && (
         <div className="card mt">
-          <div className="spread"><h3>🧭 The PM — roadmap suggestions</h3><button className="btn ghost sm" onClick={() => setPmInsights(null)}>✕</button></div>
+          <div className="spread"><h3 className="row" style={{ gap: 8 }}><Icon name="clipboard" /> The PM — roadmap suggestions</h3><button className="btn ghost sm" onClick={() => setPmInsights(null)}><Icon name="close" /></button></div>
           <pre className="mt">{pmInsights}</pre>
         </div>
       )}
@@ -219,7 +220,7 @@ export default function PersonasPage() {
         <div className="card mt">
           <div className="spread">
             <h3>{personaOutput.persona} — result</h3>
-            <button className="btn ghost sm" onClick={() => setPersonaOutput(null)}>✕</button>
+            <button className="btn ghost sm" onClick={() => setPersonaOutput(null)}><Icon name="close" /></button>
           </div>
           <pre className="mt">{personaOutput.text}</pre>
         </div>
@@ -243,7 +244,7 @@ export default function PersonasPage() {
                 if (error) throw new Error(error.message);
                 await refresh();
               })}>
-              {activeOrg.ceo_kill_switch ? '↺ Release kill switch' : '🛑 KILL SWITCH'}
+              {activeOrg.ceo_kill_switch ? <><Icon name="refresh" /> Release kill switch</> : <><Icon name="lock" /> KILL SWITCH</>}
             </button>
           </div>
         </div>

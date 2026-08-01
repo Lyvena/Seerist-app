@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { callFn, db, INSFORGE_URL } from '../lib/insforge';
 import { DraftDrawer, DraftTable } from './SiteStudioTab';
 import type { AdCampaign, GrowthContentDraft } from '../lib/types';
+import { Icon } from './Icon';
 
 /**
  * Ad creative generation and campaign management (spec §4, Module C).
@@ -131,7 +132,7 @@ export default function AdsTab({ wsId }: { wsId: string }) {
             op: 'generate_creative', workspace_id: wsId, brief,
             campaign_id: briefCampaign || undefined, count: 3,
           }))}>
-          {busy === 'creative' ? <span className="spinner" /> : '✦ Draft 3 variants'}
+          {busy === 'creative' ? <span className="spinner" /> : <><Icon name="sparkle" /> Draft 3 variants</>}
         </button>
       </div>
 

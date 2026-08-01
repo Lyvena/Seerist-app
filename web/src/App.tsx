@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import { useApp } from './state/AppContext';
+import { Icon, Logomark } from './components/Icon';
 import AuthPage from './pages/AuthPage';
 import OnboardingPage from './pages/OnboardingPage';
 import HomePage from './pages/HomePage';
@@ -15,7 +16,7 @@ import ExtensionPage from './pages/ExtensionPage';
 function Logo() {
   return (
     <div className="logo">
-      <img src="/logo.svg" alt="Seerist" width={36} height={36} style={{ display: 'block' }} />
+      <Logomark size={34} />
       <div>
         <div className="logo-name">Seerist</div>
         <div className="logo-tag">Win the work. Grow the product.</div>
@@ -77,29 +78,27 @@ function Shell({ children }: { children: React.ReactNode }) {
         </select>
       </div>
       <nav className="nav" onClick={() => setMenuOpen(false)}>
-        <NavLink to="/home"><span className="icon">🏠</span> Home</NavLink>
+        <NavLink to="/home"><Icon name="home" /> Home</NavLink>
         <div className="nav-section">Bid engine</div>
-        <NavLink to="/queue"><span className="icon">📋</span> Pitch Queue</NavLink>
-        <NavLink to="/analytics"><span className="icon">📈</span> Analytics</NavLink>
-        <NavLink to="/extension"><span className="icon">🧩</span> Capture & sources</NavLink>
-        <div className="nav-section">Delivery & growth</div>
-        <NavLink to="/delivery"><span className="icon">🚚</span> Delivery Engine</NavLink>
-        <NavLink to="/growth"><span className="icon">🌱</span> Growth Engine</NavLink>
+        <NavLink to="/queue"><Icon name="queue" /> Pitch Queue</NavLink>
+        <NavLink to="/analytics"><Icon name="analytics" /> Analytics</NavLink>
+        <NavLink to="/extension"><Icon name="radar" /> Find work</NavLink>
+        <div className="nav-section">Delivery &amp; growth</div>
+        <NavLink to="/delivery"><Icon name="delivery" /> Delivery Engine</NavLink>
+        <NavLink to="/growth"><Icon name="growth" /> Growth Engine</NavLink>
         <div className="nav-section">Organization</div>
-        <NavLink to="/personas"><span className="icon">🤖</span> AI Employees</NavLink>
-        <NavLink to="/settings"><span className="icon">⚙️</span> Settings</NavLink>
+        <NavLink to="/personas"><Icon name="personas" /> AI Employees</NavLink>
+        <NavLink to="/settings"><Icon name="settings" /> Settings</NavLink>
       </nav>
       <div className="sidebar-footer">
         <div className="user-chip">
           <div className="avatar">{initials}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>{profile?.name || 'Member'}</div>
+            <div className="who">{profile?.name || 'Member'}</div>
             <div className="email">{user?.email}</div>
           </div>
         </div>
-        <button className="btn ghost sm" style={{ width: '100%', justifyContent: 'center' }} onClick={() => void signOut()}>
-          Sign out
-        </button>
+        <button className="btn ghost sm block" onClick={() => void signOut()}>Sign out</button>
         <LegalLinks />
       </div>
     </aside>
@@ -108,8 +107,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <div className="mobile-bar">
-        <button className="btn ghost sm" onClick={() => setMenuOpen(true)}>☰ Menu</button>
-        <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700 }}>Seerist</span>
+        <button className="btn ghost sm" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+          <Icon name="queue" /> Menu
+        </button>
+        <span className="row" style={{ gap: 7 }}>
+          <Logomark size={20} />
+          <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700 }}>Seerist</span>
+        </span>
         <span className="faint">{activeWs?.name || ''}</span>
       </div>
       {menuOpen && <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} />}
@@ -123,7 +127,16 @@ export default function App() {
   const { loading, user, orgs } = useApp();
 
   if (loading) {
-    return <div className="center-page"><div className="row"><span className="spinner" /> <span className="muted">Loading Seerist…</span></div></div>;
+    return (
+      <div className="center-page">
+        <div style={{ textAlign: 'center' }}>
+          <Logomark size={44} />
+          <div className="row" style={{ justifyContent: 'center', marginTop: 12 }}>
+            <span className="spinner" /> <span className="muted">Loading Seerist…</span>
+          </div>
+        </div>
+      </div>
+    );
   }
   if (!user) return <AuthPage />;
   if (!orgs.length) return <OnboardingPage />;

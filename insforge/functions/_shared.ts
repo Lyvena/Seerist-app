@@ -542,6 +542,32 @@ async function logPersona(
   }
 }
 
+/**
+ * Record one automation tick. A scheduled job that quietly stops running is
+ * worse than no scheduled job at all, so every run leaves a row — including
+ * the runs that found nothing to do. Never allowed to fail the work it logs.
+ */
+async function recordRun(
+  workspaceId: string | null,
+  job: string,
+  status: 'ok' | 'skipped' | 'failed',
+  detail: string,
+  items: number,
+  token: string,
+): Promise<void> {
+  try {
+    await dbInsert('automation_runs', [{
+      workspace_id: workspaceId,
+      job,
+      status,
+      detail: detail.slice(0, 500),
+      items,
+    }], token);
+  } catch (e) {
+    console.error('automation run log failed:', e instanceof Error ? e.message : e);
+  }
+}
+
 async function logStatusChange(
   proposalId: string,
   from: string | null,

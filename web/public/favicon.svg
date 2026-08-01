@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Seerist">
+  <title>Seerist</title>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="0.5" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <!-- A filled tile, not an outline: at 16px in a browser tab a thin mark on
+       transparency disappears, while a solid tile stays readable. -->
+  <rect width="512" height="512" rx="116" fill="url(#tile)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M 323.7 159.3 A 118 118 0 1 0 366.2 298.3" stroke-width="48"/>
+  </g>
+  <circle cx="371" cy="141" r="35" fill="#ffffff"/>
+  <circle cx="256" cy="256" r="43" fill="#ffffff"/>
+</svg>

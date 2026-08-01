@@ -1171,4 +1171,80 @@ insert into policy_configs (platform, mention_policy, version, notes) values
    'PLACEHOLDER — safe default. Read Toptal''s current engagement policy and update this row before allowing any product mention.')
 on conflict (platform) do nothing;
 
+
+-- ============================================================================
+-- Discovery, learning and automation (2026-08-01)
+--
+-- Three gaps this closes: Seerist could not see a job until a human had already
+-- found it; it never learned from whether a bid won; and nothing ran unless
+-- somebody clicked. Everything below is additive -- no existing column,
+-- constraint or policy is removed.
+-- ============================================================================
+
+-- --- Discovery --------------------------------------------------------------
+
+-- A job can now arrive from a forwarded platform alert email. Same pipeline,
+-- one more source value.
+alter table job_postings drop constraint if exists job_postings_source_check;
+alter table job_postings add constraint job_postings_source_check
+  check (source in ('extension_capture','api_poll','manual','email_alert'));
+
+-- Per-workspace intake address (jobs+<token>@...). Random and revocable, and
+-- the ONLY thing that maps an inbound email to a workspace -- a From address is
+-- trivially forged, so it is never trusted on its own.
+alter table workspaces add column if not exists intake_token text;
+create unique index if not exists workspaces_intake_token_key on workspaces (intake_token);
+update workspaces set intake_token = encode(gen_random_bytes(9), 'hex') where intake_token is null;
+
+-- The same job forwarded twice (two alert emails, or an email plus a manual
+-- capture) must not become two proposals.
+create unique index if not exists job_postings_workspace_url_key
+  on job_postings (workspace_id, url) where url is not null;
+
+-- --- Automation preferences (per workspace, always switch-off-able) ----------
+
+alter table workspaces add column if not exists automation_enabled boolean not null default true;
+alter table workspaces add column if not exists alert_min_score integer not null default 75;
+alter table workspaces add column if not exists alert_channel text;
+alter table workspaces add column if not exists alert_target text;
+
+-- --- Learning from outcomes -------------------------------------------------
+
+-- Why a bid was won or lost. Without this there is nothing to learn from: the
+-- outcome enum records THAT we lost, never why.
+alter table proposals add column if not exists outcome_reason text;
+alter table proposals add column if not exists outcome_category text;
+alter table proposals drop constraint if exists proposals_outcome_category_check;
+alter table proposals add constraint proposals_outcome_category_check
+  check (outcome_category is null or outcome_category in
+    ('price','timing','fit','scope','competitor','no_response','client_silent','other'));
+
+-- Automation bookkeeping, so a nudge is sent once and a re-score is not redone
+-- every night for a job nothing has changed about.
+alter table proposals add column if not exists follow_up_nudged_at timestamptz;
+alter table proposals add column if not exists rescored_at timestamptz;
+
+create index if not exists proposals_outcome_idx on proposals (workspace_id, outcome);
+
+-- --- Scheduled work ---------------------------------------------------------
+
+-- One row per automation tick. A scheduled job that silently stops running is
+-- worse than no scheduled job, so every run is recorded whether it did work
+-- or not.
+create table if not exists automation_runs (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid references workspaces(id) on delete cascade,
+  job text not null,
+  status text not null default 'ok' check (status in ('ok','skipped','failed')),
+  detail text,
+  items integer not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists automation_runs_ws_idx on automation_runs (workspace_id, created_at desc);
+
+alter table automation_runs enable row level security;
+drop policy if exists automation_runs_select on automation_runs;
+create policy automation_runs_select on automation_runs for select to authenticated
+  using (workspace_id is not null and seerist_is_ws_member(workspace_id));
+
 notify pgrst, 'reload schema';

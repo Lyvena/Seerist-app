@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { callFn, db, insforge } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { CeoApprovalItem } from '../lib/types';
+import { Icon } from './Icon';
 
 /**
  * The CEO's approval queue. Every action the CEO persona is not allowed to take
@@ -144,7 +145,7 @@ export default function CEOApprovalQueue({ orgId, canApprove, onPendingCountChan
           <span className={`badge ${live ? 'green' : 'gray'}`} title={live ? 'Live via realtime subscription' : 'Realtime unavailable — refreshing on a timer'}>
             {live ? '● live' : '○ polling'}
           </span>
-          <button className="btn ghost sm" onClick={() => void load()}>↻</button>
+          <button className="btn ghost sm" onClick={() => void load()}><Icon name="refresh" /></button>
         </div>
       </div>
 
@@ -181,11 +182,11 @@ export default function CEOApprovalQueue({ orgId, canApprove, onPendingCountChan
               <div className="row mt">
                 <button className="btn success sm" disabled={!canApprove || busy === item.id}
                   onClick={() => void decide(item, true)}>
-                  {busy === item.id ? <span className="spinner" /> : '✓ Approve & execute'}
+                  {busy === item.id ? <span className="spinner" /> : <><Icon name="check" /> Approve &amp; execute</>}
                 </button>
                 <button className="btn danger sm" disabled={!canApprove || busy === item.id}
                   onClick={() => void decide(item, false)}>
-                  ✕ Reject
+                  <Icon name="close" /> Reject
                 </button>
               </div>
             </div>

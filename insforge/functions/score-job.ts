@@ -49,8 +49,16 @@ Client stats: ${JSON.stringify(job.client_stats || {})}
 Description:
 ${(job.description || '').slice(0, 6000)}`;
 
+    // What this workspace's own history says about jobs like this one. A score
+    // with no grounding in real outcomes is an unanchored opinion; once there
+    // are enough resolved bids it becomes a calibrated one.
+    const history = await outcomeHistory(proposal.workspace_id, job.platform, token);
+
     const parsed = await aiJson(
-      [{ role: 'system', content: system }, { role: 'user', content: user }],
+      [
+        { role: 'system', content: system + history.systemNote },
+        { role: 'user', content: user + history.userBlock },
+      ],
       token,
       { maxTokens: 700, temperature: 0.2, scope: { workspace_id: proposal.workspace_id, function_slug: 'score-job' } },
     );
@@ -77,9 +85,78 @@ ${(job.description || '').slice(0, 6000)}`;
       created_by: userId,
     }, token);
 
-    return json({ proposal: updated, score, reasoning });
+    return json({ proposal: updated, score, reasoning, calibration: history.summary });
   } catch (e) {
     console.error(e);
     return json({ error: e instanceof Error ? e.message : 'scoring failed' }, 500);
   }
+}
+
+/** Below this a "win rate" is noise dressed up as a number. */
+const MIN_SAMPLE = 8;
+
+/**
+ * The workspace's real hit rate, so the score means something.
+ *
+ * Deliberately silent until there are enough resolved bids to say anything
+ * honest — inventing a conversion rate from three data points would be worse
+ * than saying nothing, and the first-run experience must not change.
+ */
+async function outcomeHistory(
+  workspaceId: string,
+  platform: string,
+  token: string,
+): Promise<{ systemNote: string; userBlock: string; summary: any }> {
+  const quiet = { systemNote: '', userBlock: '', summary: null };
+  try {
+    const resolved = await dbSelect(
+      'proposals',
+      `workspace_id=eq.${workspaceId}&outcome=in.(won,lost)&fit_score=not.is.null` +
+        `&select=fit_score,outcome,outcome_category&order=updated_at.desc&limit=200`,
+      token,
+    );
+    if (resolved.length < MIN_SAMPLE) return quiet;
+
+    const wins = resolved.filter((p: any) => p.outcome === 'won').length;
+    const rate = Math.round((wins / resolved.length) * 100);
+
+    // Conversion by score band — this is what tells the model whether its own
+    // 85s have been meaning anything.
+    const bands = [[80, 100], [60, 79], [0, 59]] as const;
+    const byBand = bands.map(([lo, hi]) => {
+      const inBand = resolved.filter((p: any) => p.fit_score >= lo && p.fit_score <= hi);
+      const won = inBand.filter((p: any) => p.outcome === 'won').length;
+      return {
+        band: `${lo}-${hi}`,
+        n: inBand.length,
+        won,
+        rate: inBand.length ? Math.round((won / inBand.length) * 100) : null,
+      };
+    }).filter((b) => b.n > 0);
+
+    const reasons = tally(
+      resolved.filter((p: any) => p.outcome === 'lost' && p.outcome_category)
+        .map((p: any) => p.outcome_category),
+    );
+    const topReasons = Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+    const summary = { sample: resolved.length, win_rate: rate, by_band: byBand, top_loss_reasons: topReasons };
+    return {
+      systemNote:
+        '\nThis workspace has a real bidding history, given below. Calibrate against it: if jobs in a score band have rarely converted, score a similar job lower, and say what would have to be true for it to score higher.',
+      userBlock: `\n\nTHIS WORKSPACE'S HISTORY (${resolved.length} resolved bids on all platforms, current platform ${platform})
+Overall win rate: ${rate}%
+By score band: ${byBand.map((b) => `${b.band} → ${b.rate}% of ${b.n}`).join('; ')}
+${topReasons.length ? `Most common loss reasons: ${topReasons.map(([r, n]) => `${r} (${n})`).join(', ')}` : ''}`,
+      summary,
+    };
+  } catch {
+    return quiet;
+  }
+}
+
+function tally(values: string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const v of values) out[v] = (out[v] || 0) + 1;
+  return out;
 }

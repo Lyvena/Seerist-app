@@ -14,19 +14,22 @@
 // ============================================================================
 
 const BTN_ID = 'seerist-capture-btn';
+const BULK_ID = 'seerist-capture-all-btn';
 const FILL_ID = 'seerist-autofill-btn';
 const PANEL_ID = 'seerist-panel';
 
 const styles = `
-#${BTN_ID}, #${FILL_ID} {
+#${BTN_ID}, #${FILL_ID}, #${BULK_ID} {
   position: fixed; z-index: 999999; right: 18px; display: flex; align-items: center; gap: 8px;
   background: #0ea5e9; color: #04121e; font: 600 13px/1 system-ui, sans-serif;
   border: none; border-radius: 10px; padding: 11px 16px; cursor: pointer;
   box-shadow: 0 6px 24px rgba(2,6,16,0.35);
 }
 #${BTN_ID} { bottom: 24px; }
+#${BULK_ID} { bottom: 24px; background: #6366f1; color: #fff; }
 #${FILL_ID} { bottom: 72px; background: #34d399; }
-#${BTN_ID}:hover, #${FILL_ID}:hover { filter: brightness(1.08); }
+#${BTN_ID}:hover, #${FILL_ID}:hover, #${BULK_ID}:hover { filter: brightness(1.08); }
+#${BULK_ID}:disabled { opacity: 0.6; cursor: progress; }
 #${PANEL_ID} {
   position: fixed; z-index: 1000000; right: 18px; bottom: 120px; width: 340px;
   background: #0b1220; color: #e6edf7; border: 1px solid #2b3d5f; border-radius: 12px;
@@ -97,6 +100,64 @@ function textareaBySelectors(selectors) {
   return null;
 }
 
+/**
+ * Every job on a search-results page, so one click captures the whole search
+ * instead of one posting at a time.
+ *
+ * Deliberately generic: all four platforms render results as a list of anchors
+ * pointing at their own job URLs, so matching that URL shape finds the cards
+ * without four sets of CSS selectors that break on every redesign.
+ *
+ * Same compliance posture as single capture — the user's own browser, their own
+ * logged-in session, and an explicit click. Nothing is submitted.
+ */
+function collectListCards(linkPattern, limit = 40) {
+  const seen = new Set();
+  const out = [];
+  for (const a of document.querySelectorAll('a[href]')) {
+    let parsed;
+    try {
+      parsed = new URL(a.getAttribute('href'), location.origin);
+    } catch {
+      continue;
+    }
+    if (!linkPattern.test(parsed.pathname)) continue;
+    const url = `${parsed.origin}${parsed.pathname}`;
+    if (seen.has(url)) continue;
+    const title = (a.textContent || '').replace(/\s+/g, ' ').trim();
+    if (title.length < 8) continue; // thumbnails and icon links carry no title
+    seen.add(url);
+
+    const card = cardFor(a);
+    const text = card ? card.textContent.replace(/\s+/g, ' ').trim() : title;
+    const money = text.match(/[$€£₹]\s?[\d,.]+(\s*-\s*[$€£₹]?\s?[\d,.]+)?(\s*\/\s*hr)?/);
+    const clientStats = {};
+    if (/payment (method )?verified/i.test(text)) clientStats.payment_verified = true;
+    const hire = text.match(/(\d+)%\s*hire rate/i);
+    if (hire) clientStats.hire_rate = `${hire[1]}%`;
+
+    out.push({
+      title: title.slice(0, 400),
+      description: text.slice(0, 4000),
+      budget: money ? money[0].slice(0, 100) : '',
+      client_stats: clientStats,
+      url,
+    });
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** The smallest ancestor big enough to be the result card, not just the link. */
+function cardFor(anchor) {
+  let el = anchor;
+  for (let i = 0; i < 6 && el.parentElement; i += 1) {
+    el = el.parentElement;
+    if ((el.textContent || '').length > 120) return el;
+  }
+  return anchor.parentElement;
+}
+
 // --- Platform adapters ------------------------------------------------------
 // Each adapter owns its platform's page selectors. Every adapter falls back to
 // the shared generic helpers above, so a layout change degrades to a usable
@@ -107,6 +168,8 @@ const ADAPTERS = [
     platform: 'upwork',
     hostPattern: /(^|\.)upwork\.com$/i,
     isJobPage: () => /\/jobs\/|\/nx\/jobs\//.test(location.pathname),
+    isListPage: () => /\/(nx\/(search|find-work)|freelance-jobs|ab\/jobs\/search)/i.test(location.pathname),
+    listLink: /\/jobs\/~|\/nx\/job-details\//i,
     scrape() {
       const title = firstText(['h1', '[data-test="job-title"]', '.job-details-card h4'])
         || document.title.replace(/ - Upwork.*$/i, '');
@@ -149,6 +212,9 @@ const ADAPTERS = [
     platform: 'fiverr',
     hostPattern: /(^|\.)fiverr\.com$/i,
     isJobPage: () => /\/(briefs?|requests?|buyer-requests|manage_requests|opportunities)\b/i.test(location.pathname),
+    isListPage: () => /\/(briefs|requests|buyer-requests|manage_requests|opportunities|search)\b/i.test(location.pathname)
+      && !/\/(briefs|requests|opportunities)\/[A-Za-z0-9_-]{6,}/i.test(location.pathname),
+    listLink: /\/(briefs|requests|opportunities)\/[A-Za-z0-9_-]{4,}/i,
     scrape() {
       const title = firstText(['h1', '[class*="brief-title" i]', '[class*="request-title" i]'])
         || document.title.replace(/ \| Fiverr.*$/i, '');
@@ -184,6 +250,9 @@ const ADAPTERS = [
     platform: 'freelancer',
     hostPattern: /(^|\.)freelancer\.(com|[a-z]{2}|com\.[a-z]{2})$/i,
     isJobPage: () => /\/projects\//i.test(location.pathname),
+    isListPage: () => /\/(jobs|search\/projects|freelance-jobs)\b/i.test(location.pathname)
+      && !/\/projects\//i.test(location.pathname),
+    listLink: /\/projects\/[A-Za-z0-9-]{4,}/i,
     scrape() {
       const title = firstText([
         'h1',
@@ -226,6 +295,8 @@ const ADAPTERS = [
     platform: 'toptal',
     hostPattern: /(^|\.)toptal\.com$/i,
     isJobPage: () => /\/(jobs?|roles?|engagements?|talent\/opportunities)\b/i.test(location.pathname),
+    isListPage: () => /\/(jobs|roles|engagements|talent\/opportunities)\/?$/i.test(location.pathname),
+    listLink: /\/(jobs|roles|engagements|opportunities)\/[A-Za-z0-9-]{2,}/i,
     scrape() {
       const title = firstText(['h1', '[class*="job-title" i]', '[class*="role-title" i]'])
         || document.title.replace(/ \| Toptal.*$/i, '');
@@ -302,6 +373,34 @@ function mountCaptureButton(adapter) {
   document.body.appendChild(btn);
 }
 
+function mountBulkButton(adapter) {
+  const existing = document.getElementById(BULK_ID);
+  const cards = collectListCards(adapter.listLink);
+  if (!cards.length) { existing?.remove(); return; }
+  const label = `◎ Capture all ${cards.length} to Seerist`;
+  if (existing) { if (existing.textContent !== label && !existing.disabled) existing.textContent = label; return; }
+
+  const btn = document.createElement('button');
+  btn.id = BULK_ID;
+  btn.textContent = label;
+  btn.addEventListener('click', () => {
+    const jobs = collectListCards(adapter.listLink).map((c) => ({ ...c, platform: adapter.platform }));
+    if (!jobs.length) { toast('No job cards found on this page', false); return; }
+    btn.disabled = true;
+    btn.textContent = `Capturing ${jobs.length}…`;
+    chrome.runtime.sendMessage({ type: 'CAPTURE_MANY', jobs }, (res) => {
+      btn.disabled = false;
+      btn.textContent = label;
+      if (!res?.ok) { toast(res?.error || 'Capture failed', false); return; }
+      const parts = [`${res.captured} captured`];
+      if (res.duplicates) parts.push(`${res.duplicates} already in your queue`);
+      if (res.queued) parts.push(`${res.queued} queued offline`);
+      toast(`${parts.join(', ')}. Scores appear in your Pitch Queue shortly.`);
+    });
+  });
+  document.body.appendChild(btn);
+}
+
 function mountAutofillButton(adapter) {
   if (document.getElementById(FILL_ID)) return;
   const btn = document.createElement('button');
@@ -352,7 +451,15 @@ function tick() {
   injectStyles();
 
   const onProposalEditor = !!adapter.proposalField();
-  if (adapter.isJobPage() && !onProposalEditor) mountCaptureButton(adapter);
+  // A results page is checked first: on some platforms its URL also matches the
+  // job-page pattern, and scraping a list as though it were one posting would
+  // capture nonsense.
+  const onList = !onProposalEditor && typeof adapter.isListPage === 'function' && adapter.isListPage();
+
+  if (onList) mountBulkButton(adapter);
+  else document.getElementById(BULK_ID)?.remove();
+
+  if (adapter.isJobPage() && !onProposalEditor && !onList) mountCaptureButton(adapter);
   else document.getElementById(BTN_ID)?.remove();
 
   if (onProposalEditor) mountAutofillButton(adapter);
@@ -369,5 +476,5 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 
 /* c8 ignore next 3 */
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { ADAPTERS, currentAdapter, scrapeJob };
+  module.exports = { ADAPTERS, currentAdapter, scrapeJob, collectListCards };
 }

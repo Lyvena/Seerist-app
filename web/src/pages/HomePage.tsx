@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { PersonaAction, Proposal } from '../lib/types';
+import { Icon } from '../components/Icon';
+import { EmptyState } from '../components/UI';
 
 // Home — the first screen after sign-in: where the workspace stands, what to
 // do next, and what the AI employees have been doing.
@@ -53,9 +55,12 @@ export default function HomePage() {
   return (
     <>
       <div className="hero-banner">
+        <svg className="hero-art" width="230" height="230" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.1" aria-hidden="true">
+          <path d="M12 12.2 17 7.4M12 20.4a8.2 8.2 0 1 1 8.2-8.2M12 16.6a4.4 4.4 0 1 1 4.4-4.4" />
+        </svg>
         <div className="spread">
           <div>
-            <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName} 👋</h1>
+            <h1>Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {firstName}</h1>
             <p>
               {activeWs
                 ? <>You're in <strong>{activeWs.name}</strong> ({activeWs.type === 'saas' ? 'SaaS — every bid can win a contract, a signup, or brand awareness' : 'agency — speed, fit, and win-rate'}). {inReview > 0 ? `${inReview} proposal${inReview === 1 ? '' : 's'} waiting for your review.` : 'The queue is clear — go capture something good.'}</>
@@ -79,12 +84,12 @@ export default function HomePage() {
           <div className="grid cols-2 mt">
             <div className="card">
               <div className="spread mb">
-                <h3>Getting started</h3>
+                <h3 className="row" style={{ gap: 8 }}><Icon name="target" /> Getting started</h3>
                 <span className="badge blue">{doneCount}/{checklist.length} done</span>
               </div>
               {checklist.map((c) => (
                 <Link to={c.to} key={c.label} className="checklist-item" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className={`check-dot ${c.done ? 'done' : 'todo'}`}>{c.done ? '✓' : '○'}</div>
+                  <div className={`check-dot ${c.done ? 'done' : 'todo'}`}>{c.done ? <Icon name="check" size={13} /> : ''}</div>
                   <span style={{ fontSize: 13.5, color: c.done ? 'var(--text-faint)' : 'var(--text)', textDecoration: c.done ? 'line-through' : 'none' }}>{c.label}</span>
                 </Link>
               ))}
@@ -92,11 +97,11 @@ export default function HomePage() {
 
             <div className="stack">
               <div className="card">
-                <h3>Quick actions</h3>
+                <h3 className="row" style={{ gap: 8 }}><Icon name="bolt" /> Quick actions</h3>
                 <div className="stack mt" style={{ gap: 8 }}>
-                  <Link to="/queue" className="quick-action"><span className="qa-icon">📋</span><div><b>Open the Pitch Queue</b><span>Capture, score, draft, and walk the Kanban</span></div></Link>
-                  <Link to="/personas" className="quick-action"><span className="qa-icon">🤖</span><div><b>Meet your AI employees</b><span>Run The PM's roadmap review or direct The CEO</span></div></Link>
-                  <Link to="/analytics" className="quick-action"><span className="qa-icon">📈</span><div><b>Check your funnel</b><span>Sent → viewed → replied → won{activeWs?.type === 'saas' ? ' + product mentions' : ''}</span></div></Link>
+                  <Link to="/queue" className="quick-action"><span className="qa-icon"><Icon name="queue" /></span><div><b>Open the Pitch Queue</b><span>Capture, score, draft, and walk the Kanban</span></div></Link>
+                  <Link to="/personas" className="quick-action"><span className="qa-icon"><Icon name="personas" /></span><div><b>Meet your AI employees</b><span>Run The PM's roadmap review or direct The CEO</span></div></Link>
+                  <Link to="/analytics" className="quick-action"><span className="qa-icon"><Icon name="analytics" /></span><div><b>Check your funnel</b><span>Sent → viewed → replied → won{activeWs?.type === 'saas' ? ' + product mentions' : ''}</span></div></Link>
                 </div>
               </div>
               {activeOrg && (
@@ -104,7 +109,7 @@ export default function HomePage() {
                   <div className="spread">
                     <h3>{activeOrg.name}</h3>
                     <span className={`badge ${activeOrg.plan === 'lifetime_founder' ? 'violet' : activeOrg.billing_status === 'active' ? 'green' : 'blue'}`}>
-                      {activeOrg.plan === 'lifetime_founder' ? '♾ lifetime founder' : `${activeOrg.plan} · ${activeOrg.billing_status}`}
+                      {activeOrg.plan === 'lifetime_founder' ? 'lifetime founder' : `${activeOrg.plan} · ${activeOrg.billing_status}`}
                     </span>
                   </div>
                   <p className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>
@@ -116,9 +121,12 @@ export default function HomePage() {
           </div>
 
           <div className="card mt">
-            <div className="spread mb"><h3>Recent AI activity</h3><Link to="/personas" style={{ fontSize: 12.5 }}>Full audit log →</Link></div>
+            <div className="spread mb"><h3 className="row" style={{ gap: 8 }}><Icon name="sparkle" /> Recent AI activity</h3><Link to="/personas" style={{ fontSize: 12.5 }}>Full audit log →</Link></div>
             {!actions.length ? (
-              <p className="faint">Nothing yet — capture a job and The Scout will show up here.</p>
+              <EmptyState art="spark" title="No activity yet">
+                Every action an AI employee takes is logged here — capture a job, or forward a job
+                alert to your intake address, and The Scout appears within the hour.
+              </EmptyState>
             ) : (
               <table className="data">
                 <tbody>

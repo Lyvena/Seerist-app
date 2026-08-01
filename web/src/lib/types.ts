@@ -46,6 +46,12 @@ export interface Workspace {
   visitor_intent_jurisdiction?: string | null;
   visitor_intent_policy_url?: string | null;
   visitor_intent_consent_at?: string | null;
+  /** Per-workspace job intake address token: jobs+<token>@… */
+  intake_token?: string | null;
+  automation_enabled?: boolean;
+  alert_min_score?: number;
+  alert_channel?: string | null;
+  alert_target?: string | null;
 }
 
 export interface PlatformConnection {
@@ -87,8 +93,48 @@ export interface Proposal {
   replied_at: string | null;
   won_at: string | null;
   lost_at: string | null;
+  /** Why it went that way — the only thing the product can learn from. */
+  outcome_reason?: string | null;
+  outcome_category?: OutcomeCategory | null;
+  follow_up_nudged_at?: string | null;
   created_at: string;
   job_postings?: JobPosting;
+}
+
+export type OutcomeCategory =
+  | 'price' | 'timing' | 'fit' | 'scope' | 'competitor' | 'no_response' | 'client_silent' | 'other';
+
+export const OUTCOME_CATEGORIES: Array<{ value: OutcomeCategory; label: string }> = [
+  { value: 'price', label: 'Price — we were too expensive' },
+  { value: 'timing', label: 'Timing — too slow, or bad timing' },
+  { value: 'fit', label: 'Fit — not the right skills or experience' },
+  { value: 'scope', label: 'Scope — we read the job wrong' },
+  { value: 'competitor', label: 'Competitor — someone else was stronger' },
+  { value: 'no_response', label: 'No response — never heard back' },
+  { value: 'client_silent', label: 'Client went silent mid-conversation' },
+  { value: 'other', label: 'Something else' },
+];
+
+export interface AutomationRun {
+  id: string;
+  workspace_id: string | null;
+  job: string;
+  status: 'ok' | 'skipped' | 'failed';
+  detail: string | null;
+  items: number;
+  created_at: string;
+}
+
+export interface Learning {
+  ready: boolean;
+  resolved: number;
+  needed?: number;
+  note: string;
+  overallWinRate?: number | null;
+  byScoreBand?: Array<{ band: string; n: number; winRate: number | null }>;
+  byPlatform?: Array<{ platform: string; n: number; winRate: number | null }>;
+  lossReasons?: Array<{ reason: string; count: number }>;
+  productMention?: { withWinRate: number | null; withoutWinRate: number | null; withN: number; withoutN: number } | null;
 }
 
 export interface DeliveryRun {
@@ -485,14 +531,15 @@ export interface AnalyticsSummary {
     mentionShareOfSent: number | null;
   } | null;
   growth: { touchpoints: number; attributedSignups: number; totalSignups: number };
+  learning?: Learning;
 }
 
 export const PERSONAS = [
-  { name: 'The Scout', owns: 'Job capture assist & fit scoring', module: 'Module A', icon: '🔭' },
-  { name: 'The Drafter', owns: 'Proposal writing & product-mention logic', module: 'Module A', icon: '✍️' },
-  { name: 'The Builder', owns: 'Delivery execution incl. InstantDB/InsForge stack choice', module: 'Module B (OpenHands)', icon: '🔨' },
-  { name: 'The Closer', owns: 'Post-win client comms & scheduling', module: 'Composio (Gmail, Calendar)', icon: '🤝' },
-  { name: 'The Grower', owns: 'Site, content & attribution (SaaS workspaces)', module: 'Module C', icon: '🌱' },
-  { name: 'The PM', owns: 'Win/loss, QA & attribution → roadmap suggestions', module: 'Existing data only', icon: '🧭' },
-  { name: 'The CEO', owns: 'Org-level orchestration — bounded autonomy', module: 'All modules, org scope', icon: '👁️' },
+  { name: 'The Scout', owns: 'Job capture assist & fit scoring', module: 'Module A', icon: 'scout' },
+  { name: 'The Drafter', owns: 'Proposal writing & product-mention logic', module: 'Module A', icon: 'pen' },
+  { name: 'The Builder', owns: 'Delivery execution incl. InstantDB/InsForge stack choice', module: 'Module B (OpenHands)', icon: 'hammer' },
+  { name: 'The Closer', owns: 'Post-win client comms & scheduling', module: 'Composio (Gmail, Calendar)', icon: 'handshake' },
+  { name: 'The Grower', owns: 'Site, content & attribution (SaaS workspaces)', module: 'Module C', icon: 'sprout' },
+  { name: 'The PM', owns: 'Win/loss, QA & attribution → roadmap suggestions', module: 'Existing data only', icon: 'clipboard' },
+  { name: 'The CEO', owns: 'Org-level orchestration — bounded autonomy', module: 'All modules, org scope', icon: 'crown' },
 ] as const;

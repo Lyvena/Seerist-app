@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { callFn } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { JobSourceStatus } from '../lib/types';
+import { Link } from 'react-router-dom';
+import { Icon } from '../components/Icon';
+import { CopyRow } from '../components/UI';
 
 const PLATFORMS = ['Upwork', 'Fiverr', 'Freelancer.com', 'Toptal'];
 
@@ -27,12 +30,39 @@ export default function ExtensionPage() {
     <>
       <div className="page-head">
         <div>
-          <h1>Capture & job sources</h1>
-          <p className="sub">Dual-duty and compliance-first: capture jobs you're already browsing (zero automated traffic) and autofill approved proposals (you click Submit — always). Supported on {PLATFORMS.join(', ')}.</p>
+          <div className="eyebrow"><Icon name="radar" /> Find work</div>
+          <h1>Three ways in, none of them scraping</h1>
+          <p className="sub">
+            Seerist can only pitch for work it can see. It gets there by reading the job alerts you
+            already receive, by capturing what you are already browsing, and — where a platform has
+            approved us — by its own API. Submission is always your click. Supported on {PLATFORMS.join(', ')}.
+          </p>
         </div>
       </div>
 
-      <div className="grid cols-2">
+      {/* Email intake first: it is the only path that finds a job before the
+          user has gone looking for it. */}
+      <div className="card accent">
+        <div className="spread">
+          <div style={{ maxWidth: 620 }}>
+            <h3 className="row" style={{ gap: 8 }}><Icon name="mail" /> Forward your job alerts — the fastest way in</h3>
+            <p className="muted" style={{ fontSize: 13.5, marginTop: 4 }}>
+              Every platform already emails you when something matching your search is posted.
+              Forward those emails to this workspace's intake address and the jobs land in your
+              Pitch Queue, scored, before you have opened your inbox. Nothing is scraped and nothing
+              is submitted — it is your own mail.
+            </p>
+          </div>
+          <Link className="btn primary" to="/settings"><Icon name="bolt" /> Set up intake</Link>
+        </div>
+        {activeWs?.intake_token ? (
+          <div className="mt">
+            <CopyRow value={`jobs+${activeWs.intake_token}@inbound.seerist.xyz`} label="This workspace's intake address" />
+          </div>
+        ) : null}
+      </div>
+
+      <div className="grid cols-2 mt">
         <div className="card">
           <h3>1 · Install (developer mode)</h3>
           <ol className="muted" style={{ paddingLeft: 18, lineHeight: 2 }}>
@@ -55,7 +85,8 @@ export default function ExtensionPage() {
 
         <div className="card">
           <h3>3 · Capture while you browse</h3>
-          <p className="muted">On a job page on any of the four supported platforms you'll see a <strong>"Capture to Seerist"</strong> button. One click sends the title, description, budget, and client stats — everything already rendered on your own screen — into the Pitch Queue. No polling, no scraping runs, no server-to-server traffic against the platform.</p>
+          <p className="muted">On a job page you'll see a <strong>"Capture to Seerist"</strong> button. One click sends the title, description, budget and client stats — everything already rendered on your own screen — into the Pitch Queue.</p>
+          <p className="muted">On a <strong>search-results page</strong> you get <strong>"Capture all N to Seerist"</strong> instead, which takes the whole page of results in one click rather than one posting at a time. Jobs you already have are recognised and never duplicated.</p>
         </div>
 
         <div className="card">
@@ -66,8 +97,8 @@ export default function ExtensionPage() {
 
       <div className="card mt">
         <div className="spread">
-          <h3 style={{ marginBottom: 0 }}>Job sources</h3>
-          <button className="btn ghost sm" onClick={() => void load()}>↻</button>
+          <h3 style={{ marginBottom: 0 }} className="row"><Icon name="database" /> Job sources</h3>
+          <button className="btn ghost sm" onClick={() => void load()}><Icon name="refresh" /></button>
         </div>
         <p className="muted mt">
           Extension capture is always live. Each platform's API-polling source is built and code-complete — it activates by itself the moment that platform's developer access is approved. Nothing here is a stub waiting to be written.

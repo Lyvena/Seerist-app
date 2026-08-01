@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { WorkspaceType } from '../lib/types';
+import { Icon } from '../components/Icon';
 
 // Workspace onboarding — required before bidding can be enabled (spec §4).
 // Agency: name, description, portfolio, tone/style, ideal-client profile.
@@ -149,7 +150,7 @@ export default function OnboardingPage() {
                 <div className="grid cols-2">
                   {(['agency', 'saas'] as WorkspaceType[]).map((t) => (
                     <div key={t} className="card" style={{ cursor: 'pointer', borderColor: wsType === t ? 'var(--brand)' : undefined }} onClick={() => setWsType(t)}>
-                      <h3>{t === 'agency' ? '🏢 Agency' : '🚀 SaaS company'}</h3>
+                      <h3><>{t === 'agency' ? <Icon name="building" /> : <Icon name="rocket" />} {t === 'agency' ? 'Agency' : 'SaaS company'}</></h3>
                       <p className="muted" style={{ fontSize: 12.5 }}>
                         {t === 'agency'
                           ? 'Services business bidding for core revenue. Speed, fit, win-rate.'

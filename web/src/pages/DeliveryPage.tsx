@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { DeliveryRun, DeliveryStackStatus, DeliveryTask, ProvisionedProject } from '../lib/types';
+import { Icon } from '../components/Icon';
 
 const RUN_BADGE: Record<string, string> = {
   planning: 'gray', running: 'blue', qa: 'amber', delivered: 'green', failed: 'red', cancelled: 'gray',
@@ -58,7 +59,7 @@ export default function DeliveryPage() {
             Contract won → The Builder decomposes tasks → sandboxed execution (OpenHands when connected, model gateway otherwise) → <strong>mandatory human QA</strong> → client handoff. Default stack: InstantDB for real-time/client-heavy work, InsForge for fuller server-side stacks — never forced on a client-specified stack.
           </p>
         </div>
-        <button className="btn" onClick={() => void load()}>↻ Refresh</button>
+        <button className="btn" onClick={() => void load()}><Icon name="refresh" /> Refresh</button>
       </div>
 
       {error && <div className="error-box mb">{error}</div>}
@@ -196,7 +197,7 @@ function StackPanel({ run, onChanged }: { run: DeliveryRun; onChanged: () => voi
                 throw e;
               }
             })}>
-            {busy === 'provision' ? <span className="spinner" /> : '⚡ Provision InsForge project'}
+            {busy === 'provision' ? <span className="spinner" /> : <><Icon name="bolt" /> Provision InsForge project</>}
           </button>
           {candidates.length > 0 && (
             <div className="mt">
@@ -260,7 +261,7 @@ function RunDrawer({ run, onClose, onChanged }: { run: DeliveryRun; onClose: () 
               {current.packaging_channel && <span className="badge blue">→ {current.packaging_channel}</span>}
             </div>
           </div>
-          <button className="btn ghost" onClick={onClose}>✕</button>
+          <button className="btn ghost" onClick={onClose}><Icon name="close" /></button>
         </div>
 
         {error && <div className="error-box mt">{error}</div>}
@@ -306,11 +307,11 @@ function RunDrawer({ run, onClose, onChanged }: { run: DeliveryRun; onClose: () 
                   <div className="row mt">
                     <button className="btn success sm" disabled={!!busy}
                       onClick={() => act(`qa-${t.id}`, () => callFn('qa-task', { task_id: t.id, approve: true, note: qaNotes[t.id] || null }))}>
-                      ✓ Approve
+                      <Icon name="check" /> Approve
                     </button>
                     <button className="btn danger sm" disabled={!!busy || !(qaNotes[t.id] || '').trim()}
                       onClick={() => act(`qa-${t.id}`, () => callFn('qa-task', { task_id: t.id, approve: false, note: qaNotes[t.id] }))}>
-                      ✕ Reject with feedback
+                      <Icon name="close" /> Reject with feedback
                     </button>
                   </div>
                 </div>
@@ -327,7 +328,7 @@ function RunDrawer({ run, onClose, onChanged }: { run: DeliveryRun; onClose: () 
               {(['download', 'drive', 'github', 'gitlab'] as const).map((ch) => (
                 <button key={ch} className="btn sm" disabled={!allApproved || !!busy}
                   onClick={() => act('complete', () => callFn('complete-delivery-run', { run_id: current.id, packaging_channel: ch }))}>
-                  📦 Deliver via {ch}
+                  <Icon name="delivery" /> Deliver via {ch}
                 </button>
               ))}
             </div>

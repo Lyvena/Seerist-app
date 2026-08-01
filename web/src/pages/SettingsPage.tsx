@@ -3,7 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import BillingPanel from '../components/BillingPanel';
+import AutomationPanel from '../components/AutomationPanel';
+import { Icon, type IconName } from '../components/Icon';
+import { EmptyState } from '../components/UI';
 import type { PlatformConnection, WorkspaceMemory } from '../lib/types';
+
+type TabId = 'organization' | 'workspace' | 'automation' | 'integrations' | 'compliance';
+
+const TABS: Array<{ id: TabId; label: string; icon: IconName }> = [
+  { id: 'organization', label: 'Organization & billing', icon: 'building' },
+  { id: 'workspace', label: 'Workspace', icon: 'clipboard' },
+  { id: 'automation', label: 'Automation', icon: 'bolt' },
+  { id: 'integrations', label: 'Integrations', icon: 'link' },
+  { id: 'compliance', label: 'Compliance', icon: 'shield' },
+];
 
 interface PolicyRow { id: string; platform: string; mention_policy: string; version: number; notes: string | null }
 interface MemberRow { id: string; user_id: string; role: string; profiles?: { email: string; name: string | null } }
@@ -23,6 +36,7 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState('');
 
   const [wsForm, setWsForm] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<TabId>('organization');
 
   const load = useCallback(async () => {
     if (!activeOrg) return;
@@ -66,13 +80,28 @@ export default function SettingsPage() {
   return (
     <>
       <div className="page-head">
-        <div><h1>Settings</h1><p className="sub">Organization, billing (Creem), members, workspace profile, platform kill switches, policies, and integrations.</p></div>
-        <button className="btn" onClick={() => nav('/onboarding')}>+ New workspace</button>
+        <div>
+          <div className="eyebrow"><Icon name="settings" /> Settings</div>
+          <h1>{activeOrg.name}</h1>
+          <p className="sub">
+            Billing, your team, how this workspace pitches, what runs automatically, and the
+            compliance controls that never move without you.
+          </p>
+        </div>
+        <button className="btn" onClick={() => nav('/onboarding')}><Icon name="plus" /> New workspace</button>
       </div>
 
-      {error && <div className="error-box mb">{error}</div>}
+      <div className="tabs">
+        {TABS.map((t) => (
+          <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
+            <Icon name={t.icon} /> {t.label}
+          </button>
+        ))}
+      </div>
 
-      <div className="card">
+      {error && <div className="error-box mb"><Icon name="alert" /><span>{error}</span></div>}
+
+      <div className="card" hidden={tab !== 'organization'}>
         <h3>Organization — {activeOrg.name}</h3>
         <div className="row mt">
           <span className={`badge ${activeOrg.billing_status === 'active' ? 'green' : activeOrg.billing_status === 'trial' ? 'blue' : 'red'}`}>
@@ -83,10 +112,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <div hidden={tab !== 'organization'}>
       <BillingPanel orgId={activeOrg.id} />
 
       <div className="card mt">
-        <h3>Members</h3>
+        <h3 className="row" style={{ gap: 8 }}><Icon name="personas" /> Members</h3>
         <table className="data">
           <thead><tr><th>User</th><th>Role</th></tr></thead>
           <tbody>
@@ -111,10 +141,11 @@ export default function SettingsPage() {
         </div>
         <p className="faint mt">Same email, many orgs, many workspaces — roles live on the membership, not the user.</p>
       </div>
+      </div>
 
       {activeWs && (
         <>
-          <div className="card mt">
+          <div className="card" hidden={tab !== 'workspace'}>
             <h3>Workspace profile — {activeWs.name} <span className="badge gray">{activeWs.type}</span></h3>
             <div className="grid cols-2 mt">
               <div className="field"><label>Name</label><input type="text" value={wsForm.name || ''} onChange={(e) => setWsForm({ ...wsForm, name: e.target.value })} /></div>
@@ -144,8 +175,12 @@ export default function SettingsPage() {
             })}>{busy === 'ws-save' ? <span className="spinner" /> : 'Save workspace profile'}</button>
           </div>
 
-          <div className="card mt">
-            <h3>Platforms & kill switches</h3>
+          <div hidden={tab !== 'automation'}>
+            <AutomationPanel ws={activeWs} onSaved={() => void refresh()} />
+          </div>
+
+          <div className="card" hidden={tab !== 'compliance'}>
+            <h3 className="row" style={{ gap: 8 }}><Icon name="shield" /> Platforms &amp; kill switches</h3>
             <p className="muted">Credentials stay unused until a platform's developer API access exists (the Upwork key application is a parallel, non-blocking track). The kill switch instantly halts capture & drafting for a platform.</p>
             <table className="data mt">
               <thead><tr><th>Platform</th><th>API status</th><th>Kill switch</th><th></th></tr></thead>
@@ -163,7 +198,7 @@ export default function SettingsPage() {
                         }).eq('id', c.id);
                         if (error) throw new Error(error.message);
                       })}>
-                        {c.kill_switch ? 'Re-enable' : '🛑 Kill'}
+                        {c.kill_switch ? <><Icon name="refresh" /> Re-enable</> : <><Icon name="lock" /> Kill</>}
                       </button>
                     </td>
                   </tr>
@@ -172,7 +207,7 @@ export default function SettingsPage() {
             </table>
           </div>
 
-          <div className="card mt">
+          <div className="card" hidden={tab !== 'compliance'} style={{ marginTop: 14 }}>
             <h3>Product-mention policies (manually curated, versioned)</h3>
             <p className="muted">Never auto-inferred from scraped ToS text. A platform without a row defaults to <strong>no mention</strong>. Curation happens at the Seerist platform level.</p>
             <table className="data mt">
@@ -190,10 +225,15 @@ export default function SettingsPage() {
             </table>
           </div>
 
-          <div className="card mt">
-            <h3>Workspace memory (Hermes layer)</h3>
+          <div className="card" hidden={tab !== 'workspace'} style={{ marginTop: 14 }}>
+            <h3 className="row" style={{ gap: 8 }}><Icon name="brain" /> Workspace memory (Hermes layer)</h3>
             <p className="muted">Client preferences, prior decisions, style guidance, the delivery-stack rule, and skills learned from completed runs.</p>
-            {!memories.length ? <p className="faint">No memories yet.</p> : (
+            {!memories.length ? (
+              <EmptyState art="spark" title="No memories yet">
+                Seerist writes here as it works — client preferences, the stack rule it chose and
+                why, and skills learned from completed delivery runs.
+              </EmptyState>
+            ) : (
               <table className="data mt">
                 <thead><tr><th>Kind</th><th>Key</th><th>Content</th></tr></thead>
                 <tbody>
@@ -211,8 +251,8 @@ export default function SettingsPage() {
         </>
       )}
 
-      <div className="card mt">
-        <h3>Integrations (Composio managed OAuth)</h3>
+      <div className="card" hidden={tab !== 'integrations'}>
+        <h3 className="row" style={{ gap: 8 }}><Icon name="link" /> Integrations (Composio managed OAuth)</h3>
         <p className="muted">Slack / Telegram / Discord alerts, Gmail, Calendar, CRM, Drive, Notion. Creem and GitHub/GitLab are NOT here by design — Creem is native, GitHub/GitLab go through OpenHands.</p>
         {composioErr && <div className="warn-box mt">{composioErr}</div>}
         {composio && (
@@ -225,7 +265,7 @@ export default function SettingsPage() {
                     const res = await callFn<{ redirectUrl: string | null }>('composio-integrations', { action: 'connect', toolkit: tk, callback_url: window.location.href });
                     if (res.redirectUrl) window.open(res.redirectUrl, '_blank');
                   })}>
-                    {connected ? `✓ ${tk}` : `Connect ${tk}`}
+                    {connected ? <><Icon name="check" /> {tk}</> : <>Connect {tk}</>}
                   </button>
                 );
               })}
@@ -237,8 +277,8 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <div className="card mt">
-        <h3>OpenHands & Hermes (delivery infrastructure)</h3>
+      <div className="card" hidden={tab !== 'integrations'} style={{ marginTop: 14 }}>
+        <h3 className="row" style={{ gap: 8 }}><Icon name="database" /> OpenHands &amp; Hermes (delivery infrastructure)</h3>
         <p className="muted">
           Delivery-task execution runs in an <strong>OpenHands</strong> sandbox when the <code>OPENHANDS_API_KEY</code> project secret is set (OpenHands Cloud or a self-hosted Agent Server via <code>OPENHANDS_BASE_URL</code>); otherwise tasks execute through the InsForge model gateway with the same mandatory QA gate. The <strong>Hermes-style memory layer</strong> (workspace memories above) is always on and grounds scoring, drafting, and stack decisions.
         </p>

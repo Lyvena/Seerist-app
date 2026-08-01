@@ -147,6 +147,28 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           }
           break;
         }
+        case 'CAPTURE_MANY': {
+          // One results page can hold forty postings. Captured sequentially so
+          // the backend sees a normal request rate rather than a burst, and a
+          // job the queue already has is counted, not treated as a failure.
+          let captured = 0;
+          let duplicates = 0;
+          let queued = 0;
+          let authError = null;
+          for (const job of (msg.jobs || []).slice(0, 40)) {
+            try {
+              await sendCapture(job);
+              captured += 1;
+            } catch (e) {
+              if (e.message === 'AUTH') { authError = 'Sign in and pick a workspace in the Seerist popup first.'; break; }
+              if (/duplicate|already exists|unique/i.test(e.message)) { duplicates += 1; continue; }
+              queued = await queueCapture(job);
+            }
+          }
+          if (authError && !captured) sendResponse({ ok: false, error: authError });
+          else sendResponse({ ok: true, captured, duplicates, queued });
+          break;
+        }
         case 'SYNC_QUEUE':
           sendResponse({ ok: true, ...(await syncQueue()) });
           break;

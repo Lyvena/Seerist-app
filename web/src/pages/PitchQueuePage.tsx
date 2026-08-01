@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import type { Proposal, ProposalStatus } from '../lib/types';
+import { OUTCOME_CATEGORIES } from '../lib/types';
+import { Icon } from '../components/Icon';
+import { EmptyState } from '../components/UI';
 
 const COLUMNS: Array<{ key: ProposalStatus; label: string }> = [
   { key: 'new', label: 'New' },
@@ -159,9 +162,9 @@ export default function PitchQueuePage() {
         </div>
         <div className="row">
           <button className={`btn ${activeFilters ? 'primary' : ''}`} onClick={() => setShowFilters((v) => !v)}>
-            ⛃ Filters{activeFilters ? ` (${activeFilters})` : ''}
+            <Icon name="filter" /> Filters{activeFilters ? ` (${activeFilters})` : ''}
           </button>
-          <button className="btn" onClick={() => void load()}>↻ Refresh</button>
+          <button className="btn" onClick={() => void load()}><Icon name="refresh" /> Refresh</button>
           <button className="btn primary" onClick={() => setShowCapture(true)}>+ Capture a job</button>
         </div>
       </div>
@@ -240,7 +243,7 @@ export default function PitchQueuePage() {
                   <div className="meta">
                     {p.job_postings?.platform && <span className="badge blue">{p.job_postings.platform}</span>}
                     <ScorePill score={p.fit_score} />
-                    {p.product_mentioned && <span className="badge violet">product ✦</span>}
+                    {p.product_mentioned && <span className="badge violet"><Icon name="sparkle" size={11} /> product</span>}
                     {p.status === 'submitted' && <span className={`badge ${OUTCOME_BADGE[p.outcome]}`}>{p.outcome}</span>}
                     <span className="faint">{p.job_postings?.budget || ''}</span>
                   </div>
@@ -346,7 +349,12 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const job = proposal.job_postings;
 
+  const [resolving, setResolving] = useState<'won' | 'lost' | null>(null);
+  const [outcomeCategory, setOutcomeCategory] = useState('');
+  const [outcomeReason, setOutcomeReason] = useState('');
+
   useEffect(() => { setDraft(proposal.draft_content || ''); }, [proposal.id, proposal.draft_content]);
+  useEffect(() => { setResolving(null); }, [proposal.id]);
 
   useEffect(() => {
     void db().from('proposal_status_history').select('*')
@@ -389,12 +397,12 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
               <span className="faint">{job?.platform} · {job?.source?.replace('_', ' ')} · {job?.budget || 'no budget stated'}</span>
             </div>
           </div>
-          <button className="btn ghost" onClick={onClose}>✕</button>
+          <button className="btn ghost" onClick={onClose}><Icon name="close" /></button>
         </div>
 
         {error && <div className="error-box mt">{error}</div>}
 
-        {job?.url && <p className="mt"><a href={job.url} target="_blank" rel="noreferrer">Open the original posting ↗</a></p>}
+        {job?.url && <p className="mt"><a href={job.url} target="_blank" rel="noreferrer">Open the original posting</a></p>}
 
         {job?.description && (
           <div className="card mt">
@@ -407,7 +415,7 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
           <div className="spread">
             <h3>Fit score — The Scout</h3>
             <button className="btn sm" disabled={!!busy} onClick={() => run('score', () => callFn('score-job', { proposal_id: proposal.id }))}>
-              {busy === 'score' ? <span className="spinner" /> : proposal.fit_score !== null ? '↻ Re-score' : '⚡ Score this job'}
+              {busy === 'score' ? <span className="spinner" /> : proposal.fit_score !== null ? <><Icon name="refresh" /> Re-score</> : <><Icon name="bolt" /> Score this job</>}
             </button>
           </div>
           {proposal.fit_score !== null ? (
@@ -424,9 +432,9 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
           <div className="spread">
             <h3>Proposal draft — The Drafter</h3>
             <div className="row">
-              {draft && <button className="btn sm" onClick={() => void copyDraft()}>{copied ? '✓ Copied' : '⧉ Copy'}</button>}
+              {draft && <button className="btn sm" onClick={() => void copyDraft()}>{copied ? <><Icon name="check" /> Copied</> : <><Icon name="copy" /> Copy</>}</button>}
               <button className="btn sm" disabled={!!busy || proposal.status === 'new'} onClick={() => run('draft', () => callFn('draft-proposal', { proposal_id: proposal.id }))}>
-                {busy === 'draft' ? <span className="spinner" /> : proposal.draft_content ? '↻ Redraft' : '✍ Draft proposal'}
+                {busy === 'draft' ? <span className="spinner" /> : proposal.draft_content ? <><Icon name="refresh" /> Redraft</> : <><Icon name="pen" /> Draft proposal</>}
               </button>
             </div>
           </div>
@@ -453,13 +461,13 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
           <div className="row mt">
             {proposal.status === 'drafted' && (
               <>
-                <button className="btn success" disabled={!!busy} onClick={() => void move('approved')}>✓ Approve</button>
+                <button className="btn success" disabled={!!busy} onClick={() => void move('approved')}><Icon name="check" /> Approve</button>
                 <button className="btn" disabled={!!busy} onClick={() => void move('needs_edits')}>Needs edits</button>
               </>
             )}
             {proposal.status === 'needs_edits' && (
               <>
-                <button className="btn success" disabled={!!busy} onClick={() => void move('approved', { draft_content: draft })}>✓ Approve with edits</button>
+                <button className="btn success" disabled={!!busy} onClick={() => void move('approved', { draft_content: draft })}><Icon name="check" /> Approve with edits</button>
                 <button className="btn" disabled={!!busy} onClick={() => run('draft', () => callFn('draft-proposal', { proposal_id: proposal.id }))}>↻ Redraft</button>
               </>
             )}
@@ -471,15 +479,69 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
             )}
             {proposal.status === 'submitted' && (
               <>
-                {(['viewed', 'replied', 'won', 'lost'] as const).map((o) => (
-                  <button key={o} className={`btn ${o === 'won' ? 'success' : o === 'lost' ? 'danger' : ''}`} disabled={!!busy || proposal.outcome === o}
+                {(['viewed', 'replied'] as const).map((o) => (
+                  <button key={o} className="btn" disabled={!!busy || proposal.outcome === o}
                     onClick={() => run(`outcome-${o}`, () => callFn('record-outcome', { proposal_id: proposal.id, outcome: o }))}>
-                    {o === 'viewed' ? '👁 Viewed' : o === 'replied' ? '💬 Replied' : o === 'won' ? '🏆 Won' : '✕ Lost'}
+                    <Icon name={o === 'viewed' ? 'radar' : 'mail'} /> {o === 'viewed' ? 'Viewed' : 'Replied'}
                   </button>
                 ))}
+                <button className="btn success" disabled={!!busy || proposal.outcome === 'won'} onClick={() => setResolving('won')}>
+                  <Icon name="target" /> Won
+                </button>
+                <button className="btn danger" disabled={!!busy || proposal.outcome === 'lost'} onClick={() => setResolving('lost')}>
+                  <Icon name="close" /> Lost
+                </button>
               </>
             )}
           </div>
+
+          {/* Recording WHY is the whole learning loop: an outcome on its own
+              says what happened, never what to do differently next time. */}
+          {resolving && (
+            <div className="card mt" style={{ background: 'var(--panel-2)' }}>
+              <h3 className="row" style={{ gap: 8 }}>
+                <Icon name="brain" /> {resolving === 'won' ? 'What won it?' : 'Why was it lost?'}
+              </h3>
+              <p className="muted" style={{ fontSize: 12.5, marginTop: 0 }}>
+                Optional, and worth ten seconds: this is what The Drafter reads before writing your
+                next proposal, and what calibrates The Scout's fit scores against your real results.
+              </p>
+              <div className="field">
+                <label>Closest reason</label>
+                <select value={outcomeCategory} onChange={(e) => setOutcomeCategory(e.target.value)}>
+                  <option value="">Prefer not to say</option>
+                  {OUTCOME_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label>Anything specific</label>
+                <textarea
+                  value={outcomeReason}
+                  placeholder={resolving === 'won' ? 'e.g. they liked that we named their actual competitor' : 'e.g. they went with someone half our rate'}
+                  onChange={(e) => setOutcomeReason(e.target.value)}
+                  style={{ minHeight: 70 }}
+                />
+              </div>
+              <div className="row">
+                <button
+                  className={`btn ${resolving === 'won' ? 'success' : 'danger'}`}
+                  disabled={!!busy}
+                  onClick={() => run(`outcome-${resolving}`, async () => {
+                    await callFn('record-outcome', {
+                      proposal_id: proposal.id,
+                      outcome: resolving,
+                      outcome_category: outcomeCategory || undefined,
+                      outcome_reason: outcomeReason || undefined,
+                    });
+                    setResolving(null); setOutcomeCategory(''); setOutcomeReason('');
+                  })}
+                >
+                  {busy ? <span className="spinner" /> : <Icon name="check" />} Record {resolving}
+                </button>
+                <button className="btn ghost" disabled={!!busy} onClick={() => setResolving(null)}>Cancel</button>
+              </div>
+            </div>
+          )}
           {proposal.status === 'approved' && (
             <p className="faint mt">
               Use the Chrome extension's <strong>Autofill</strong> on the platform's proposal editor, then click the platform's own Submit button. Seerist never submits for you.
@@ -489,7 +551,7 @@ function ProposalDrawer({ proposal, onClose, onChanged }: {
             <div className="success-box mt spread">
               <span>Contract won — hand off to the Delivery Engine (Module B).</span>
               <button className="btn success sm" disabled={!!busy} onClick={() => run('delivery', () => callFn('trigger-delivery-run', { proposal_id: proposal.id }))}>
-                {busy === 'delivery' ? <span className="spinner" /> : '🚚 Trigger delivery run'}
+                {busy === 'delivery' ? <span className="spinner" /> : <><Icon name="delivery" /> Trigger delivery run</>}
               </button>
             </div>
           )}

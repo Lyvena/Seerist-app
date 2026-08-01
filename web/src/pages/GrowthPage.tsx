@@ -4,6 +4,7 @@ import { useApp } from '../state/AppContext';
 import SiteStudioTab from '../components/SiteStudioTab';
 import AdsTab from '../components/AdsTab';
 import VisitorsTab from '../components/VisitorsTab';
+import { Icon } from '../components/Icon';
 import type {
   DeploySyncDraft,
   GrowthRecommendation,
@@ -112,7 +113,7 @@ function GrowthInner({ wsId }: { wsId: string }) {
           <h1>Growth Engine</h1>
           <p className="sub">The Grower feeds the Brain your bidder draws from: site ingestion grounds product mentions, every mentioning bid becomes a tracked touchpoint, signups attribute back to specific bids, and deploys draft docs/site updates — always as drafts, never auto-published.</p>
         </div>
-        <button className="btn" onClick={() => void load()}>↻ Refresh</button>
+        <button className="btn" onClick={() => void load()}><Icon name="refresh" /> Refresh</button>
       </div>
 
       <div className="tabs">
@@ -139,7 +140,7 @@ function GrowthInner({ wsId }: { wsId: string }) {
             <div className="row mt">
               <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://yourproduct.com" style={{ flex: 1, minWidth: 260 }} />
               <button className="btn primary" disabled={!!busy || !url.trim()} onClick={() => act('ingest', () => callFn('site-ingest', { workspace_id: wsId, url }))}>
-                {busy === 'ingest' ? <span className="spinner" /> : '⇣ Ingest'}
+                {busy === 'ingest' ? <span className="spinner" /> : <><Icon name="database" /> Ingest</>}
               </button>
             </div>
             {jobs.length > 0 && (
@@ -231,7 +232,7 @@ function GrowthInner({ wsId }: { wsId: string }) {
           <div className="drawer" onClick={(e) => e.stopPropagation()}>
             <div className="spread">
               <h2>Deploy sync draft — {openDraft.deploy_ref || 'manual'}</h2>
-              <button className="btn ghost" onClick={() => setOpenDraft(null)}>✕</button>
+              <button className="btn ghost" onClick={() => setOpenDraft(null)}><Icon name="close" /></button>
             </div>
             <p className="muted mt">{openDraft.change_summary}</p>
             <div className="card mt"><h3>Docs draft</h3><pre>{openDraft.docs_draft || '(empty)'}</pre></div>
@@ -281,7 +282,7 @@ function RecommendationsTab({
         <div className="spread">
           <h3 style={{ marginBottom: 0 }}>What the data says to do next</h3>
           <button className="btn primary" disabled={!!busy} onClick={onAnalyze}>
-            {busy === 'feedback' ? <span className="spinner" /> : '🔄 Run fresh analysis'}
+            {busy === 'feedback' ? <span className="spinner" /> : <><Icon name="refresh" /> Run fresh analysis</>}
           </button>
         </div>
         <p className="muted mt">
@@ -497,7 +498,7 @@ function PloybookRunDrawer({ run, ploybook, onClose }: { run: PloybookRun; ployb
               </span>
             </div>
           </div>
-          <button className="btn ghost" onClick={onClose}>✕</button>
+          <button className="btn ghost" onClick={onClose}><Icon name="close" /></button>
         </div>
 
         {run.error && <div className="error-box mt">{run.error}</div>}

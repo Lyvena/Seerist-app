@@ -7,6 +7,13 @@
 
 const OUTCOMES = ['viewed', 'replied', 'won', 'lost'];
 
+/**
+ * Why it went that way. This is what the product learns from: the outcome
+ * alone records THAT a bid was lost, never why, and a pile of bare 'lost'
+ * rows teaches nothing. Optional — never block recording an outcome on it.
+ */
+const CATEGORIES = ['price', 'timing', 'fit', 'scope', 'competitor', 'no_response', 'client_silent', 'other'];
+
 export default async function (req: Request): Promise<Response> {
   const pf = preflight(req);
   if (pf) return pf;
@@ -48,8 +55,22 @@ export default async function (req: Request): Promise<Response> {
     }
     if (outcome === 'lost') patch.lost_at = now;
 
+    if (typeof body.outcome_reason === 'string' && body.outcome_reason.trim()) {
+      patch.outcome_reason = body.outcome_reason.trim().slice(0, 1000);
+    }
+    if (CATEGORIES.includes(body.outcome_category)) {
+      patch.outcome_category = body.outcome_category;
+    }
+
     const [updated] = await dbPatch('proposals', `id=eq.${proposal_id}`, patch, token);
-    await logStatusChange(proposal_id, 'submitted', `outcome:${outcome}`, userId, null, token);
+    await logStatusChange(
+      proposal_id,
+      'submitted',
+      `outcome:${outcome}`,
+      userId,
+      [patch.outcome_category, patch.outcome_reason].filter(Boolean).join(' — ') || null,
+      token,
+    );
 
     return json({
       proposal: updated,

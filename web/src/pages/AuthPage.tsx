@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { insforge } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
+import { Icon } from '../components/Icon';
 
 type Mode = 'signin' | 'signup' | 'verify' | 'forgot' | 'reset';
 
@@ -103,9 +104,9 @@ export default function AuthPage() {
         <h2>Every bid should win you something.</h2>
         <p>Seerist turns freelance-platform bidding into a triple-outcome channel: win the contract, drive a product signup, or build brand awareness — at zero ad spend. Then deliver the work with AI and a mandatory human QA gate.</p>
         <div className="auth-points">
-          <div className="auth-point"><div className="dot">🔭</div><div><b>Capture & score while you browse</b><span>One click on any Upwork job. AI fit scores always come with plain-language reasoning.</span></div></div>
-          <div className="auth-point"><div className="dot">✍️</div><div><b>Policy-safe proposals in seconds</b><span>Product mentions follow a curated per-platform policy. You review, you approve, you click Submit.</span></div></div>
-          <div className="auth-point"><div className="dot">🤖</div><div><b>Seven AI employees, one audit log</b><span>From The Scout to a bounded-autonomy CEO — every action logged, money moves always need your approval.</span></div></div>
+          <div className="auth-point"><div className="dot"><Icon name="scout" /></div><div><b>Capture & score while you browse</b><span>One click on any Upwork job. AI fit scores always come with plain-language reasoning.</span></div></div>
+          <div className="auth-point"><div className="dot"><Icon name="pen" /></div><div><b>Policy-safe proposals in seconds</b><span>Product mentions follow a curated per-platform policy. You review, you approve, you click Submit.</span></div></div>
+          <div className="auth-point"><div className="dot"><Icon name="personas" /></div><div><b>Seven AI employees, one audit log</b><span>From The Scout to a bounded-autonomy CEO — every action logged, money moves always need your approval.</span></div></div>
         </div>
       </div>
 
