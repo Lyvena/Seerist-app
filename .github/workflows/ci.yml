@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install root tooling
+        run: npm install --no-audit --no-fund
+
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund --include=dev
+        working-directory: web
+
+      - name: Lint
+        run: npm run lint
+
+      # Edge functions are single-file with _shared.ts inlined at deploy time,
+      # so they are typechecked exactly as they ship, not as they are authored.
+      - name: Typecheck edge functions
+        run: npm run typecheck:functions
+
+      - name: Typecheck and build the web app
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+  schema:
+    name: Validate schema.sql
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Parse against the real PostgreSQL grammar so a broken migration can
+      # never reach the database.
+      - name: Install parser
+        run: pip install pglast
+
+      - name: Parse schema.sql
+        run: |
+          python - <<'PY'
+          import pglast, sys
+          sql = open('insforge/schema.sql').read()
+          try:
+              stmts = pglast.parse_sql(sql)
+          except Exception as e:
+              print(f'schema.sql failed to parse: {e}')
+              sys.exit(1)
+          print(f'schema.sql parsed cleanly — {len(stmts)} statements')
+          PY

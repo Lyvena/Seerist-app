@@ -359,6 +359,15 @@ function tick() {
   else { document.getElementById(FILL_ID)?.remove(); document.getElementById(PANEL_ID)?.remove(); }
 }
 
-tick();
-// Every supported platform is a SPA — re-evaluate on navigation.
-new MutationObserver(() => tick()).observe(document.body, { childList: true, subtree: true });
+// Only auto-start inside a real extension context. Tests load this file to
+// exercise the adapters directly, and must not start the observer.
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+  tick();
+  // Every supported platform is a SPA — re-evaluate on navigation.
+  new MutationObserver(() => tick()).observe(document.body, { childList: true, subtree: true });
+}
+
+/* c8 ignore next 3 */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ADAPTERS, currentAdapter, scrapeJob };
+}

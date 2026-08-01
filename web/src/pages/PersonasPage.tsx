@@ -4,6 +4,27 @@ import { useApp } from '../state/AppContext';
 import CEOApprovalQueue from '../components/CEOApprovalQueue';
 import { PERSONAS, type PersonaAction } from '../lib/types';
 
+/**
+ * Each persona's own slice of persona_action_log (spec §4 Module D: "Each gets
+ * an activity feed from persona_action_log"). Read-only — the full audit trail
+ * is still at the bottom of the page.
+ */
+function PersonaFeed({ persona, log }: { persona: string; log: PersonaAction[] }) {
+  const mine = log.filter((l) => l.persona === persona).slice(0, 3);
+  if (!mine.length) return <div className="faint" style={{ marginTop: 8 }}>No activity yet.</div>;
+  return (
+    <div className="persona-feed">
+      {mine.map((l) => (
+        <div key={l.id} className="persona-feed-item">
+          <code>{l.action}</code>
+          <span className="faint"> · {new Date(l.created_at).toLocaleDateString()}</span>
+          {l.result && <div className="faint">{l.result.slice(0, 90)}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** The one piece of work each persona picks up when you press its button. */
 const PERSONA_ACTIONS: Record<string, { label: string; hint: string }> = {
   'The Scout': { label: 'Score next job', hint: 'Scores the oldest job sitting in New.' },
@@ -181,6 +202,7 @@ export default function PersonasPage() {
               </div>
               <div className="owns">{p.owns}</div>
               <div className="module"><span className="badge gray">{p.module}</span></div>
+              <PersonaFeed persona={p.name} log={log} />
             </div>
           </div>
         ))}

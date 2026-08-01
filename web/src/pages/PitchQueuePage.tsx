@@ -238,6 +238,7 @@ export default function PitchQueuePage() {
                 <div className="kanban-card" key={p.id} onClick={() => setSelected(p)}>
                   <div className="title">{p.job_postings?.title || 'Untitled job'}</div>
                   <div className="meta">
+                    {p.job_postings?.platform && <span className="badge blue">{p.job_postings.platform}</span>}
                     <ScorePill score={p.fit_score} />
                     {p.product_mentioned && <span className="badge violet">product ✦</span>}
                     {p.status === 'submitted' && <span className={`badge ${OUTCOME_BADGE[p.outcome]}`}>{p.outcome}</span>}

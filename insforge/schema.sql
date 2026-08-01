@@ -928,6 +928,13 @@ create table if not exists visitor_intent_records (
 alter table policy_configs add column if not exists api_polling_enabled boolean not null default false;
 alter table policy_configs add column if not exists authorized_submission boolean not null default false;
 
+-- When a human last read this platform's live terms. Null means never reviewed,
+-- which is exactly why the row must stay at 'no_mention'.
+alter table policy_configs add column if not exists last_reviewed timestamptz;
+update policy_configs
+   set last_reviewed = '2026-07-30T00:00:00Z'
+ where platform = 'upwork' and last_reviewed is null;
+
 -- Spec §7: platform_connections.source_type (extension | api).
 alter table platform_connections add column if not exists source_type text not null default 'extension';
 do $$

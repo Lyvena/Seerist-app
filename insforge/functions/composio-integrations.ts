@@ -12,6 +12,7 @@
 //   create_event        → Google Calendar event (The Closer's scheduling)
 //   crm_upsert_contact  → HubSpot contact upsert
 //   save_document       → Google Drive file or Notion page
+//   ingest_document     → READ a Notion page / Google Doc into workspace memory
 //   social_post         → LinkedIn post
 // ============================================================================
 
@@ -61,6 +62,23 @@ async function executeTool(tool: string, toolkit: string, args: Record<string, u
     method: 'POST',
     body: JSON.stringify({ connected_account_id: account.id, arguments: args }),
   });
+}
+
+/**
+ * Pull readable prose out of a Composio tool result. Notion and Google Docs
+ * return quite different shapes, so walk the response and collect every string
+ * rather than binding to one provider's schema.
+ */
+function extractText(payload: unknown, depth = 0): string {
+  if (depth > 8 || payload == null) return '';
+  if (typeof payload === 'string') return payload.length > 1 ? `${payload} ` : '';
+  if (typeof payload === 'number' || typeof payload === 'boolean') return '';
+  if (Array.isArray(payload)) return payload.map((p) => extractText(p, depth + 1)).join('');
+  return Object.entries(payload as Record<string, unknown>)
+    // Skip identifier-ish noise so the summary sees content, not UUIDs.
+    .filter(([k]) => !/^(id|ids|url|href|type|object|created_time|last_edited_time|color)$/i.test(k))
+    .map(([, v]) => extractText(v, depth + 1))
+    .join('');
 }
 
 async function composio(path: string, key: string, init: RequestInit = {}): Promise<any> {
@@ -237,6 +255,62 @@ export default async function (req: Request): Promise<Response> {
         }, token);
       }
       return json({ saved: exec.successful !== false, target: 'googledrive', detail: exec });
+    }
+
+    // --- Read-only product-doc ingestion (spec §3.2) -----------------------
+    // Pulls a Notion page or Google Doc into workspace memory under the same
+    // key site-ingest uses, so The Drafter's product mentions and the Growth
+    // Engine's page generation are grounded in the real documentation. Strictly
+    // read-only: nothing is ever written back to Notion or Drive here.
+    if (action === 'ingest_document') {
+      const { workspace_id, source, document_id } = body;
+      if (!workspace_id || !document_id) {
+        return json({ error: 'workspace_id and document_id are required' }, 400);
+      }
+      const target = source === 'googledocs' ? 'googledocs' : 'notion';
+      const exec = target === 'notion'
+        ? await executeTool('NOTION_FETCH_A_PAGE', 'notion', { page_id: String(document_id) }, key)
+        : await executeTool('GOOGLEDOCS_GET_DOCUMENT_BY_ID', 'googledocs', { id: String(document_id) }, key);
+
+      const text = extractText(exec).slice(0, 16000);
+      if (text.length < 50) {
+        return json({ error: 'That document had too little readable text to ingest.' }, 422);
+      }
+
+      const summary = await aiChat([
+        {
+          role: 'system',
+          content: 'You are The Grower. From this product documentation, extract what a proposal writer needs to describe the product accurately. Respond with STRICT JSON: {"summary": "<4-6 sentences>", "positioning": "<2-3 sentences: who it is for and the key differentiator>"}',
+        },
+        { role: 'user', content: text },
+      ], token, { maxTokens: 700, temperature: 0.3, scope: { workspace_id, function_slug: 'composio-integrations' } });
+      const parsed = parseJsonLoose(summary);
+
+      const memoryKey = `product_docs_${target}_${String(document_id).slice(0, 24)}`;
+      const existing = await dbSelect(
+        'workspace_memories',
+        `workspace_id=eq.${workspace_id}&key=eq.${encodeURIComponent(memoryKey)}&limit=1`,
+        token,
+      );
+      const content = `${parsed.positioning}\n\n${parsed.summary}`;
+      if (existing.length) {
+        await dbPatch('workspace_memories', `id=eq.${existing[0].id}`, { content, source: target }, token);
+      } else {
+        await dbInsert('workspace_memories', [{
+          workspace_id, key: memoryKey, kind: 'preference', content, source: target,
+        }], token);
+      }
+
+      await logPersona({
+        workspace_id,
+        persona: 'The Grower',
+        action: 'ingest_document',
+        params: { source: target, document_id },
+        result: String(parsed.positioning || '').slice(0, 400),
+        created_by: userId,
+      }, token);
+
+      return json({ ingested: true, source: target, positioning: parsed.positioning, summary: parsed.summary });
     }
 
     // --- The Grower: social -------------------------------------------------

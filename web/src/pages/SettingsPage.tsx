@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { callFn, db, INSFORGE_URL } from '../lib/insforge';
+import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
 import BillingPanel from '../components/BillingPanel';
 import type { PlatformConnection, WorkspaceMemory } from '../lib/types';
@@ -21,7 +21,6 @@ export default function SettingsPage() {
   const [composio, setComposio] = useState<{ authConfigs: any[]; connectedAccounts: any[] } | null>(null);
   const [composioErr, setComposioErr] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [checkoutMsg, setCheckoutMsg] = useState<string | null>(null);
 
   const [wsForm, setWsForm] = useState<Record<string, string>>({});
 
@@ -82,7 +81,6 @@ export default function SettingsPage() {
           <span className="badge gray">plan: {activeOrg.plan}</span>
           {activeOrg.creem_customer_id && <span className="badge gray">creem: {activeOrg.creem_customer_id.slice(0, 12)}…</span>}
         </div>
-        {checkoutMsg && <div className="warn-box mt">{checkoutMsg}</div>}
       </div>
 
       <BillingPanel orgId={activeOrg.id} />

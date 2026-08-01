@@ -191,9 +191,13 @@ function isChatModel(m: GatewayModel): boolean {
   return !out || out.includes('text');
 }
 
-/** Numbers in an id, for comparing versions: opus-5 beats opus-4.8. */
+/**
+ * Version components of an id, for comparing releases: opus-5 beats opus-4.8.
+ * Each digit run is its own component so "4.10" reads as [4, 10] and correctly
+ * outranks "4.9" → [4, 9]; parsing it as the float 4.10 would rank it lower.
+ */
 function versionKey(id: string): number[] {
-  return (id.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+  return (id.match(/\d+/g) || []).map(Number);
 }
 
 function compareVersions(a: string, b: string): number {

@@ -1,0 +1,28 @@
+{
+  "name": "seerist",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Seerist — win the work, deliver it, grow the product. Root workspace: lint, typecheck and tests for the web app, the Chrome extension and the InsForge edge functions.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "npm --prefix web run build",
+    "typecheck:functions": "node scripts/typecheck-functions.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run lint && npm run typecheck:functions && npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.4.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.19.0",
+    "vitest": "^2.1.8"
+  }
+}
