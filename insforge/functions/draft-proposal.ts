@@ -101,12 +101,11 @@ Budget: ${job.budget || 'not stated'}
 Description:
 ${(job.description || '').slice(0, 6000)}`;
 
-    const raw = await aiChat(
+    const parsed = await aiJson(
       [{ role: 'system', content: system }, { role: 'user', content: user }],
       token,
       { maxTokens: 1100, temperature: 0.6, scope: { workspace_id: proposal.workspace_id, function_slug: 'draft-proposal' } },
     );
-    const parsed = parseJsonLoose(raw);
     const draft = String(parsed.draft || '').trim();
     if (!draft) throw new Error('Drafting model returned an empty draft');
     let productMentioned = Boolean(parsed.product_mentioned);

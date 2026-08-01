@@ -149,11 +149,18 @@ interface GatewayModel {
 
 let _catalog: { at: number; models: GatewayModel[] } | null = null;
 
-/** The gateway's live model list, cached briefly per isolate. */
+/**
+ * The gateway's live model list, cached briefly per isolate.
+ *
+ * Read with the project's service key, not the caller's JWT: the catalog
+ * endpoint is admin-only and the list is project-wide rather than tenant data.
+ * A caller's token gets a 403 here, which silently pins every tier to its
+ * hardcoded fallback and defeats model selection entirely.
+ */
 async function gatewayModels(token: string): Promise<GatewayModel[]> {
   if (_catalog && Date.now() - _catalog.at < 300000) return _catalog.models;
   const res = await fetch(`${IF_BASE}/api/ai/models`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${SERVICE_KEY || token}` },
   });
   if (!res.ok) throw new Error(`model catalog failed (${res.status})`);
   const data = await res.json();
@@ -383,6 +390,43 @@ async function aiChat(
 
   const data = await res.json();
   return data.text ?? '';
+}
+
+/**
+ * A model call whose reply has to be JSON.
+ *
+ * The gateway serves whichever model ranks best today, so the reply's shape is
+ * not stable across model swaps: a more verbose model runs out of token budget
+ * part-way through the object and returns a truncated one. The gateway reports
+ * that as success, so it surfaces as an unparseable reply. Retrying once with
+ * room to finish keeps a model change from quietly breaking a feature.
+ */
+async function aiJson(
+  messages: Array<{ role: string; content: string }>,
+  token: string,
+  opts: {
+    model?: string;
+    maxTokens?: number;
+    temperature?: number;
+    scope?: AiScope;
+  } = {},
+): Promise<any> {
+  const raw = await aiChat(messages, token, opts);
+  try {
+    return parseJsonLoose(raw);
+  } catch {
+    console.warn(`unparseable JSON from ${opts.scope?.function_slug ?? 'model call'} — retrying with a larger budget`);
+    const roomier = Math.min(Math.max((opts.maxTokens ?? 1200) * 2, 1200), 4000);
+    const retry = await aiChat(
+      messages.concat({
+        role: 'system',
+        content: 'Your previous reply could not be parsed as JSON. Reply with the JSON object ONLY — no prose, no code fence, no explanation — and keep the strings short enough that the object is complete and closed.',
+      }),
+      token,
+      { ...opts, maxTokens: roomier },
+    );
+    return parseJsonLoose(retry);
+  }
 }
 
 /** Monthly AI-action cap from the plan's limits. Paid-plan overage is allowed. */

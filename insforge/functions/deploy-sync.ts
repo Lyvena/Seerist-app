@@ -45,11 +45,10 @@ export default async function (req: Request): Promise<Response> {
     const ws = (await dbSelect('workspaces', `id=eq.${workspace_id}&limit=1`, token))[0];
     if (!ws) return json({ error: 'Workspace not found' }, 404);
 
-    const raw = await aiChat([
+    const parsed = await aiJson([
       { role: 'system', content: 'You are The Grower, drafting post-deploy documentation and marketing-site updates. Given a deploy\'s change summary or diff, draft (1) developer-docs updates and (2) marketing site copy updates that reflect the change. These are DRAFTS a human will review — never claim they are live. Respond with STRICT JSON: {"change_summary": "<1-2 sentence summary>", "docs_draft": "<markdown docs update draft>", "site_draft": "<marketing copy update draft>"}' },
       { role: 'user', content: `Product: ${ws.product_name || ws.name} — ${ws.product_description || ''}\nDeploy ref: ${deploy_ref || '(unspecified)'}\n\nCHANGES:\n${changes}` },
     ], token, { maxTokens: 1800, temperature: 0.4, scope: { workspace_id, function_slug: 'deploy-sync' } });
-    const parsed = parseJsonLoose(raw);
 
     const [draft] = await dbInsert('deploy_sync_drafts', [{
       workspace_id,

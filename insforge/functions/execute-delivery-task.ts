@@ -310,7 +310,7 @@ async function planDependencies(runId: string, token: string, userId: string | n
   const hermes = await loadHermesContext(run.workspace_id, token);
   const context = await loadRunContext(run, token);
 
-  const raw = await aiChat([
+  const parsed = await aiJson([
     {
       role: 'system',
       content: `You are The Builder, planning the execution graph for a won contract. Decide which tasks genuinely BLOCK which other tasks — a dependency means the downstream task cannot start until the upstream one is finished and signed off. Keep the graph sparse: only real blockers, never "nice to do first". Never create a cycle.
@@ -322,7 +322,6 @@ Respond with STRICT JSON: {"dependencies": [{"task": <task number>, "depends_on"
     },
   ], token, { maxTokens: 800, temperature: 0.2, scope: { workspace_id: run.workspace_id, function_slug: 'execute-delivery-task' } });
 
-  const parsed = parseJsonLoose(raw);
   const proposed: Array<{ task_id: string; depends_on_task_id: string }> = [];
   for (const d of Array.isArray(parsed.dependencies) ? parsed.dependencies : []) {
     const downstream = graph.tasks[Number(d?.task) - 1];

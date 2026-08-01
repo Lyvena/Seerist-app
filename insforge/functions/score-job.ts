@@ -49,12 +49,11 @@ Client stats: ${JSON.stringify(job.client_stats || {})}
 Description:
 ${(job.description || '').slice(0, 6000)}`;
 
-    const raw = await aiChat(
+    const parsed = await aiJson(
       [{ role: 'system', content: system }, { role: 'user', content: user }],
       token,
       { maxTokens: 700, temperature: 0.2, scope: { workspace_id: proposal.workspace_id, function_slug: 'score-job' } },
     );
-    const parsed = parseJsonLoose(raw);
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));
     const reasoning = String(parsed.reasoning || '').trim();
     if (!reasoning) throw new Error('Scoring model returned no reasoning — refusing to store a bare number.');

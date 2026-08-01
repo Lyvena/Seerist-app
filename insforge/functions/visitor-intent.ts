@@ -254,7 +254,7 @@ async function scoreVisitors(body: any, token: string, userId: string | null): P
   );
   if (!pending.length) return json({ scored: 0, message: 'No unscored visitor records.' });
 
-  const raw = await aiChat([
+  const parsed = await aiJson([
     {
       role: 'system',
       content: `You are The Grower scoring buying intent from anonymous site-visit behaviour. Score 0-100 based ONLY on the behavioural signals given (which pages, how many, how long, referrer, campaign). Never infer identity, demographics or anything about the person. Give a one-sentence reason per visitor.
@@ -270,7 +270,6 @@ ${pending.map((r: any) => `- ${r.visitor_key}: pages=${(r.signals?.pages || []).
     },
   ], token, { maxTokens: 1200, temperature: 0.2, scope: { workspace_id, function_slug: 'visitor-intent' } });
 
-  const parsed = parseJsonLoose(raw);
   const scores = Array.isArray(parsed.scores) ? parsed.scores : [];
 
   let updated = 0;

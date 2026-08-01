@@ -87,7 +87,7 @@ async function extractDesignSystem(body: any, token: string, userId: string | nu
 
   let parsed: any = {};
   try {
-    const raw = await aiChat([
+    parsed = await aiJson([
       {
         role: 'system',
         content: `You are The Grower reconstructing a website's design system so future generated pages match it exactly. Work ONLY from the extracted values given — never invent a colour or font that is not in the list. Respond with STRICT JSON:
@@ -110,7 +110,6 @@ PAGE TEXT:
 ${text}`,
       },
     ], token, { maxTokens: 900, temperature: 0.2, scope: { workspace_id, function_slug: 'site-studio' } });
-    parsed = parseJsonLoose(raw);
   } catch (e) {
     // Keep the raw extraction even if the model call fails — it is still the
     // real design system, just unlabelled.
@@ -175,7 +174,7 @@ async function generatePage(body: any, token: string, userId: string | null): Pr
   const design = profiles[0];
   const positioning = ingested.map((j: any) => j.positioning).filter(Boolean).join('\n') || '(not ingested yet)';
 
-  const raw = await aiChat([
+  const parsed = await aiJson([
     {
       role: 'system',
       content: `You are The Grower generating an optimized ${pageType} page. Produce copy that matches the workspace's existing design system and voice, is genuinely useful (not keyword stuffing), and never claims a product capability that is not supported by the positioning provided.
@@ -206,7 +205,6 @@ PAGE TYPE: ${pageType}`,
     },
   ], token, { maxTokens: 2600, temperature: 0.45, scope: { workspace_id, function_slug: 'site-studio' } });
 
-  const parsed = parseJsonLoose(raw);
   const faq = Array.isArray(parsed.faq) ? parsed.faq.slice(0, 10) : [];
 
   // JSON-LD is assembled in code from the model's structured fields so the
@@ -352,7 +350,7 @@ async function monitor(body: any, token: string, userId: string | null): Promise
   }
 
   const failing = findings.filter((f) => f.severity === 'fix');
-  const raw = await aiChat([
+  const parsed = await aiJson([
     {
       role: 'system',
       content: kind === 'performance'
@@ -365,7 +363,6 @@ async function monitor(body: any, token: string, userId: string | null): Promise
     },
   ], token, { maxTokens: 1400, temperature: 0.3, scope: { workspace_id, function_slug: 'site-studio' } });
 
-  const parsed = parseJsonLoose(raw);
   const fixes = Array.isArray(parsed.fixes) ? parsed.fixes.slice(0, 8) : [];
 
   const drafts = fixes.length

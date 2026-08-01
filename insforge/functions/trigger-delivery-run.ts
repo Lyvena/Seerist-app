@@ -59,21 +59,22 @@ export default async function (req: Request): Promise<Response> {
         token,
       );
       const ruleText = rules.map((r: any) => r.content).join('\n') || DEFAULT_STACK_RULE;
-      const raw = await aiChat([
+      const parsed = await aiJson([
         { role: 'system', content: `You are The Builder, Seerist's delivery engineer. Choose the default backend stack for a won contract using this decision rule:\n${ruleText}\nRespond with STRICT JSON: {"stack": "instantdb"|"insforge", "reasoning": "<2-3 sentences>"}` },
         { role: 'user', content: `Job title: ${job?.title}\nJob description:\n${(job?.description || '').slice(0, 4000)}` },
       ], token, { maxTokens: 300, temperature: 0.2, scope: { workspace_id: proposal.workspace_id, function_slug: 'trigger-delivery-run' } });
-      const parsed = parseJsonLoose(raw);
       stack = normalizeStackChoice(parsed.stack);
       stackReasoning = String(parsed.reasoning || '');
     }
 
     // --- Task decomposition --------------------------------------------------
-    const rawTasks = await aiChat([
+    const rawTasks = await aiJson([
       { role: 'system', content: 'You are The Builder. Decompose a won freelance contract into 4-8 concrete, sequential delivery tasks. Each task must be independently executable and QA-checkable. Respond with STRICT JSON: {"tasks": ["<task 1>", "<task 2>", ...]}' },
       { role: 'user', content: `Contract: ${job?.title}\nWinning proposal:\n${(proposal.draft_content || '').slice(0, 2500)}\nJob description:\n${(job?.description || '').slice(0, 4000)}\nTarget stack: ${stack}` },
-    ], token, { maxTokens: 800, temperature: 0.3, scope: { workspace_id: proposal.workspace_id, function_slug: 'trigger-delivery-run' } });
-    const taskList: string[] = (parseJsonLoose(rawTasks).tasks || [])
+      // Eight tasks of real detail do not fit in a smaller budget: measured
+      // against the gateway's current models, 800 tokens truncates every time.
+    ], token, { maxTokens: 1600, temperature: 0.3, scope: { workspace_id: proposal.workspace_id, function_slug: 'trigger-delivery-run' } });
+    const taskList: string[] = (rawTasks.tasks || [])
       .map((t: unknown) => String(t).trim()).filter(Boolean).slice(0, 12);
     if (!taskList.length) throw new Error('Task decomposition returned no tasks');
 

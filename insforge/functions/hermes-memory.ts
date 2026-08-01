@@ -183,7 +183,7 @@ async function extractSkill(body: any, token: string, userId: string | null): Pr
   let skillName = `${job?.title ? String(job.title).slice(0, 60) : 'Delivery run'} playbook`;
   let skillData: Record<string, unknown> = {};
   try {
-    const raw = await aiChat([
+    const parsed = await aiJson([
       {
         role: 'system',
         content: `You are Hermes, Seerist's memory layer. Distil ONE reusable delivery skill from a completed, human-QA-approved contract so future runs start from experience. Respond with STRICT JSON:
@@ -198,7 +198,6 @@ async function extractSkill(body: any, token: string, userId: string | null): Pr
         content: `Contract: ${job?.title || '(untitled)'}\nStack: ${run.target_stack}\n\n${transcript}`,
       },
     ], token, { maxTokens: 700, temperature: 0.3, scope: { workspace_id: run.workspace_id, function_slug: 'hermes-memory' } });
-    const parsed = parseJsonLoose(raw);
     if (parsed.skill_name) skillName = String(parsed.skill_name).slice(0, 120);
     skillData = {
       summary: String(parsed.summary || '').slice(0, 2000),

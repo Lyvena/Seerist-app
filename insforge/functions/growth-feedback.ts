@@ -262,7 +262,7 @@ async function phrase(
   token: string,
 ): Promise<string[]> {
   try {
-    const raw = await aiChat([
+    const parsed = await aiJson([
       {
         role: 'system',
         content: `You are The Grower, Seerist's growth analyst. Turn each measured bid segment into ONE plain-language recommendation a founder can act on tomorrow. Rules: state the action first, then the evidence with its real numbers. Never invent a number that is not given. Never promise a result. One or two sentences each, no markdown, no bullet characters.
@@ -277,7 +277,6 @@ Segments (same order as your output must be):
 ${segments.map((s, i) => `${i + 1}. ${s.dimension} = "${s.value}" — ${s.bids} bids, ${s.wins} wins (${pct(s.win_rate)}), ${s.signups} attributed signups (${pct(s.signup_rate)}), signup lift ${liftLabel(s.signup_lift)} vs baseline, win lift ${liftLabel(s.win_lift)}.`).join('\n')}`,
       },
     ], token, { maxTokens: 900, temperature: 0.35, scope: { workspace_id: ctx.ws.id, function_slug: 'growth-feedback' } });
-    const parsed = parseJsonLoose(raw);
     const list = Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
     return segments.map((_, i) => String(list[i] || '').trim().slice(0, 600));
   } catch (e) {

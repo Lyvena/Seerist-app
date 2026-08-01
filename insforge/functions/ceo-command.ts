@@ -111,7 +111,7 @@ async function command(body: any, token: string, userId: string | null): Promise
   const { org, workspaces } = gate;
 
   // 1. Classify the instruction. The model proposes; the server DECIDES.
-  const raw = await aiChat([
+  const parsed = await aiJson([
     { role: 'system', content: `You are The CEO, Seerist's org-level orchestration persona. Classify the founder's instruction into exactly one action_type:
 - "reprioritize_backlog": reorder delivery tasks/backlog items across workspaces
 - "reallocate_tasks": move work between personas/workspaces
@@ -127,7 +127,6 @@ async function command(body: any, token: string, userId: string | null): Promise
 Respond with STRICT JSON: {"action_type": "<one of the above>", "plan": "<2-4 sentences: exactly what you would do>", "target_workspace_ids": ["<uuid>", ...]}` },
     { role: 'user', content: `Organization: ${org.name}\nWorkspaces: ${workspaces.map((w: any) => `${w.name} (${w.type}, ${w.id})`).join('; ')}\n\nInstruction: ${String(instruction).slice(0, 2000)}` },
   ], token, { maxTokens: 500, temperature: 0.2, scope: { organization_id, function_slug: 'ceo-command' } });
-  const parsed = parseJsonLoose(raw);
   const actionType = normalizeActionType(parsed.action_type);
   const plan = String(parsed.plan || '').slice(0, 1500);
   const targets = Array.isArray(parsed.target_workspace_ids)
@@ -364,11 +363,11 @@ async function executeAction(
       for (const r of runs) {
         const tasks = await dbSelect('delivery_tasks', `delivery_run_id=eq.${r.id}&status=in.(todo,qa_rejected)&order=position.asc&limit=50`, token);
         if (tasks.length < 2) continue;
-        const rawOrder = await aiChat([
+        const rawOrder = await aiJson([
           { role: 'system', content: 'Reorder these delivery tasks by execution priority per the instruction. Respond with STRICT JSON: {"order": [<task ids in new priority order>]}' },
           { role: 'user', content: `Instruction: ${instruction}\nTasks:\n${tasks.map((t: any) => `${t.id}: ${t.description}`).join('\n')}` },
         ], token, { maxTokens: 400, temperature: 0.2, scope: { organization_id: org.id, function_slug: 'ceo-command' } });
-        const order: string[] = parseJsonLoose(rawOrder).order || [];
+        const order: string[] = rawOrder.order || [];
         for (let i = 0; i < order.length; i++) {
           const t = tasks.find((x: any) => x.id === order[i]);
           if (t && t.position !== i) {

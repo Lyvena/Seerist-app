@@ -277,14 +277,13 @@ export default async function (req: Request): Promise<Response> {
         return json({ error: 'That document had too little readable text to ingest.' }, 422);
       }
 
-      const summary = await aiChat([
+      const parsed = await aiJson([
         {
           role: 'system',
           content: 'You are The Grower. From this product documentation, extract what a proposal writer needs to describe the product accurately. Respond with STRICT JSON: {"summary": "<4-6 sentences>", "positioning": "<2-3 sentences: who it is for and the key differentiator>"}',
         },
         { role: 'user', content: text },
       ], token, { maxTokens: 700, temperature: 0.3, scope: { workspace_id, function_slug: 'composio-integrations' } });
-      const parsed = parseJsonLoose(summary);
 
       const memoryKey = `product_docs_${target}_${String(document_id).slice(0, 24)}`;
       const existing = await dbSelect(

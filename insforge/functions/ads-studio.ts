@@ -198,7 +198,7 @@ async function generateCreative(body: any, token: string, userId: string | null)
   );
   const positioning = ingested.map((j: any) => j.positioning).filter(Boolean).join('\n') || '(not ingested yet)';
 
-  const raw = await aiChat([
+  const parsed = await aiJson([
     {
       role: 'system',
       content: `You are The Grower writing ${count} distinct ad creative variants. Each must take a genuinely different angle (not reworded copies). Never claim a capability, statistic, customer or outcome that the positioning does not support. No fake urgency, no invented social proof.
@@ -220,7 +220,6 @@ BRIEF: ${brief}`,
     },
   ], token, { maxTokens: 1600, temperature: 0.6, scope: { workspace_id, function_slug: 'ads-studio' } });
 
-  const parsed = parseJsonLoose(raw);
   const variants = (Array.isArray(parsed.variants) ? parsed.variants : []).slice(0, count);
   if (!variants.length) return json({ error: 'Creative generation returned no variants' }, 502);
 
