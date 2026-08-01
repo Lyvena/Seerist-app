@@ -11,20 +11,56 @@ Edge functions read them via `Deno.env.get(...)` — nothing sensitive ships to 
 | `SERVICE_API_KEY` | Service-role DB access for `creem-webhook`, `track-signup`, CI `deploy-sync` |
 | `COMPOSIO_API_KEY` | Composio managed OAuth + tool execution |
 | `DEPLOY_SYNC_TOKEN` | Authenticates CI deploy-sync webhook calls |
+| `CREEM_API_KEY` | Creem live API key — checkout sessions and billing-portal links |
+| `CREEM_WEBHOOK_SECRET` | HMAC-SHA256 secret used to verify every `creem-signature` header |
 
-## Creem (billing — Merchant of Record) ⬜
+## Creem (billing — Merchant of Record) ✅
 
-1. Create products for each plan in the [Creem dashboard](https://creem.io).
-2. Add secrets:
-   - `CREEM_API_KEY` — from Creem → Developers
-   - `CREEM_PRODUCT_STARTER`, `CREEM_PRODUCT_GROWTH` — product ids
-   - `CREEM_WEBHOOK_SECRET` — after step 3
-   - (test mode: also set `CREEM_BASE_URL=https://test-api.creem.io`)
-3. Register the webhook in Creem → Developers → Webhooks:
-   `https://si9f4zab.eu-central.insforge.app/functions/creem-webhook`
-4. Done — `creem-checkout` starts returning real checkout URLs, and subscription
-   events update `organizations.billing_status` automatically. Until then the
-   Settings page shows a clear "setup needed" message (HTTP 501), by design.
+Live and verified. Creem is the legal seller: it collects payment, registers and
+remits VAT/GST/sales tax in 190+ countries, and absorbs chargeback liability.
+
+**Webhook endpoint** registered in Creem → Developers → Webhooks:
+
+```
+https://si9f4zab.eu-central.insforge.app/functions/creem-webhook
+```
+
+This must be the **edge function** URL. `app.seerist.xyz` is a static site on
+InsForge Sites with no `/api/*` routes, so any webhook pointed there returns 404
+and Creem retries forever (30s → 1m → 5m → 1h) without ever granting access.
+
+**Product ids are NOT environment variables.** The plan ladder lives in the
+`billing_plans` table (`code`, `price_cents`, `interval`, `creem_product_id`,
+`features`, `limits`), so pricing is data you can edit without a deploy:
+
+| Plan | Monthly | Yearly (2 months free) |
+|---|---|---|
+| Free | $0 — no Creem product | — |
+| Starter | `prod_64FkTYg19BehXAxxZ3Rnvz` | `prod_42NNzZ5QMttfLm6owbUztY` |
+| Builder | `prod_1KbeN1XPs0TcPckX3RySlZ` | `prod_3kIuVm748zlejuW4m4iltY` |
+| Scale | `prod_5z8aZK2jL7iNxeYGdluJl9` | `prod_6pgwtkJgYGEINzwWoODcG2` |
+
+Access follows Creem's own guidance: granted on `subscription.active`, `paid`
+and `trialing`; revoked on `expired` and `paused`; a `scheduled_cancel` keeps
+access until the period ends. Signatures are compared in constant time and an
+unsigned or wrongly-signed request is rejected with 401.
+
+To run against the sandbox instead, set `CREEM_BASE_URL=https://test-api.creem.io`
+and swap in a `creem_test_` key — the function also infers the base URL from the
+key prefix on its own.
+
+### Rotating the webhook secret
+
+Update the secret in Creem, then update the InsForge project secret to match:
+
+```bash
+curl -X PUT "$INSFORGE_BASE_URL/api/secrets/CREEM_WEBHOOK_SECRET" \
+  -H "Authorization: Bearer $INSFORGE_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"value":"whsec_..."}'
+```
+
+No redeploy is needed — functions read the secret at invocation time.
 
 ## OpenHands (delivery sandbox) ⬜
 
