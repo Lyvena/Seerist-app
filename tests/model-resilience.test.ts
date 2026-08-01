@@ -76,6 +76,26 @@ describe('a truncated JSON reply is retried, not surfaced', () => {
   });
 });
 
+describe('free-tier defaults are picked for the request budget', () => {
+  const schema = readRepoFile('insforge/schema.sql');
+  const rank = (pattern: string) => {
+    const m = schema.match(new RegExp(`'free', '${pattern.replace('/', '\\/')}',\\s*(\\d+)`));
+    if (!m) throw new Error(`no free-tier rank seeded for ${pattern}`);
+    return Number(m[1]);
+  };
+
+  it('falls back to a model that answers inside the edge timeout', () => {
+    expect(shared).toMatch(/FREE_FALLBACK_MODEL = [\s\S]*?'inclusionai\/ling-3\.0-flash:free'/);
+  });
+
+  it('ranks the fast zero-cost model above the largest and the slowest', () => {
+    // A 550B model that needs ~47s is not a better free default than a ~4s one
+    // when the request is killed at ~30s.
+    expect(rank('inclusionai/ling')).toBeGreaterThan(rank('nvidia/nemotron-3-ultra'));
+    expect(rank('inclusionai/ling')).toBeGreaterThan(rank('openai/gpt-oss'));
+  });
+});
+
 describe('every JSON-shaped model call goes through the retry', () => {
   it('leaves no direct parseJsonLoose(aiChat(...)) call sites behind', () => {
     // parseJsonLoose is the raw parser; call sites use aiJson so that a model

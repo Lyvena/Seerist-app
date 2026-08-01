@@ -136,7 +136,9 @@ async function dbCount(table: string, query: string, token: string): Promise<num
 // against the LIVE gateway catalog every time, so when a better model appears
 // it becomes the default on its own — no code change, no redeploy.
 
-const FREE_FALLBACK_MODEL = Deno.env.get('SEERIST_FREE_MODEL') ?? 'openai/gpt-oss-20b:free';
+// Used when the catalog cannot be read at all, so it has to be a model that
+// answers well within the edge timeout rather than the most capable one.
+const FREE_FALLBACK_MODEL = Deno.env.get('SEERIST_FREE_MODEL') ?? 'inclusionai/ling-3.0-flash:free';
 const PAID_FALLBACK_MODEL = Deno.env.get('SEERIST_PAID_MODEL') ?? 'anthropic/claude-opus-5';
 
 interface GatewayModel {

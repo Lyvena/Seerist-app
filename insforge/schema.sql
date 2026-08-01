@@ -1142,12 +1142,17 @@ on conflict (code) do update set
 -- FREE tier: only zero-cost gateway models are ever eligible (the resolver
 -- enforces price = 0 as a hard constraint; these patterns only order them).
 insert into model_preferences (tier, pattern, rank, note) values
-  ('free', 'nvidia/nemotron-3-ultra',  100, 'Largest zero-cost model on the gateway.'),
-  ('free', 'nvidia/nemotron-3-super',   90, 'Strong zero-cost mid-size.'),
-  ('free', 'openai/gpt-oss',            80, 'Reliable zero-cost general model.'),
-  ('free', 'google/gemma',              70, 'Zero-cost Gemma family.'),
-  ('free', 'inclusionai/ling',          60, 'Zero-cost fast model.'),
-  ('free', 'nvidia/nemotron-nano',      50, 'Small zero-cost fallback.'),
+-- FREE tier: ranked by how well a model serves an interactive request, not by
+-- size. Edge functions are killed at ~30s, so a larger model that needs 47s to
+-- answer is not a better free default -- it is a timeout. Ranks below follow
+-- measured latency on Seerist's own drafting and decomposition prompts.
+  ('free', 'inclusionai/ling',         100, 'Zero-cost and fast (~4s on a drafting prompt) — comfortably inside the request budget.'),
+  ('free', 'nvidia/nemotron-3-super',   90, 'Strong zero-cost mid-size, ~13s.'),
+  ('free', 'nvidia/nemotron-3-nano',    80, 'Zero-cost small, ~27s on long outputs.'),
+  ('free', 'nvidia/nemotron-3-ultra',   70, 'Most capable zero-cost model, but ~47s on long outputs — often past the edge timeout.'),
+  ('free', 'nvidia/nemotron-nano',      60, 'Small zero-cost fallback.'),
+  ('free', 'google/gemma',              50, 'Zero-cost Gemma family.'),
+  ('free', 'openai/gpt-oss',            40, 'Last resort — measured ~50s on a drafting prompt.'),
 -- PAID tier: best overall first. Version numbers are compared automatically,
 -- so a future claude-opus-6 wins over opus-5 without touching this table.
   ('paid', 'anthropic/claude-opus',    100, 'Best overall. Default for paid plans.'),
