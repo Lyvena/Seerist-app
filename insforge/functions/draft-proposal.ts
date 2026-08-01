@@ -47,12 +47,22 @@ export default async function (req: Request): Promise<Response> {
       }
     }
 
-    // Hermes-style workspace memory grounds the draft (tone, positioning, prior decisions).
-    const memories = await dbSelect(
-      'workspace_memories',
-      `workspace_id=eq.${proposal.workspace_id}&order=updated_at.desc&limit=12`,
-      token,
-    );
+    // Hermes-style workspace memory grounds the draft (tone, positioning, prior
+    // decisions). Ingested product documentation is read separately from the
+    // recency window: every delivery run writes a memory of its own, so on a
+    // busy workspace the docs would otherwise be pushed out of the context that
+    // the product-mention rules above depend on.
+    const wsFilter = `workspace_id=eq.${proposal.workspace_id}`;
+    const [productDocs, recent] = await Promise.all([
+      dbSelect('workspace_memories', `${wsFilter}&key=like.product_docs_*&order=updated_at.desc&limit=4`, token),
+      dbSelect('workspace_memories', `${wsFilter}&order=updated_at.desc&limit=12`, token),
+    ]);
+    const seen = new Set<string>();
+    const memories = [...productDocs, ...recent].filter((m: any) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
     const memoryBlock = memories.length
       ? memories.map((m: any) => `- [${m.kind}] ${m.key}: ${m.content.slice(0, 400)}`).join('\n')
       : '(no stored memories yet)';

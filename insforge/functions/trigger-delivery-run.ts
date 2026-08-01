@@ -46,27 +46,25 @@ export default async function (req: Request): Promise<Response> {
     const ws = (await dbSelect('workspaces', `id=eq.${proposal.workspace_id}&limit=1`, token))[0];
 
     // --- Stack decision (Hermes memory decision rule + model gateway) -------
-    let stack = 'insforge';
+    let stack = DEFAULT_TARGET_STACK;
     let stackReasoning = '';
-    if (target_stack && ['instantdb', 'insforge', 'client_specified'].includes(target_stack)) {
-      stack = target_stack;
-      stackReasoning = target_stack === 'client_specified'
-        ? 'Client explicitly specified their own stack — Seerist never forces a default onto a specified stack.'
-        : 'Stack manually selected by the workspace.';
+    const explicit = explicitStack(target_stack);
+    if (explicit) {
+      stack = explicit.stack;
+      stackReasoning = explicit.reasoning;
     } else {
       const rules = await dbSelect(
         'workspace_memories',
         `workspace_id=eq.${proposal.workspace_id}&kind=eq.decision_rule&limit=5`,
         token,
       );
-      const ruleText = rules.map((r: any) => r.content).join('\n') ||
-        'Default rule: InstantDB for client-heavy, real-time deliverables (dashboards, collaborative tools, chat-like features); InsForge for deliverables needing a fuller server-side stack (auth, storage, edge functions).';
+      const ruleText = rules.map((r: any) => r.content).join('\n') || DEFAULT_STACK_RULE;
       const raw = await aiChat([
         { role: 'system', content: `You are The Builder, Seerist's delivery engineer. Choose the default backend stack for a won contract using this decision rule:\n${ruleText}\nRespond with STRICT JSON: {"stack": "instantdb"|"insforge", "reasoning": "<2-3 sentences>"}` },
         { role: 'user', content: `Job title: ${job?.title}\nJob description:\n${(job?.description || '').slice(0, 4000)}` },
       ], token, { maxTokens: 300, temperature: 0.2, scope: { workspace_id: proposal.workspace_id, function_slug: 'trigger-delivery-run' } });
       const parsed = parseJsonLoose(raw);
-      stack = parsed.stack === 'instantdb' ? 'instantdb' : 'insforge';
+      stack = normalizeStackChoice(parsed.stack);
       stackReasoning = String(parsed.reasoning || '');
     }
 
@@ -155,4 +153,35 @@ export default async function (req: Request): Promise<Response> {
     console.error(e);
     return json({ error: e instanceof Error ? e.message : 'delivery trigger failed' }, 500);
   }
+}
+
+/** The stacks a delivery run may target. Mirrors the delivery_runs check constraint. */
+const TARGET_STACKS = ['instantdb', 'insforge', 'client_specified'];
+
+/** Falling back to the fuller server-side stack is the safe default. */
+const DEFAULT_TARGET_STACK = 'insforge';
+
+/** Used when the workspace has no decision_rule memories of its own yet. */
+const DEFAULT_STACK_RULE =
+  'Default rule: InstantDB for client-heavy, real-time deliverables (dashboards, collaborative tools, chat-like features); InsForge for deliverables needing a fuller server-side stack (auth, storage, edge functions).';
+
+/**
+ * An explicitly requested stack short-circuits the model entirely. Notably
+ * `client_specified` must survive untouched: when a contract names the client's
+ * own stack, nothing here may override it. Returns null when there is no valid
+ * request to honour, which hands the decision to the rule below.
+ */
+function explicitStack(requested: unknown): { stack: string; reasoning: string } | null {
+  if (typeof requested !== 'string' || !TARGET_STACKS.includes(requested)) return null;
+  return {
+    stack: requested,
+    reasoning: requested === 'client_specified'
+      ? 'Client explicitly specified their own stack — Seerist never forces a default onto a specified stack.'
+      : 'Stack manually selected by the workspace.',
+  };
+}
+
+/** Only an explicit instantdb vote picks InstantDB; anything else defaults. */
+function normalizeStackChoice(choice: unknown): string {
+  return choice === 'instantdb' ? 'instantdb' : DEFAULT_TARGET_STACK;
 }

@@ -153,7 +153,22 @@ zip `extension/`, and submit. No code changes needed.
 
 ## CI deploy-sync webhook (Module C)
 
-Point your product's deploy pipeline at:
+`.github/workflows/deploy-sync.yml` fires this on every push to `main` that
+touches the code or API surface (`insforge/functions`, `insforge/schema.sql`,
+`web/src`, `extension`, `docs`). It diffs the deploy against the previous
+commit and posts the result. Two repository settings turn it on — until both
+are present the workflow logs a notice and skips, so it never fails a build:
+
+| Where | Name | Value |
+| --- | --- | --- |
+| Settings → Secrets → Actions | `DEPLOY_SYNC_TOKEN` | must equal the InsForge project secret of the same name |
+| Settings → Variables → Actions | `DEPLOY_SYNC_WORKSPACE_ID` | the workspace whose docs/site the drafts are for |
+| Settings → Variables → Actions | `INSFORGE_URL` | optional; defaults to the live project URL |
+
+Run it by hand from the Actions tab ("Deploy sync" → Run workflow) to draft
+against an arbitrary base commit.
+
+Any other pipeline can call it directly:
 
 ```
 POST https://si9f4zab.eu-central.insforge.app/functions/deploy-sync?token=<DEPLOY_SYNC_TOKEN>

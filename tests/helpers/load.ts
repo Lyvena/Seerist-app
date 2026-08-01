@@ -45,17 +45,31 @@ export function loadExtensionAdapters(html: string, url: string) {
  * instead of a copy of it.
  */
 export function loadSharedHelpers(): Record<string, any> {
-  const ts = readRepoFile('insforge/functions/_shared.ts');
-  const js = transformSync(ts, { loader: 'ts', format: 'cjs', target: 'es2022' }).code;
-
-  const names = [
+  return loadFunctionScope('insforge/functions/_shared.ts', [
     'isZeroCost', 'isChatModel', 'versionKey', 'compareVersions',
     'freeModelCeiling', 'withinFreeCeiling', 'parseJsonLoose',
-  ];
-  const factory = new Function('Deno', 'exports', `
+  ]);
+}
+
+/**
+ * Evaluate an edge function's module scope and hand back the named top-level
+ * declarations, so a helper can be tested as the code that actually ships.
+ *
+ * Only the module scope runs — the default export is never called — so the
+ * `_shared` helpers it references at call time need no stubbing. `Deno` is
+ * stubbed because module-scope secret reads would otherwise throw.
+ */
+export function loadFunctionScope(relative: string, names: string[]): Record<string, any> {
+  const ts = readRepoFile(relative);
+  const js = transformSync(ts, { loader: 'ts', format: 'cjs', target: 'es2022' }).code;
+
+  // A file with an `export default` compiles to code that assigns to `module`,
+  // so both it and `exports` have to exist for the scope to evaluate at all.
+  const factory = new Function('Deno', 'module', 'exports', 'found', `
     ${js}
-    ${names.map((n) => `try { exports.${n} = ${n}; } catch (e) {}`).join('\n')}
-    return exports;
+    ${names.map((n) => `try { found.${n} = ${n}; } catch (e) {}`).join('\n')}
+    return found;
   `);
-  return factory({ env: { get: () => undefined } }, {});
+  const shim = { exports: {} };
+  return factory({ env: { get: () => undefined } }, shim, shim.exports, {});
 }

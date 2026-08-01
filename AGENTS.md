@@ -163,9 +163,16 @@ Deploying (needs `INSFORGE_BASE_URL` and `INSFORGE_API_KEY`):
 
 ```bash
 node insforge/scripts/apply-schema.mjs        # idempotent, safe to re-run
-node insforge/scripts/deploy-functions.mjs    # all 28, or pass slugs
+node insforge/scripts/deploy-functions.mjs    # all 29, or pass slugs
 npm --prefix web run build && node insforge/scripts/deploy-site.mjs
 ```
+
+Two workflows run in CI. `ci.yml` is the gate: lint, both typechecks, the
+Vitest suite, and a real PostgreSQL parse of `schema.sql`. `deploy-sync.yml`
+fires after a push to `main` touching the code or API surface and asks the
+`deploy-sync` function to draft docs and marketing copy for the change; it
+skips itself unless `DEPLOY_SYNC_TOKEN` (secret) and `DEPLOY_SYNC_WORKSPACE_ID`
+(variable) are set on the repository, and it publishes nothing.
 
 **Schema changes go at the end of `insforge/schema.sql`** as an appended
 idempotent block (`create table if not exists`, `add column if not exists`,

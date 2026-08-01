@@ -1,0 +1,117 @@
+name: Deploy sync
+
+# Spec §6 / playbook 3.3: a production deploy diffs the changed code and API
+# surface against the current docs and marketing copy, and drafts updates to
+# both. Output is ALWAYS a draft for human review in Growth Engine → Overview
+# — this workflow publishes nothing.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'insforge/functions/**'
+      - 'insforge/schema.sql'
+      - 'web/src/**'
+      - 'extension/**'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      workspace_id:
+        description: 'Workspace to draft docs + site copy for (defaults to the DEPLOY_SYNC_WORKSPACE_ID variable)'
+        required: false
+      base:
+        description: 'Commit to diff against (defaults to the previous commit)'
+        required: false
+
+concurrency:
+  group: deploy-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  draft:
+    name: Draft docs + site updates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The previous commit has to be present to diff against it.
+          fetch-depth: 0
+
+      - name: Check the webhook is configured
+        id: config
+        env:
+          DEPLOY_SYNC_TOKEN: ${{ secrets.DEPLOY_SYNC_TOKEN }}
+          WORKSPACE_ID: ${{ github.event.inputs.workspace_id || vars.DEPLOY_SYNC_WORKSPACE_ID }}
+        run: |
+          if [ -z "$DEPLOY_SYNC_TOKEN" ] || [ -z "$WORKSPACE_ID" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy sync is not configured — skipping. Add the DEPLOY_SYNC_TOKEN repository secret (it must match the InsForge project secret of the same name) and the DEPLOY_SYNC_WORKSPACE_ID repository variable to turn it on."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Collect the deployed change surface
+        if: steps.config.outputs.ready == 'true'
+        id: changes
+        env:
+          BASE_INPUT: ${{ github.event.inputs.base || github.event.before }}
+        run: |
+          set -euo pipefail
+          BASE="$BASE_INPUT"
+          # `before` is all-zeros on a branch's first push, and absent on a
+          # manual run; fall back to the parent commit, then to the root.
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)
+          fi
+          echo "Diffing $BASE..$GITHUB_SHA"
+
+          PATHS='insforge/functions insforge/schema.sql web/src extension docs'
+          {
+            echo "Commits in this deploy:"
+            git log --no-merges --format='- %s' "$BASE..$GITHUB_SHA" | head -40
+            echo
+            echo "Changed surface:"
+            git diff --stat "$BASE..$GITHUB_SHA" -- $PATHS
+            echo
+            echo "Diff:"
+            git diff --unified=2 "$BASE..$GITHUB_SHA" -- $PATHS
+          } > /tmp/changes.txt
+
+          # The function caps the payload at 12k characters; truncate here so a
+          # large deploy still produces a coherent summary rather than a
+          # sentence cut in half.
+          head -c 11000 /tmp/changes.txt > /tmp/changes.trimmed
+          mv /tmp/changes.trimmed /tmp/changes.txt
+          if [ ! -s /tmp/changes.txt ]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Request the draft
+        if: steps.config.outputs.ready == 'true' && steps.changes.outputs.empty == 'false'
+        env:
+          INSFORGE_URL: ${{ vars.INSFORGE_URL || 'https://si9f4zab.eu-central.insforge.app' }}
+          DEPLOY_SYNC_TOKEN: ${{ secrets.DEPLOY_SYNC_TOKEN }}
+          WORKSPACE_ID: ${{ github.event.inputs.workspace_id || vars.DEPLOY_SYNC_WORKSPACE_ID }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg ws "$WORKSPACE_ID" \
+            --arg ref "$GITHUB_SHA" \
+            --rawfile diff /tmp/changes.txt \
+            '{workspace_id: $ws, deploy_ref: $ref, diff: $diff}' > /tmp/payload.json
+
+          STATUS=$(curl -sS -o /tmp/response.json -w '%{http_code}' \
+            -X POST "$INSFORGE_URL/functions/deploy-sync?token=$DEPLOY_SYNC_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/payload.json)
+
+          if [ "$STATUS" != "201" ]; then
+            echo "deploy-sync returned HTTP $STATUS"
+            cat /tmp/response.json
+            exit 1
+          fi
+          echo "::notice::Docs + site drafts created for review in Growth Engine → Overview (nothing published)."
+          jq -r '.draft.change_summary // "draft created"' /tmp/response.json >> "$GITHUB_STEP_SUMMARY"
