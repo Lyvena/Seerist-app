@@ -1065,6 +1065,28 @@ alter table ai_usage_log enable row level security;
 
 -- Reference data: readable by any signed-in user, written only by the service
 -- role (same pattern as policy_configs — no client write policy on purpose).
+-- ---------------------------------------------------------------------------
+-- Delivery stack provisioning (InsForge co-branded partnership).
+--
+-- When a won contract is delivered on the InsForge stack, Seerist provisions a
+-- REAL InsForge project for the client through the partnership API, so The
+-- Builder writes code against a live backend instead of a placeholder.
+--
+-- Deliberately NO api_key column: the project key is a live credential and is
+-- fetched fresh from InsForge on demand (delivery-stack `credentials`), which
+-- keeps it out of the database and out of any row a client could be shown.
+-- ---------------------------------------------------------------------------
+
+alter table delivery_runs add column if not exists stack_account_id text;
+alter table delivery_runs add column if not exists stack_project_id text;
+alter table delivery_runs add column if not exists stack_access_host text;
+alter table delivery_runs add column if not exists stack_region text;
+alter table delivery_runs add column if not exists stack_instance_type text;
+alter table delivery_runs add column if not exists stack_owner_email text;
+alter table delivery_runs add column if not exists stack_provisioned_at timestamptz;
+
+create index if not exists idx_delivery_runs_stack_project on delivery_runs(stack_project_id);
+
 -- Pricing is public information — readable signed out so a pricing page or a
 -- logged-out checkout link can render the ladder.
 drop policy if exists billing_plans_select on billing_plans;

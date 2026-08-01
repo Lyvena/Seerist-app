@@ -48,6 +48,7 @@
 | `trigger-delivery-run` | B | Won contract → stack decision (memory rule) → task decomposition → optional OpenHands conversation |
 | `execute-delivery-task` | B | DAG orchestration: topological order, dependency gating, per-task status, run roll-up → `qa_pending` (mandatory human QA) |
 | `hermes-memory` | B | Persistent per-workspace memory (`hermes_memories`) + skill library extracted from delivered runs (`hermes_skills`) |
+| `delivery-stack` | B | Provisions the client's own InsForge project via the **co-branded** partnership API so The Builder targets a live backend |
 | `qa-task` | B | Human approve/reject with feedback loop |
 | `complete-delivery-run` | B | Server-enforced QA gate → delivered + skill extraction into memory |
 | `site-ingest` | C | Fetch + summarize the SaaS site; grounds product-mention drafting |
@@ -97,6 +98,33 @@ InstantDB for client-heavy/real-time deliverables; InsForge for fuller server-si
 | `{ delivery_run_id, action: 'graph' }` | Inspect order, blockers and progress without executing |
 | `{ delivery_run_id, action: 'plan_dependencies' }` | Infer the DAG (consulting the Hermes skill library first) |
 | `{ delivery_run_id, action: 'set_dependencies', dependencies }` | Set the edges explicitly |
+
+## Client backend provisioning (Module B)
+
+Two different InsForge projects are in play and they must not be confused.
+`si9f4zab` is **Seerist's own** backend. `delivery-stack` provisions a
+**separate** project per client deliverable through the co-branded partnership
+API (`POST /partnership/v1/:partnerId/connect-user`, then `.../sync-project`),
+authenticated with `X-Partnership-Secret`.
+
+Co-branded is a deliberate choice over white-label: the client is a real
+InsForge user linked by their own email, can sign in and manage the project, and
+pays InsForge directly. Seerist hands over infrastructure the client controls.
+
+Three properties worth preserving:
+
+- **The API key is never stored.** `delivery_runs` records the project id, host,
+  region and owner — never the key. `credentials` reads it live from InsForge at
+  handoff and writes an audit line each time.
+- **A plan limit is not a failure.** When the client's InsForge plan caps active
+  projects, the response carries their existing `candidate_projects` so a human
+  attaches one instead.
+- **Only InsForge is provisioned.** An `instantdb` run is refused outright rather
+  than half-provisioned.
+
+Once a run has a provisioned host, `execute-delivery-task` injects it into The
+Builder's prompt (host only, never the key) so generated migrations, edge
+functions and client calls all target the real project.
 
 ## OpenHands / Hermes
 

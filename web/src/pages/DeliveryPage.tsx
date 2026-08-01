@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { callFn, db } from '../lib/insforge';
 import { useApp } from '../state/AppContext';
-import type { DeliveryRun, DeliveryTask } from '../lib/types';
+import type { DeliveryRun, DeliveryStackStatus, DeliveryTask, ProvisionedProject } from '../lib/types';
 
 const RUN_BADGE: Record<string, string> = {
   planning: 'gray', running: 'blue', qa: 'amber', delivered: 'green', failed: 'red', cancelled: 'gray',
@@ -91,6 +91,130 @@ export default function DeliveryPage() {
   );
 }
 
+/**
+ * The client's real backend, provisioned through the InsForge co-branded
+ * partnership. The client owns the project and signs in to InsForge with the
+ * same email — Seerist hands over infrastructure the client controls, and never
+ * stores their API key.
+ */
+function StackPanel({ run, onChanged }: { run: DeliveryRun; onChanged: () => void }) {
+  const [status, setStatus] = useState<DeliveryStackStatus | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<ProvisionedProject[]>([]);
+  const [creds, setCreds] = useState<{ access_host: string; api_key: string } | null>(null);
+  const [email, setEmail] = useState('');
+  const [region, setRegion] = useState('us-east');
+
+  useEffect(() => {
+    void callFn<DeliveryStackStatus>('delivery-stack', { op: 'status' })
+      .then(setStatus)
+      .catch(() => setStatus(null));
+  }, []);
+
+  async function act(label: string, fn: () => Promise<unknown>) {
+    setBusy(label); setError(null);
+    try { await fn(); onChanged(); }
+    catch (e) { setError(e instanceof Error ? e.message : `${label} failed`); }
+    finally { setBusy(null); }
+  }
+
+  if (run.target_stack === 'instantdb') {
+    return (
+      <div className="card mt">
+        <h3>Client backend</h3>
+        <p className="muted">This run targets InstantDB. Seerist only provisions InsForge backends — set this one up manually, or switch the run to the InsForge stack.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card mt">
+      <div className="spread">
+        <h3 style={{ marginBottom: 0 }}>Client backend (InsForge)</h3>
+        {run.stack_access_host
+          ? <span className="badge green">provisioned</span>
+          : <span className={`badge ${status?.configured ? 'amber' : 'gray'}`}>{status?.configured ? 'not provisioned' : 'partnership not set up'}</span>}
+      </div>
+
+      {error && <div className="error-box mt">{error}</div>}
+
+      {run.stack_access_host ? (
+        <>
+          <p className="muted mt">
+            Live at <a href={run.stack_access_host} target="_blank" rel="noopener noreferrer">{run.stack_access_host}</a>
+            {run.stack_owner_email && <> · owned by <strong>{run.stack_owner_email}</strong></>}
+            {run.stack_region && <> · {run.stack_region}</>}
+          </p>
+          <p className="faint">
+            The client owns this project. They sign in to InsForge with that email and manage it themselves — Seerist stores the host, never the API key.
+          </p>
+          <div className="row mt">
+            <button className="btn sm" disabled={!!busy}
+              onClick={() => act('creds', async () => {
+                setCreds(await callFn('delivery-stack', { op: 'credentials', delivery_run_id: run.id }));
+              })}>
+              {busy === 'creds' ? <span className="spinner" /> : 'Reveal credentials for handoff'}
+            </button>
+            <button className="btn ghost sm" disabled={!!busy}
+              onClick={() => act('refresh', () => callFn('delivery-stack', { op: 'refresh', delivery_run_id: run.id }))}>
+              Refresh status
+            </button>
+          </div>
+          {creds && (
+            <pre className="mt">{`INSFORGE_URL=${creds.access_host}\nINSFORGE_API_KEY=${creds.api_key}`}</pre>
+          )}
+        </>
+      ) : !status?.configured ? (
+        <div className="info-box mt">
+          {status?.note || 'Checking partnership status…'}
+          {status?.docs && <> <a href={status.docs} target="_blank" rel="noopener noreferrer">Partnership docs</a></>}
+        </div>
+      ) : (
+        <>
+          <p className="muted mt">
+            Provision a real InsForge project for this contract so The Builder writes code against a live backend. Leave the email blank to put it under your own account, or enter the client's so they own and pay for it from day one.
+          </p>
+          <div className="grid cols-2 mt">
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com (optional)" />
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {(status.regions || []).map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+          <button className="btn primary mt" disabled={!!busy}
+            onClick={() => act('provision', async () => {
+              setCandidates([]);
+              try {
+                await callFn('delivery-stack', {
+                  op: 'provision', delivery_run_id: run.id,
+                  client_email: email || undefined, region,
+                });
+              } catch (e) {
+                // A plan limit is not a failure — offer the existing projects.
+                const msg = e instanceof Error ? e.message : '';
+                if (/plan/i.test(msg)) setError(`${msg} Pick an existing project below instead.`);
+                throw e;
+              }
+            })}>
+            {busy === 'provision' ? <span className="spinner" /> : '⚡ Provision InsForge project'}
+          </button>
+          {candidates.length > 0 && (
+            <div className="mt">
+              <p className="muted">The client's plan is at its project limit. Attach one of these instead:</p>
+              {candidates.map((c) => (
+                <button key={c.id} className="btn sm mt" disabled={!!busy}
+                  onClick={() => act('attach', () => callFn('delivery-stack', { op: 'attach', delivery_run_id: run.id, project_id: c.id }))}>
+                  Attach {c.access_host}
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function RunDrawer({ run, onClose, onChanged }: { run: DeliveryRun; onClose: () => void; onChanged: () => void }) {
   const [tasks, setTasks] = useState<DeliveryTask[]>([]);
   const [current, setCurrent] = useState<DeliveryRun>(run);
@@ -147,6 +271,8 @@ function RunDrawer({ run, onClose, onChanged }: { run: DeliveryRun; onClose: () 
             <p className="muted">{current.stack_reasoning}</p>
           </div>
         )}
+
+        <StackPanel run={current} onChanged={() => { void load(); onChanged(); }} />
 
         <div className="card mt">
           <h3>Tasks — every one passes human QA before delivery</h3>

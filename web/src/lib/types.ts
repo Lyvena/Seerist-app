@@ -102,6 +102,27 @@ export interface DeliveryRun {
   openhands_trace: Array<Record<string, unknown>>;
   packaging_channel: string | null;
   created_at: string;
+  /** Set once delivery-stack provisions the client's InsForge project. */
+  stack_project_id?: string | null;
+  stack_access_host?: string | null;
+  stack_region?: string | null;
+  stack_owner_email?: string | null;
+  stack_provisioned_at?: string | null;
+}
+
+export interface DeliveryStackStatus {
+  configured: boolean;
+  model: string;
+  regions: string[];
+  instance_types: string[];
+  note: string;
+  docs: string;
+}
+
+export interface ProvisionedProject {
+  id: string;
+  access_host: string;
+  status: string;
 }
 
 export interface DeliveryTask {

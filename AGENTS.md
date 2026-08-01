@@ -120,6 +120,16 @@ QA on every task** → packaged handoff. Hermes (`hermes_memories`,
 runs. Default stack: InstantDB for real-time/collaborative deliverables,
 InsForge for fuller server-side needs, never forced over a client's own choice.
 
+`delivery-stack` provisions the client's **own** InsForge project through the
+co-branded partnership API — a *different* project from Seerist's own backend.
+Do not conflate the two. Three invariants, all covered by
+`tests/delivery-stack.test.ts`: the client's API key is **never persisted**
+(read live at handoff, audited each time), a plan limit returns the client's
+existing projects to attach rather than failing, and an `instantdb` run is
+refused rather than half-provisioned. Only InsForge provisioning exists;
+InstantDB remains advisory (it changes one word in the Builder's prompt and
+nothing else).
+
 **C — Growth Engine.** Site and doc ingestion → bid→signup attribution →
 autonomous site generation with schema markup → ad creative and campaigns →
 consent-gated visitor intent → Ploybooks → deploy-triggered docs/site drafts.

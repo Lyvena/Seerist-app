@@ -537,7 +537,7 @@ async function executeTask(
     },
     {
       role: 'user',
-      content: `CONTRACT: ${context.jobTitle}\nQA feedback from previous attempt: ${task.qa_note || '(first attempt)'}\n\nWORKSPACE SKILL LIBRARY (Hermes):\n${hermes.skillBlock}\n\nWORKSPACE MEMORY:\n${hermes.memoryBlock}\n\nUPSTREAM DEPENDENCIES:\n${upstream}\n\nTASK ${task.position + 1}: ${task.description}\n\nContext (job description):\n${context.jobDescription}`,
+      content: `CONTRACT: ${context.jobTitle}\nQA feedback from previous attempt: ${task.qa_note || '(first attempt)'}\n${stackBlock(run)}\nWORKSPACE SKILL LIBRARY (Hermes):\n${hermes.skillBlock}\n\nWORKSPACE MEMORY:\n${hermes.memoryBlock}\n\nUPSTREAM DEPENDENCIES:\n${upstream}\n\nTASK ${task.position + 1}: ${task.description}\n\nContext (job description):\n${context.jobDescription}`,
     },
   ], token, { maxTokens: 3000, temperature: 0.4, scope: { workspace_id: run.workspace_id, function_slug: 'execute-delivery-task' } });
 
@@ -571,6 +571,21 @@ async function executeTask(
   }, token);
 
   return { task: updated };
+}
+
+/**
+ * When the client's backend has actually been provisioned (delivery-stack),
+ * tell The Builder the real host so generated code targets a live project
+ * instead of a placeholder. The API key is deliberately NOT included — it is
+ * fetched on demand at handoff and never sits in a prompt.
+ */
+function stackBlock(run: any): string {
+  if (!run.stack_access_host) return '\n';
+  return `\nTARGET BACKEND (already provisioned for this client):
+  Base URL: ${run.stack_access_host}
+  Read the anon/API key from an environment variable — never hardcode it.
+  Write code against this real project: schema migrations, edge functions and
+  client calls should all assume this host.\n`;
 }
 
 async function loadRunContext(run: any, token: string) {

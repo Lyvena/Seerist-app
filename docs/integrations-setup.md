@@ -62,6 +62,51 @@ curl -X PUT "$INSFORGE_BASE_URL/api/secrets/CREEM_WEBHOOK_SECRET" \
 
 No redeploy is needed — functions read the secret at invocation time.
 
+## InsForge partnership — provisioning client backends ⬜
+
+Seerist's own backend is one InsForge project. **Separately**, when a won
+contract is delivered on the InsForge stack, `delivery-stack` provisions a
+*second, different* InsForge project for the client, so The Builder writes code
+against a live backend instead of a placeholder.
+
+We use the **co-branded** model, not white-label, on purpose. Co-branded means:
+
+- the client is a real InsForge user, linked by their own email;
+- they can sign in to InsForge and manage the project themselves;
+- they pay InsForge directly under their own plan.
+
+That is the honest shape for delivered client work — you hand over a backend the
+client controls, rather than reselling infrastructure or holding their data
+behind your account. White-label hides InsForge entirely and puts the bill on
+Seerist; that is a different commercial agreement and is deliberately not built.
+
+**To enable it:**
+
+1. Email <partnerships@insforge.dev> and ask for a **co-branded** partnership.
+2. On approval you get a Partner ID and a Secret Key.
+3. Add them as project secrets: `INSFORGE_PARTNER_ID`, `INSFORGE_PARTNER_SECRET`.
+   (Optionally `INSFORGE_PARTNER_BASE_URL`; it defaults to `https://api.insforge.dev`.)
+
+Until those exist every operation returns HTTP 501 with the exact next step, and
+delivery still works — The Builder writes InsForge code, you just create the
+client's project by hand.
+
+**How it behaves once configured** (Delivery → open a run → *Client backend*):
+
+| Operation | What happens |
+|---|---|
+| `provision` | `connect-user` with the owner's email, then `sync-project`; stores the project id, host, region and owner on the run |
+| `attach` | For when the client's plan is at its project limit — pick one of the `candidate_projects` InsForge returns instead of failing |
+| `credentials` | Reads the API key **live** from InsForge for handoff and writes an audit line. The key is never stored in Seerist |
+| `refresh` | Re-reads the project's current status |
+
+Leave the email blank and the project lands under your own InsForge account;
+enter the client's and they own and pay for it from day one. Only the InsForge
+stack is provisioned — an `instantdb` run is refused with a clear message rather
+than half-provisioned.
+
+Docs: <https://docs.insforge.dev/partnership>
+
 ## OpenHands (delivery sandbox) ⬜
 
 - **Cloud**: get an API key from [OpenHands Cloud](https://app.all-hands.dev) and add
