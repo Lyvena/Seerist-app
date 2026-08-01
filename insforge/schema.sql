@@ -1058,8 +1058,10 @@ alter table ai_usage_log enable row level security;
 
 -- Reference data: readable by any signed-in user, written only by the service
 -- role (same pattern as policy_configs — no client write policy on purpose).
+-- Pricing is public information — readable signed out so a pricing page or a
+-- logged-out checkout link can render the ladder.
 drop policy if exists billing_plans_select on billing_plans;
-create policy billing_plans_select on billing_plans for select to authenticated using (true);
+create policy billing_plans_select on billing_plans for select to anon, authenticated using (true);
 drop policy if exists model_preferences_select on model_preferences;
 create policy model_preferences_select on model_preferences for select to authenticated using (true);
 
