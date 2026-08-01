@@ -1193,6 +1193,9 @@ alter table job_postings add constraint job_postings_source_check
 -- the ONLY thing that maps an inbound email to a workspace -- a From address is
 -- trivially forged, so it is never trusted on its own.
 alter table workspaces add column if not exists intake_token text;
+-- A default, not just a backfill: a workspace created tomorrow needs an intake
+-- address as much as one created today.
+alter table workspaces alter column intake_token set default encode(gen_random_bytes(9), 'hex');
 create unique index if not exists workspaces_intake_token_key on workspaces (intake_token);
 update workspaces set intake_token = encode(gen_random_bytes(9), 'hex') where intake_token is null;
 

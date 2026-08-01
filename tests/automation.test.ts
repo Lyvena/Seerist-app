@@ -16,8 +16,19 @@ const { MAX_WORKSPACES, MAX_SCORES, MAX_NUDGES, JOBS } =
   ]);
 
 describe('the jobs that exist', () => {
-  it('covers the five the product promises', () => {
-    expect([...JOBS]).toEqual(['scan', 'nudge', 'digest', 'grower', 'stale']);
+  it('covers the jobs the tick owns', () => {
+    expect([...JOBS]).toEqual(['scan', 'nudge', 'stale']);
+  });
+
+  it('leaves the weekly jobs to the functions that do the work', () => {
+    // A function on this backend cannot call another over HTTP (Deno Deploy
+    // answers 508 Loop Detected), so the digest and the Grower run are
+    // scheduled against pm-insights and growth-feedback directly.
+    const script = readRepoFile('insforge/scripts/apply-schedules.mjs');
+    expect(script).toContain("fn: 'pm-insights'");
+    expect(script).toContain("fn: 'growth-feedback'");
+    expect(readRepoFile('insforge/functions/pm-insights.ts')).toContain("job: 'digest'");
+    expect(readRepoFile('insforge/functions/growth-feedback.ts')).toContain("job: 'grower'");
   });
 
   it('rejects a job name it does not know', () => {
@@ -52,6 +63,17 @@ describe('work per tick is bounded', () => {
   });
 });
 
+describe('nothing tries to call another function over HTTP', () => {
+  it('no edge function fetches a sibling — the platform refuses it', () => {
+    // Deno Deploy answers 508 Loop Detected, and the failure is silent unless
+    // the caller inspects the status. Shared work lives in _shared instead.
+    const functions = import.meta.glob('../insforge/functions/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+    for (const [path, src] of Object.entries(functions)) {
+      expect(src, `${path} must not call another function over HTTP`).not.toContain('invokeFunction(');
+    }
+  });
+});
+
 describe('the boundaries still hold when nobody is watching', () => {
   it('never sends anything to a client — alerts go to the workspace owner', () => {
     // An external communication on the org's behalf is exactly what spec §12
@@ -62,18 +84,20 @@ describe('the boundaries still hold when nobody is watching', () => {
     expect(tick).toContain('ws.alert_channel');
   });
 
-  it('respects bidding_enabled and plan entitlements', () => {
+  it('respects bidding_enabled, and the weekly Grower respects the plan', () => {
     expect(tick).toContain('ws.bidding_enabled');
-    expect(tick).toContain('resolveEntitlement');
-    expect(tick).toContain('growth_engine');
+    const grower = readRepoFile('insforge/functions/growth-feedback.ts');
+    expect(grower).toContain('resolveEntitlement');
+    expect(grower).toContain('growth_engine');
   });
 
   it('meters every model call against the plan like a human-triggered one', () => {
-    // Work is delegated to the existing functions, which each pass `scope` to
-    // aiChat — a cron must not be a way around the monthly cap.
-    expect(tick).toContain("invokeFunction('score-job'");
-    expect(tick).toContain("invokeFunction('pm-insights'");
-    expect(tick).toContain("invokeFunction('growth-feedback'");
+    // Scoring runs through the same shared implementation the HTTP entry point
+    // uses, which passes `scope` to aiChat — a cron must not be a way around
+    // the monthly cap.
+    expect(tick).toContain('scoreProposal(');
+    const shared = readRepoFile('insforge/functions/_shared.ts');
+    expect(shared).toMatch(/scoreProposal[\s\S]{0,2600}function_slug: 'score-job'/);
   });
 
   it('writes every autonomous action to the audit log', () => {
@@ -122,9 +146,8 @@ describe('the schedules are defined as code', () => {
   const script = readRepoFile('insforge/scripts/apply-schedules.mjs');
 
   it('registers one schedule per job', () => {
-    for (const job of ['scan', 'nudge', 'digest', 'grower', 'stale']) {
-      expect(script).toContain(`job: '${job}'`);
-    }
+    for (const job of ['scan', 'nudge', 'stale']) expect(script).toContain(`job: '${job}'`);
+    for (const fn of ['pm-insights', 'growth-feedback']) expect(script).toContain(`fn: '${fn}'`);
   });
 
   it('references the token as a secret rather than inlining it', () => {

@@ -497,18 +497,40 @@ async function runStageDraftStep(step: any, ctx: StepContext): Promise<{ output:
   };
 }
 
+/**
+ * A step that runs another piece of Seerist.
+ *
+ * It cannot do that over HTTP: a function on this platform cannot call another
+ * (Deno Deploy answers 508 Loop Detected), which is why this step used to fail
+ * with an unhelpful error. Only work whose implementation lives in _shared can
+ * run in-process, so the supported set is explicit and anything else is
+ * refused with an explanation instead of a mystery.
+ */
 async function runFunctionStep(step: any, ctx: StepContext): Promise<{ output: string; data?: unknown }> {
   if (!step.fn) throw new Error('function step is missing "fn"');
-  const { ok, data } = await invokeFunction(
-    String(step.fn),
-    { workspace_id: ctx.workspaceId, ...(step.body || {}) },
-    ctx.token,
+  const slug = String(step.fn);
+
+  if (slug === 'score-job') {
+    const proposalId = String((step.body || {}).proposal_id || '');
+    if (!proposalId) throw new Error('score-job step needs a proposal_id');
+    const res = await scoreProposal(proposalId, ctx.token, null);
+    if ('error' in res) throw new Error(res.error);
+    return { output: `Scored ${res.score}/100 — ${res.reasoning.slice(0, 300)}`, data: res };
+  }
+
+  if (slug === 'send_alert') {
+    const { channel, message, to } = step.body || {};
+    if (!channel || !message) throw new Error('send_alert step needs a channel and a message');
+    const sent = await sendAlert(String(channel), String(message), to ? String(to) : null);
+    if (!sent.sent) throw new Error(`Alert not sent: ${sent.detail}`);
+    return { output: `Alert sent on ${channel}.`, data: sent };
+  }
+
+  throw new Error(
+    `A Ploybook cannot run "${slug}": this platform does not allow one function to call another, ` +
+    'so only steps implemented in the shared layer are available (score-job, send_alert). ' +
+    'Use a query, llm or stage_draft step instead.',
   );
-  if (!ok) throw new Error(`${step.fn} failed: ${JSON.stringify(data).slice(0, 300)}`);
-  return {
-    output: summarizeFunctionResult(String(step.fn), data),
-    data,
-  };
 }
 
 function summarizeFunctionResult(slug: string, data: any): string {

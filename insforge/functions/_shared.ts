@@ -97,27 +97,15 @@ async function dbDelete(table: string, query: string, token: string): Promise<vo
   if (!res.ok) throw new Error(`delete ${table} failed (${res.status}): ${await res.text()}`);
 }
 
-/**
- * Call another Seerist edge function. Failures are returned, never thrown, so a
- * best-effort side call can never fail the caller's primary work.
+/*
+ * There is deliberately no "call another Seerist function" helper.
+ *
+ * Deno Deploy refuses a deployment that fetches itself (508 Loop Detected), so
+ * an internal HTTP hop always fails — silently, if the caller does not inspect
+ * the status. Work that more than one function needs lives here instead
+ * (scoreProposal, sendAlert), and per-workspace jobs iterate their own
+ * workspaces rather than being orchestrated from a single function.
  */
-async function invokeFunction(
-  slug: string,
-  body: unknown,
-  token: string,
-): Promise<{ ok: boolean; data: any }> {
-  try {
-    const res = await fetch(`${IF_BASE}/functions/${slug}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body ?? {}),
-    });
-    const data = await res.json().catch(() => ({}));
-    return { ok: res.ok, data };
-  } catch (e) {
-    return { ok: false, data: { error: e instanceof Error ? e.message : String(e) } };
-  }
-}
 
 /** Exact row count without pulling the rows (PostgREST Content-Range). */
 async function dbCount(table: string, query: string, token: string): Promise<number> {
@@ -505,6 +493,197 @@ function parseJsonLoose(text: string): any {
     if (m) return JSON.parse(m[0]);
     throw new Error('model did not return valid JSON');
   }
+}
+
+
+/**
+ * Score one proposal and store the result.
+ *
+ * Lives here rather than in score-job because the scheduled scan needs exactly
+ * the same behaviour, and a function on this platform cannot call another over
+ * HTTP — Deno Deploy answers 508 Loop Detected. Duplicating the prompt would
+ * guarantee the two drift apart.
+ */
+async function scoreProposal(
+  proposal_id: string,
+  token: string,
+  userId: string | null,
+): Promise<{ proposal: any; score: number; reasoning: string; calibration: any } | { error: string; status: 404 }> {
+  const proposal = (await dbSelect('proposals', `id=eq.${proposal_id}&limit=1`, token))[0];
+  if (!proposal) return { error: 'Proposal not found', status: 404 as const };
+
+  const job = (await dbSelect('job_postings', `id=eq.${proposal.job_posting_id}&limit=1`, token))[0];
+  const ws = (await dbSelect('workspaces', `id=eq.${proposal.workspace_id}&limit=1`, token))[0];
+  if (!job || !ws) return { error: 'Job or workspace not found', status: 404 as const };
+
+  const system = `You are The Scout, Seerist's job-fit analyst for ${ws.type === 'saas' ? 'a SaaS company using freelance platforms as a growth channel' : 'a services agency'}.
+Score how well a job posting fits this workspace. Consider: skill match, budget sanity, client quality signals (payment verified, hire rate, spend), scope clarity, and red flags.
+Respond with STRICT JSON only: {"score": <integer 0-100>, "reasoning": "<3-6 plain-language sentences explaining why this fits or doesn't — specific, no fluff>"}`;
+
+  const user = `WORKSPACE PROFILE
+Name: ${ws.name}
+Type: ${ws.type}
+Description: ${ws.description || '(none)'}
+Ideal client profile: ${ws.ideal_client_profile || '(not set — score conservatively and say so)'}
+${ws.type === 'saas' ? `Product: ${ws.product_name || ''} — ${ws.product_description || ''}\nTarget customer: ${ws.target_customer || ''}` : `Portfolio highlights: ${ws.portfolio || '(none)'}`}
+
+JOB POSTING (${job.platform}, captured ${job.captured_at})
+Title: ${job.title}
+Budget: ${job.budget || 'not stated'}
+Client stats: ${JSON.stringify(job.client_stats || {})}
+Description:
+${(job.description || '').slice(0, 6000)}`;
+
+  // What this workspace's own history says about jobs like this one. A score
+  // with no grounding in real outcomes is an unanchored opinion; once there
+  // are enough resolved bids it becomes a calibrated one.
+  const history = await outcomeHistory(proposal.workspace_id, job.platform, token);
+
+  const parsed = await aiJson(
+    [
+      { role: 'system', content: system + history.systemNote },
+      { role: 'user', content: user + history.userBlock },
+    ],
+    token,
+    { maxTokens: 700, temperature: 0.2, scope: { workspace_id: proposal.workspace_id, function_slug: 'score-job' } },
+  );
+  const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score) || 0)));
+  const reasoning = String(parsed.reasoning || '').trim();
+  if (!reasoning) throw new Error('Scoring model returned no reasoning — refusing to store a bare number.');
+
+  const nextStatus = proposal.status === 'new' ? 'scored' : proposal.status;
+  const [updated] = await dbPatch('proposals', `id=eq.${proposal_id}`, {
+    fit_score: score,
+    fit_reasoning: reasoning,
+    status: nextStatus,
+  }, token);
+
+  if (proposal.status === 'new') {
+    await logStatusChange(proposal_id, 'new', 'scored', userId, `Fit score ${score}/100`, token);
+  }
+  await logPersona({
+    workspace_id: proposal.workspace_id,
+    persona: 'The Scout',
+    action: 'score_job',
+    params: { proposal_id, score },
+    result: reasoning.slice(0, 500),
+    created_by: userId,
+  }, token);
+
+
+  return { proposal: updated, score, reasoning, calibration: history.summary };
+}
+
+/** Below this a "win rate" is noise dressed up as a number. */
+const MIN_SAMPLE = 8;
+
+/**
+ * The workspace's real hit rate, so the score means something.
+ *
+ * Deliberately silent until there are enough resolved bids to say anything
+ * honest — inventing a conversion rate from three data points would be worse
+ * than saying nothing, and the first-run experience must not change.
+ */
+async function outcomeHistory(
+  workspaceId: string,
+  platform: string,
+  token: string,
+): Promise<{ systemNote: string; userBlock: string; summary: any }> {
+  const quiet = { systemNote: '', userBlock: '', summary: null };
+  try {
+    const resolved = await dbSelect(
+      'proposals',
+      `workspace_id=eq.${workspaceId}&outcome=in.(won,lost)&fit_score=not.is.null` +
+        `&select=fit_score,outcome,outcome_category&order=updated_at.desc&limit=200`,
+      token,
+    );
+    if (resolved.length < MIN_SAMPLE) return quiet;
+
+    const wins = resolved.filter((p: any) => p.outcome === 'won').length;
+    const rate = Math.round((wins / resolved.length) * 100);
+
+    const bands = [[80, 100], [60, 79], [0, 59]] as const;
+    const byBand = bands.map(([lo, hi]) => {
+      const inBand = resolved.filter((p: any) => p.fit_score >= lo && p.fit_score <= hi);
+      const won = inBand.filter((p: any) => p.outcome === 'won').length;
+      return {
+        band: `${lo}-${hi}`,
+        n: inBand.length,
+        won,
+        rate: inBand.length ? Math.round((won / inBand.length) * 100) : null,
+      };
+    }).filter((b) => b.n > 0);
+
+    const reasons: Record<string, number> = {};
+    for (const p of resolved) {
+      if (p.outcome === 'lost' && p.outcome_category) {
+        reasons[p.outcome_category] = (reasons[p.outcome_category] || 0) + 1;
+      }
+    }
+    const topReasons = Object.entries(reasons).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+    const summary = { sample: resolved.length, win_rate: rate, by_band: byBand, top_loss_reasons: topReasons };
+    return {
+      systemNote:
+        '\nThis workspace has a real bidding history, given below. Calibrate against it: if jobs in a score band have rarely converted, score a similar job lower, and say what would have to be true for it to score higher.',
+      userBlock: `\n\nTHIS WORKSPACE'S HISTORY (${resolved.length} resolved bids on all platforms, current platform ${platform})
+Overall win rate: ${rate}%
+By score band: ${byBand.map((b) => `${b.band} → ${b.rate}% of ${b.n}`).join('; ')}
+${topReasons.length ? `Most common loss reasons: ${topReasons.map(([r, n]) => `${r} (${n})`).join(', ')}` : ''}`,
+      summary,
+    };
+  } catch {
+    return quiet;
+  }
+}
+
+/**
+ * Send an alert to wherever the workspace asked for them.
+ *
+ * Alerts always go to the workspace's own channel, never to a client — an
+ * external communication on the org's behalf is reserved for a human click
+ * (spec §12).
+ */
+const ALERT_TOOLS: Record<string, { tool: string; args: (msg: string, to?: string) => Record<string, unknown> }> = {
+  slack: { tool: 'SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', args: (m, to) => ({ channel: to || '#general', text: m }) },
+  telegram: { tool: 'TELEGRAM_SEND_MESSAGE', args: (m, to) => ({ chat_id: to, text: m }) },
+  discord: { tool: 'DISCORD_CREATE_MESSAGE', args: (m, to) => ({ channel_id: to, content: m }) },
+  gmail: { tool: 'GMAIL_SEND_EMAIL', args: (m, to) => ({ recipient_email: to, subject: 'Seerist alert', body: m }) },
+};
+
+async function sendAlert(
+  channel: string,
+  message: string,
+  to: string | null,
+): Promise<{ sent: boolean; detail: string }> {
+  const spec = ALERT_TOOLS[channel];
+  if (!spec) return { sent: false, detail: `Unknown alert channel "${channel}"` };
+  const key = Deno.env.get('COMPOSIO_API_KEY');
+  if (!key) return { sent: false, detail: 'Composio is not configured (COMPOSIO_API_KEY secret missing).' };
+
+  try {
+    const accounts = await composioApi(`/connected_accounts?toolkit_slugs=${encodeURIComponent(channel)}&limit=5`, key);
+    const account = (accounts.items || []).find((a: any) => (a.status || '').toUpperCase() === 'ACTIVE')
+      || (accounts.items || [])[0];
+    if (!account) return { sent: false, detail: `No connected ${channel} account — connect it in Settings → Integrations.` };
+    const exec = await composioApi(`/tools/execute/${spec.tool}`, key, {
+      method: 'POST',
+      body: JSON.stringify({ connected_account_id: account.id, arguments: spec.args(message, to ?? undefined) }),
+    });
+    return { sent: exec.successful !== false, detail: exec.successful === false ? 'Composio rejected the message' : 'sent' };
+  } catch (e) {
+    return { sent: false, detail: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+async function composioApi(path: string, key: string, init: RequestInit = {}): Promise<any> {
+  const res = await fetch(`https://backend.composio.dev/api/v3${path}`, {
+    ...init,
+    headers: { 'x-api-key': key, 'Content-Type': 'application/json', ...(init.headers || {}) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || data.error || `Composio ${res.status}`);
+  return data;
 }
 
 // --- Audit helpers -----------------------------------------------------------

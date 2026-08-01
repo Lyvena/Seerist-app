@@ -41,16 +41,19 @@ const SCHEDULES = [
     job: 'nudge',
     what: 'Flag bids that were viewed but never answered',
   },
+  // These two are scheduled against their own functions rather than the tick:
+  // a function here cannot call another over HTTP, so each iterates its own
+  // workspaces. Same guards, same automation_enabled flag.
   {
     name: 'seerist-digest',
     schedule: '23 8 * * 1',
-    job: 'digest',
+    fn: 'pm-insights',
     what: "The PM's weekly synthesis, delivered",
   },
   {
     name: 'seerist-grower',
     schedule: '41 8 * * 1',
-    job: 'grower',
+    fn: 'growth-feedback',
     what: 'Weekly growth recommendations, as drafts',
   },
   {
@@ -81,7 +84,7 @@ const rows = Array.isArray(existing.data) ? existing.data : (existing.data?.sche
 
 if (process.argv.includes('--list')) {
   if (!rows.length) console.log('No schedules configured.');
-  for (const r of rows) console.log(`${r.name}\t${r.schedule}\t${r.url ?? ''}`);
+  for (const r of rows) console.log(`${r.name}\t${r.cronSchedule ?? r.cron_schedule ?? ''}\t${r.functionUrl ?? r.function_url ?? ''}`);
   process.exit(0);
 }
 
@@ -95,11 +98,14 @@ if (process.argv.includes('--delete')) {
 
 let failures = 0;
 for (const s of SCHEDULES) {
-  const url = `${baseUrl}/functions/automation-tick?job=${s.job}`;
+  const url = s.fn
+    ? `${baseUrl}/functions/${s.fn}`
+    : `${baseUrl}/functions/automation-tick?job=${s.job}`;
   const payload = {
     name: s.name,
-    schedule: s.schedule,
-    url,
+    cronSchedule: s.schedule,
+    functionUrl: url,
+    httpMethod: 'POST',
     // The token is a project secret; InsForge substitutes and encrypts it.
     headers: {
       Authorization: 'Bearer ${{secrets.AUTOMATION_TOKEN}}',

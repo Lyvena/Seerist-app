@@ -347,7 +347,7 @@ input[type='range'] { accent-color: var(--brand); }
 
 /* --- Kanban ---------------------------------------------------------------- */
 
-.kanban { display: grid; grid-template-columns: repeat(6, minmax(214px, 1fr)); gap: 10px; overflow-x: auto; align-items: start; padding-bottom: 8px; }
+.kanban { display: grid; grid-template-columns: repeat(6, minmax(168px, 1fr)); gap: 10px; overflow-x: auto; align-items: start; padding-bottom: 8px; }
 .kanban-col { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 9px; min-height: 130px; }
 .kanban-col h4 {
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim);

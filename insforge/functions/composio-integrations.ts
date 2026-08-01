@@ -35,12 +35,8 @@ const TOOLKITS: Array<{ slug: string; label: string; category: string; persona: 
   { slug: 'linkedin', label: 'LinkedIn', category: 'social', persona: 'The Grower' },
 ];
 
-const ALERT_TOOLS: Record<string, { tool: string; args: (msg: string, to?: string) => Record<string, unknown> }> = {
-  slack: { tool: 'SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', args: (m, to) => ({ channel: to || '#general', text: m }) },
-  telegram: { tool: 'TELEGRAM_SEND_MESSAGE', args: (m, to) => ({ chat_id: to, text: m }) },
-  discord: { tool: 'DISCORD_CREATE_MESSAGE', args: (m, to) => ({ channel_id: to, content: m }) },
-  gmail: { tool: 'GMAIL_SEND_EMAIL', args: (m, to) => ({ recipient_email: to, subject: 'Seerist alert', body: m }) },
-};
+// ALERT_TOOLS and the send itself live in _shared: the scheduled jobs need to
+// alert too, and a function cannot call another over HTTP on this platform.
 
 /** Find a usable connected account for a toolkit, or explain what's missing. */
 async function connectedAccountFor(toolkit: string, key: string): Promise<any> {
@@ -167,9 +163,10 @@ export default async function (req: Request): Promise<Response> {
 
     if (action === 'send_alert') {
       const { channel, message, to, workspace_id } = body;
-      const spec = ALERT_TOOLS[channel];
-      if (!spec || !message) return json({ error: `channel (${Object.keys(ALERT_TOOLS).join('|')}) and message are required` }, 400);
-      const exec = await executeTool(spec.tool, channel, spec.args(message, to), key);
+      if (!ALERT_TOOLS[channel] || !message) {
+        return json({ error: `channel (${Object.keys(ALERT_TOOLS).join('|')}) and message are required` }, 400);
+      }
+      const exec = await sendAlert(channel, String(message), to ?? null);
       if (workspace_id) {
         await logPersona({
           workspace_id,
@@ -180,7 +177,7 @@ export default async function (req: Request): Promise<Response> {
           created_by: userId,
         }, token);
       }
-      return json({ sent: exec.successful !== false, detail: exec });
+      return json({ sent: exec.sent, detail: exec.detail });
     }
 
     // --- The Closer: scheduling ------------------------------------------

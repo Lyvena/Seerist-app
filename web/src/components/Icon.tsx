@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 /**
  * The icon set.
  *
@@ -101,17 +103,26 @@ export function Icon({
   );
 }
 
-/** The Seerist mark, inline so it inherits colour in dark surfaces too. */
+/**
+ * The Seerist mark, inline so it can sit on any surface.
+ *
+ * Gradient ids are per-instance. The shell renders the mark twice (sidebar and
+ * mobile bar) and one of the two is always `display: none` — with fixed ids the
+ * hidden copy wins the id lookup and the visible mark paints nothing.
+ */
 export function Logomark({ size = 34 }: { size?: number }) {
+  const uid = useId().replace(/:/g, '');
+  const ring = `lm-ring-${uid}`;
+  const core = `lm-core-${uid}`;
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id="lm-ring" x1="0.1" y1="0" x2="0.9" y2="1">
+        <linearGradient id={ring} x1="0.1" y1="0" x2="0.9" y2="1">
           <stop offset="0" stopColor="#6366f1" />
           <stop offset="0.55" stopColor="#7c3aed" />
           <stop offset="1" stopColor="#a855f7" />
         </linearGradient>
-        <linearGradient id="lm-core" x1="0.2" y1="0" x2="0.8" y2="1">
+        <linearGradient id={core} x1="0.2" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor="#4338ca" />
           <stop offset="1" stopColor="#7c3aed" />
         </linearGradient>
@@ -119,12 +130,12 @@ export function Logomark({ size = 34 }: { size?: number }) {
       <path
         d="M 336.3 141.3 A 140 140 0 1 0 385.0 306.0"
         fill="none"
-        stroke="url(#lm-ring)"
+        stroke={`url(#${ring})`}
         strokeWidth="54"
         strokeLinecap="round"
       />
-      <circle cx="393" cy="119" r="42" fill="url(#lm-core)" />
-      <circle cx="256" cy="256" r="52" fill="url(#lm-core)" />
+      <circle cx="393" cy="119" r="42" fill={`url(#${core})`} />
+      <circle cx="256" cy="256" r="52" fill={`url(#${core})`} />
     </svg>
   );
 }

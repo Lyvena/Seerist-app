@@ -17,12 +17,30 @@ import { CopyRow, EmptyState, SectionHead, Toggle } from './UI';
 
 const INTAKE_DOMAIN = 'inbound.seerist.xyz';
 
-const JOBS: Array<{ id: string; name: string; icon: Parameters<typeof Icon>[0]['name']; what: string; when: string }> = [
-  { id: 'scan', name: 'Scan & score', icon: 'radar', what: 'Scores whatever arrived and alerts you about the ones worth bidding on.', when: 'Every 15 minutes' },
-  { id: 'nudge', name: 'Follow-up nudges', icon: 'bell', what: 'A bid that was read but never answered is a warm lead going cold. Seerist tells you — it never messages the client.', when: 'Daily' },
-  { id: 'digest', name: 'The PM digest', icon: 'clipboard', what: 'The weekly read on what is working, delivered instead of waited for.', when: 'Mondays' },
-  { id: 'grower', name: 'Growth recommendations', icon: 'growth', what: 'The Grower drafts its weekly recommendations. Drafts only — nothing is published.', when: 'Weekly' },
-  { id: 'stale', name: 'Stalled work', icon: 'clock', what: 'Flags delivery runs that have stopped moving, especially ones waiting on your QA.', when: 'Daily' },
+/**
+ * `fn` is which function runs the job. Most go through automation-tick; the
+ * weekly digest and Grower run are scheduled against their own functions,
+ * because a function on this backend cannot call another.
+ */
+const JOBS: Array<{
+  id: string; name: string; icon: Parameters<typeof Icon>[0]['name'];
+  what: string; when: string; fn: string; body: (wsId: string) => Record<string, unknown>;
+}> = [
+  { id: 'scan', name: 'Scan & score', icon: 'radar', when: 'Every 15 minutes',
+    what: 'Scores whatever arrived and alerts you about the ones worth bidding on.',
+    fn: 'automation-tick', body: (id) => ({ job: 'scan', workspace_id: id }) },
+  { id: 'nudge', name: 'Follow-up nudges', icon: 'bell', when: 'Daily',
+    what: 'A bid that was read but never answered is a warm lead going cold. Seerist tells you — it never messages the client.',
+    fn: 'automation-tick', body: (id) => ({ job: 'nudge', workspace_id: id }) },
+  { id: 'stale', name: 'Stalled work', icon: 'clock', when: 'Daily',
+    what: 'Flags delivery runs that have stopped moving, especially ones waiting on your QA.',
+    fn: 'automation-tick', body: (id) => ({ job: 'stale', workspace_id: id }) },
+  { id: 'digest', name: 'The PM digest', icon: 'clipboard', when: 'Mondays',
+    what: 'The weekly read on what is working, delivered instead of waited for.',
+    fn: 'pm-insights', body: (id) => ({ workspace_id: id }) },
+  { id: 'grower', name: 'Growth recommendations', icon: 'growth', when: 'Weekly',
+    what: 'The Grower drafts its weekly recommendations. Drafts only — nothing is published.',
+    fn: 'growth-feedback', body: (id) => ({ workspace_id: id }) },
 ];
 
 const CHANNELS = [
@@ -228,10 +246,15 @@ export default function AutomationPanel({ ws, onSaved }: { ws: Workspace; onSave
                     className="btn sm"
                     disabled={!!busy}
                     onClick={() => act(j.id, async () => {
-                      const res = await callFn('automation-tick', { job: j.id, workspace_id: ws.id }) as
-                        { results?: Array<{ status: string; detail: string }> };
+                      const res = await callFn(j.fn, j.body(ws.id)) as {
+                        results?: Array<{ status: string; detail: string }>;
+                        recommendations?: unknown[];
+                        insights?: string;
+                      };
                       const r = res.results?.[0];
-                      setNote(`${j.name}: ${r?.detail || 'done'}`);
+                      setNote(`${j.name}: ${r?.detail
+                        || (res.recommendations ? `${res.recommendations.length} recommendation(s) drafted.` : '')
+                        || (res.insights ? 'Digest generated — see the AI Employees page.' : 'done')}`);
                       await loadRuns();
                     })}
                   >

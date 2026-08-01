@@ -9,9 +9,12 @@
 //   nudge   a bid that was VIEWED but never replied to is a warm lead going
 //           cold; tell the owner. Never messages the client — an external
 //           communication is exactly what spec §12 reserves for a human click.
-//   digest  The PM's weekly synthesis, delivered instead of waited for
-//   grower  The Grower's weekly recommendations, as drafts
 //   stale   delivery runs stuck in one state, especially waiting on human QA
+//
+// The weekly digest and the weekly Grower run are scheduled directly against
+// pm-insights and growth-feedback instead of being orchestrated from here: a
+// function on this platform cannot call another over HTTP (Deno Deploy answers
+// 508 Loop Detected), so each of those iterates its own workspaces.
 //
 // Rules every job obeys, because autonomy without limits is a liability:
 //   - a workspace with automation_enabled = false is skipped entirely
@@ -34,7 +37,7 @@ const MAX_WORKSPACES = 12;
 const MAX_SCORES = 5;
 const MAX_NUDGES = 8;
 
-const JOBS = ['scan', 'nudge', 'digest', 'grower', 'stale'] as const;
+const JOBS = ['scan', 'nudge', 'stale'] as const;
 type Job = typeof JOBS[number];
 
 export default async function (req: Request): Promise<Response> {
@@ -44,10 +47,12 @@ export default async function (req: Request): Promise<Response> {
 
   const url = new URL(req.url);
   const expected = Deno.env.get('AUTOMATION_TOKEN');
-  const supplied = url.searchParams.get('token');
-  const userToken = bearer(req);
+  // The scheduler sends the token in the Authorization header, because InsForge
+  // substitutes ${{secrets.KEY}} into headers and not into URLs.
+  const supplied = url.searchParams.get('token') || bearer(req);
   const viaCron = Boolean(expected && supplied && supplied === expected);
-  if (!viaCron && !userToken) return json({ error: 'Sign in or provide a valid ?token=' }, 401);
+  const userToken = viaCron ? null : bearer(req);
+  if (!viaCron && !userToken) return json({ error: 'Sign in or provide a valid automation token' }, 401);
 
   let body: any = {};
   if (req.method === 'POST') body = await req.json().catch(() => ({}));
@@ -67,8 +72,13 @@ export default async function (req: Request): Promise<Response> {
     const filter = onlyWorkspace
       ? `id=eq.${onlyWorkspace}&limit=1`
       : `automation_enabled=is.true&order=updated_at.desc&limit=${MAX_WORKSPACES}`;
-    const workspaces = await dbSelect('workspaces', filter, SERVICE_KEY);
+    // A by-hand run acts as the person who asked for it — including the lookup,
+    // so RLS decides whether that workspace is theirs to run. Only the cron
+    // acts with the service role, and only it sees every workspace.
+    const actAs = viaCron ? SERVICE_KEY : userToken!;
+    const workspaces = await dbSelect('workspaces', filter, actAs);
     if (!workspaces.length) return json({ job, workspaces: 0, results: [] });
+    for (const ws of workspaces) ws._token = actAs;
 
     const results: any[] = [];
     for (const ws of workspaces) {
@@ -98,8 +108,6 @@ type JobResult = { status: 'ok' | 'skipped' | 'failed'; detail: string; items?: 
 async function runJob(job: Job, ws: any): Promise<JobResult> {
   if (job === 'scan') return await scan(ws);
   if (job === 'nudge') return await nudge(ws);
-  if (job === 'digest') return await digest(ws);
-  if (job === 'grower') return await grower(ws);
   return await stale(ws);
 }
 
@@ -118,9 +126,18 @@ async function scan(ws: any): Promise<JobResult> {
   // Scored in parallel: five sequential model calls would not fit the request
   // budget, five concurrent ones take as long as the slowest.
   const scored = await Promise.allSettled(
-    pending.map((p: any) => invokeFunction('score-job', { proposal_id: p.id }, SERVICE_KEY)),
+    pending.map((p: any) => scoreProposal(p.id, ws._token, null)),
   );
-  const ok = scored.filter((s) => s.status === 'fulfilled' && s.value.ok).length;
+  const ok = scored.filter((r) => r.status === 'fulfilled' && !('error' in r.value)).length;
+  // Never report "scored 0" without saying why — a silent zero is the failure
+  // mode that makes scheduled work impossible to trust.
+  if (!ok) {
+    const first = scored[0];
+    const why = first?.status === 'rejected'
+      ? String(first.reason).slice(0, 200)
+      : String((first?.value as any)?.error ?? 'unknown');
+    return { status: 'failed', detail: `Could not score ${pending.length} job(s): ${why}`, items: 0 };
+  }
 
   // Alert on the ones that clear the workspace's own bar.
   const threshold = Number(ws.alert_min_score ?? 75);
@@ -141,14 +158,12 @@ async function scan(ws: any): Promise<JobResult> {
       const j: any = byId.get(p.job_posting_id);
       return `• ${p.fit_score}/100 — ${j?.title ?? 'a job'} (${j?.platform ?? '?'}${j?.budget ? `, ${j.budget}` : ''})${j?.url ? `\n  ${j.url}` : ''}`;
     });
-    const sent = await invokeFunction('composio-integrations', {
-      action: 'send_alert',
-      channel: ws.alert_channel,
-      to: ws.alert_target || undefined,
-      workspace_id: ws.id,
-      message: `Seerist found ${worth.length} job${worth.length === 1 ? '' : 's'} worth a look in ${ws.name}:\n\n${lines.join('\n')}\n\nDraft and review them in your Pitch Queue.`,
-    }, SERVICE_KEY);
-    if (sent.ok) alerted = worth.length;
+    const sent = await sendAlert(
+      ws.alert_channel,
+      `Seerist found ${worth.length} job${worth.length === 1 ? '' : 's'} worth a look in ${ws.name}:\n\n${lines.join('\n')}\n\nDraft and review them in your Pitch Queue.`,
+      ws.alert_target || null,
+    );
+    if (sent.sent) alerted = worth.length;
   }
 
   await logPersona({
@@ -188,13 +203,11 @@ async function nudge(ws: any): Promise<JobResult> {
   });
 
   if (ws.alert_channel) {
-    await invokeFunction('composio-integrations', {
-      action: 'send_alert',
-      channel: ws.alert_channel,
-      to: ws.alert_target || undefined,
-      workspace_id: ws.id,
-      message: `${cold.length} bid${cold.length === 1 ? '' : 's'} in ${ws.name} were read but never answered:\n\n${lines.join('\n')}\n\nA short follow-up on the platform is usually what turns these. Seerist will not message the client for you.`,
-    }, SERVICE_KEY);
+    await sendAlert(
+      ws.alert_channel,
+      `${cold.length} bid${cold.length === 1 ? '' : 's'} in ${ws.name} were read but never answered:\n\n${lines.join('\n')}\n\nA short follow-up on the platform is usually what turns these. Seerist will not message the client for you.`,
+      ws.alert_target || null,
+    );
   }
 
   // Marked whether or not a channel is configured, so the queue does not
@@ -215,45 +228,6 @@ async function nudge(ws: any): Promise<JobResult> {
   return { status: 'ok', detail: `Flagged ${cold.length} cold bid(s).`, items: cold.length };
 }
 
-// --- digest: The PM's weekly synthesis, delivered ---------------------------
-
-async function digest(ws: any): Promise<JobResult> {
-  const res = await invokeFunction('pm-insights', { workspace_id: ws.id }, SERVICE_KEY);
-  if (!res.ok) return { status: 'failed', detail: String(res.data?.error || 'pm-insights failed') };
-
-  const text = String(res.data?.insights || '').trim();
-  if (!text) return { status: 'skipped', detail: 'No insights generated.' };
-
-  if (ws.alert_channel) {
-    await invokeFunction('composio-integrations', {
-      action: 'send_alert',
-      channel: ws.alert_channel,
-      to: ws.alert_target || undefined,
-      workspace_id: ws.id,
-      message: `The PM's weekly read on ${ws.name}:\n\n${text.slice(0, 3000)}`,
-    }, SERVICE_KEY);
-  }
-  return { status: 'ok', detail: 'Weekly digest generated.', items: 1 };
-}
-
-// --- grower: weekly growth recommendations, as drafts ------------------------
-
-async function grower(ws: any): Promise<JobResult> {
-  if (ws.type !== 'saas') return { status: 'skipped', detail: 'Growth Engine is for SaaS workspaces.' };
-
-  // The Growth Engine is a paid feature; a cron must not hand it out free.
-  const ent = await resolveEntitlement({ workspace_id: ws.id, function_slug: 'automation-tick' }, SERVICE_KEY);
-  if (ent.limits?.growth_engine === false) {
-    return { status: 'skipped', detail: 'This plan does not include the Growth Engine.' };
-  }
-
-  const res = await invokeFunction('growth-feedback', { workspace_id: ws.id }, SERVICE_KEY);
-  if (!res.ok) return { status: 'failed', detail: String(res.data?.error || 'growth-feedback failed') };
-
-  const count = Array.isArray(res.data?.recommendations) ? res.data.recommendations.length : 0;
-  return { status: 'ok', detail: `${count} recommendation(s) drafted for review.`, items: count };
-}
-
 // --- stale: work that has stopped moving -------------------------------------
 
 async function stale(ws: any): Promise<JobResult> {
@@ -270,13 +244,11 @@ async function stale(ws: any): Promise<JobResult> {
     return `• run ${String(r.id).slice(0, 8)} — ${r.status} for ${days} day${days === 1 ? '' : 's'}`;
   });
   if (ws.alert_channel) {
-    await invokeFunction('composio-integrations', {
-      action: 'send_alert',
-      channel: ws.alert_channel,
-      to: ws.alert_target || undefined,
-      workspace_id: ws.id,
-      message: `${stuck.length} delivery run${stuck.length === 1 ? '' : 's'} in ${ws.name} have not moved in 3 days:\n\n${lines.join('\n')}\n\nRuns waiting on QA need your approval to continue.`,
-    }, SERVICE_KEY);
+    await sendAlert(
+      ws.alert_channel,
+      `${stuck.length} delivery run${stuck.length === 1 ? '' : 's'} in ${ws.name} have not moved in 3 days:\n\n${lines.join('\n')}\n\nRuns waiting on QA need your approval to continue.`,
+      ws.alert_target || null,
+    );
   }
   await logPersona({
     workspace_id: ws.id,

@@ -39,15 +39,56 @@ export default async function (req: Request): Promise<Response> {
   if (pf) return pf;
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
 
-  const token = bearer(req);
-  if (!token) return json({ error: 'Sign in required' }, 401);
-  const userId = userIdFromToken(token);
+  // The scheduler authenticates with the automation token in the Authorization
+  // header (InsForge substitutes ${{secrets.KEY}} into headers, not URLs); the
+  // ?token= form stays supported for calling it by hand.
+  const expected = Deno.env.get('AUTOMATION_TOKEN');
+  const supplied = new URL(req.url).searchParams.get('token') || bearer(req);
+  const viaCron = Boolean(expected && supplied && supplied === expected);
 
-  let body: any;
+  const token = viaCron ? SERVICE_KEY : bearer(req);
+  if (!token) return json({ error: 'Sign in required' }, 401);
+  const userId = viaCron ? null : userIdFromToken(token);
+
+  let body: any = {};
   try {
     body = await req.json();
   } catch {
-    return json({ error: 'Invalid JSON body' }, 400);
+    if (!viaCron) return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // --- Weekly run, for every eligible workspace ----------------------------
+  // The scheduler calls this function directly: a function on this platform
+  // cannot call another over HTTP (Deno Deploy answers 508 Loop Detected), so
+  // the iteration lives with the work rather than in an orchestrator.
+  if (viaCron && !body.workspace_id) {
+    const workspaces = await dbSelect(
+      'workspaces',
+      'automation_enabled=is.true&type=eq.saas&order=updated_at.desc&limit=12',
+      SERVICE_KEY,
+    );
+    const results: any[] = [];
+    for (const ws of workspaces) {
+      try {
+        // The Growth Engine is a paid feature; a cron must not hand it out.
+        const ent = await resolveEntitlement({ workspace_id: ws.id, function_slug: 'growth-feedback' }, SERVICE_KEY);
+        if (ent.limits?.growth_engine === false) {
+          await recordRun(ws.id, 'grower', 'skipped', 'This plan does not include the Growth Engine.', 0, SERVICE_KEY);
+          results.push({ workspace_id: ws.id, status: 'skipped' });
+          continue;
+        }
+        const res = await analyze(ws.id, SERVICE_KEY, null, true);
+        const data = await res.clone().json().catch(() => ({}));
+        const n = Array.isArray(data.recommendations) ? data.recommendations.length : 0;
+        await recordRun(ws.id, 'grower', 'ok', `${n} recommendation(s) drafted for review.`, n, SERVICE_KEY);
+        results.push({ workspace_id: ws.id, status: 'ok', recommendations: n });
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        await recordRun(ws.id, 'grower', 'failed', detail, 0, SERVICE_KEY);
+        results.push({ workspace_id: ws.id, status: 'failed', detail });
+      }
+    }
+    return json({ job: 'grower', workspaces: results.length, results });
   }
 
   const { workspace_id } = body;

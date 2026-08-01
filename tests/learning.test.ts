@@ -9,7 +9,9 @@ import { loadFunctionScope, readRepoFile } from './helpers/load';
  */
 
 const draft = readRepoFile('insforge/functions/draft-proposal.ts');
-const score = readRepoFile('insforge/functions/score-job.ts');
+// Scoring and its calibration live in _shared: the scheduled scan needs the
+// same behaviour, and this platform forbids one function calling another.
+const score = readRepoFile('insforge/functions/_shared.ts');
 const analytics = readRepoFile('insforge/functions/analytics-summary.ts');
 const outcome = readRepoFile('insforge/functions/record-outcome.ts');
 const schema = readRepoFile('insforge/schema.sql');
@@ -118,9 +120,10 @@ describe('showing the user what was learned', () => {
   });
 
   it('uses the same minimum sample as the scorer, so the two never disagree', () => {
-    const scoreMin = Number(score.match(/const MIN_SAMPLE = (\d+)/)![1]);
-    const analyticsMin = Number(analytics.match(/const MIN_SAMPLE = (\d+)/)![1]);
-    expect(analyticsMin).toBe(scoreMin);
+    // One constant, in _shared, read by both — not two numbers to keep in sync.
+    expect(score).toMatch(/const MIN_SAMPLE = \d+/);
+    expect(analytics).toContain('MIN_SAMPLE');
+    expect(analytics).not.toMatch(/const MIN_SAMPLE = \d+/);
   });
 });
 

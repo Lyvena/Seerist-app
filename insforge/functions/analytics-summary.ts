@@ -95,8 +95,8 @@ export default async function (req: Request): Promise<Response> {
   }
 }
 
-/** Below this, a percentage is noise with a decimal point. */
-const MIN_SAMPLE = 8;
+// Sample floor lives in _shared as MIN_SAMPLE, shared with the scorer so the
+// two can never disagree about when a percentage is meaningful.
 
 /**
  * What the workspace's own results say — the same evidence the scorer and the

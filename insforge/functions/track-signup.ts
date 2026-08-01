@@ -67,11 +67,17 @@ export default async function (req: Request): Promise<Response> {
       }, SERVICE_KEY);
 
       // A fresh attribution changes what the segment data says, so the Grower
-      // re-reads it immediately. Best-effort: the signup is already recorded
-      // and must never fail because the analysis did.
-      await invokeFunction(
-        'growth-feedback',
-        { workspace_id, op: 'analyze', automatic: true },
+      // should re-read it. It cannot be triggered from here: a function on this
+      // platform cannot call another over HTTP (Deno Deploy answers 508 Loop
+      // Detected), which is why the call that used to sit here never actually
+      // ran. The weekly Grower schedule picks it up instead, and the note below
+      // makes the delay visible rather than silent.
+      await recordRun(
+        workspace_id,
+        'attribution',
+        'ok',
+        'Signup attributed to a bid touchpoint. Recommendations refresh on the next Grower run.',
+        1,
         SERVICE_KEY,
       );
     }
