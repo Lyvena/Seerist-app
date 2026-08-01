@@ -1083,7 +1083,10 @@ create policy ai_usage_insert on ai_usage_log for insert to authenticated
 insert into billing_plans (code, name, description, price_cents, interval, creem_product_id, rank, is_paid, features, limits) values
   ('free', 'Free', 'Try the whole bidding loop. Free models only.', 0, 'none', null, 0, false,
    '["1 workspace","Chrome extension capture on all 4 platforms","AI fit scoring + proposal drafting","Pitch Queue, Analytics, full audit trail","Free models from the gateway"]'::jsonb,
-   '{"workspaces":1,"ai_actions_per_month":50,"delivery_engine":false,"growth_engine":false,"ceo_persona":false,"model_choice":false}'::jsonb),
+   -- max_model_input_price caps what a free plan may cost per M input tokens.
+   -- 0 = genuinely zero-cost models only. Raise to 0.2 to allow very cheap
+   -- models such as deepseek/deepseek-v4-flash ($0.14/M) on the free tier.
+   '{"workspaces":1,"ai_actions_per_month":50,"delivery_engine":false,"growth_engine":false,"ceo_persona":false,"model_choice":false,"max_model_input_price":0}'::jsonb),
   ('starter', 'Starter', '1 workspace, Bid + Delivery engines, premium models.', 4900, 'month', 'prod_64FkTYg19BehXAxxZ3Rnvz', 1, true,
    '["Everything in Free","Premium models (Opus-class by default)","Delivery Engine with human QA gate","Hermes memory + skill library","Choose your own model"]'::jsonb,
    '{"workspaces":1,"ai_actions_per_month":750,"delivery_engine":true,"growth_engine":false,"ceo_persona":false,"model_choice":true}'::jsonb),

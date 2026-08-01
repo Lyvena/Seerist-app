@@ -63,7 +63,8 @@ export default async function (req: Request): Promise<Response> {
 
     if (op === 'list_models') {
       const all = (await gatewayModels(token)).filter(isChatModel);
-      const eligible = ent.tier === 'free' ? all.filter(isZeroCost) : all;
+      const ceiling = freeModelCeiling(ent.limits);
+      const eligible = ent.tier === 'free' ? all.filter((m) => withinFreeCeiling(m, ceiling)) : all;
       const resolved = await resolveModel(scope, token);
       const models = eligible
         .map((m) => ({

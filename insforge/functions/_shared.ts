@@ -162,9 +162,25 @@ async function gatewayModels(token: string): Promise<GatewayModel[]> {
   return models;
 }
 
-/** A model costs nothing at all — the only kind a free plan may use. */
+/** A model costs nothing at all — the default ceiling for free plans. */
 function isZeroCost(m: GatewayModel): boolean {
   return Number(m.inputPrice ?? 0) === 0 && Number(m.outputPrice ?? 0) === 0;
+}
+
+/**
+ * What a free plan is allowed to spend per million input tokens.
+ * `billing_plans.limits.max_model_input_price` on the free plan, default 0
+ * (genuinely zero-cost models only). Raise it to e.g. 0.2 to let the free tier
+ * reach very cheap models such as deepseek/deepseek-v4-flash ($0.14/M).
+ */
+function freeModelCeiling(limits: Record<string, any>): number {
+  const cap = Number(limits?.max_model_input_price);
+  return Number.isFinite(cap) && cap >= 0 ? cap : 0;
+}
+
+function withinFreeCeiling(m: GatewayModel, ceiling: number): boolean {
+  if (ceiling <= 0) return isZeroCost(m);
+  return Number(m.inputPrice ?? 0) <= ceiling;
 }
 
 /** Text-in/text-out only: embedding, rerank, audio and safety models are not chat models. */
@@ -261,8 +277,10 @@ async function resolveModel(scope: AiScope, token: string): Promise<ResolvedMode
     return { model: fallback, tier, plan: ent.plan, reason: 'gateway catalog unavailable — using fallback', organizationId: ent.org?.id ?? null };
   }
 
-  // Free tier: zero-cost only. This is a hard constraint, not a preference.
-  const eligible = tier === 'free' ? models.filter(isZeroCost) : models;
+  // Free tier: capped by cost. This is a hard constraint, not a preference —
+  // a free plan can never be routed to a model above its ceiling.
+  const ceiling = freeModelCeiling(ent.limits);
+  const eligible = tier === 'free' ? models.filter((m) => withinFreeCeiling(m, ceiling)) : models;
   if (!eligible.length) {
     return { model: fallback, tier, plan: ent.plan, reason: 'no eligible models in catalog — using fallback', organizationId: ent.org?.id ?? null };
   }
